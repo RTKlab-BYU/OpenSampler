@@ -72,7 +72,7 @@ class Protocol_Parameter_Instance(tk.Frame,):
         
         self.value_name = value_name
         this_type = frame.protocol[row]["type"]
-        print(index)
+        # print(index)
         tk.Label(frame.command_grid, text=ACTION_TYPES[this_type][index]).grid(row=row, column=column + 6)
         self.this_valuebox = tk.Entry(frame.command_grid)
         self.this_valuebox.insert(tk.END,string=value)
