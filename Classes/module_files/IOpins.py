@@ -91,7 +91,7 @@ class SerialPort:
             self.ser.write(str(commandToSend).encode())
             #print("read output")
             time.sleep(0.1)
-            readout = self.ser.readline().decode('ascii')
+            readout = self.ser.readline().decode('ascii',errors="replace")
             self.result.put(readout)
 
 
@@ -144,12 +144,12 @@ class SerialPort:
             input_string = input_string.lstrip("pin"+self.pin_number + " ")
             input_string = input_string.rstrip("\r\n")
             input_string = input_string.rstrip("\n")
-            if input_string == "on":
+            if "on" in input_string:
                 self.is_pressed = True
-            elif input_string == "off":
+            elif "off" in input_string:
                 self.is_pressed = False
             else:
-                print(input_string) #testing
+                print(f"Error, bad serial string: {input_string}") #testing
 
         def send_command(self, command_in, this_string):
             this_command = this_string + "\r\n"
