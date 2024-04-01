@@ -1,6 +1,7 @@
 import json
 import time
 import os
+import threading
 print(os.getcwd())
 from Classes.module_files.labware import Labware
 
@@ -213,6 +214,24 @@ class ProtocolActions:
                 #calls correct function in coordinator & unpacks the parameters list with (*params): logs each parameter
             getattr(self.myCoordinator.actionOptions, command['type'])(*params)
 
+    def run_sub_method_simultaneously(self, scriptName): #Untracked works better if not necessary
+        unmonitored_thread = threading.Thread(target = self.run_sub_method, args=([scriptName])) 
+        unmonitored_thread.start()
+    
+    def start_sub_method(self, scriptName, thread_number): #finer control and tracking for sub_method_simultaneoulsy
+        thread_number = int(thread_number)
+        while len(self.myCoordinator.myModules.myThreads) < thread_number + 1:
+            self.myCoordinator.myModules.myThreads.append(threading.Thread(target = self.wait, args=(30)))
+        self.myCoordinator.myModules.myThreads[thread_number] = threading.Thread(target = self.run_sub_method, args=([scriptName])) 
+        self.myCoordinator.myModules.myThreads[thread_number].start()
+
+    def wait_sub_method(self, thread_number): 
+        thread_number = int(thread_number)
+        while len(self.myCoordinator.myModules.myThreads) < thread_number + 1:
+            self.myCoordinator.myModules.myThreads.append(threading.Thread(target = self.wait, args=(30)))
+        while self.myCoordinator.myModules.myThreads[thread_number].is_alive():
+            time.sleep(0.5)
+
     def MS_contact_closure(self, Relay = MS_RELAY, Input = MS_INPUT, Port = MS_INPUT_PORT): 
         wait_to_analyze_timer = 0
         analyze_to_wait_timer = 0
@@ -262,6 +281,14 @@ class ProtocolActions:
             self.myCoordinator.myModules.myRelays[int(Relay)].relay_off() # turn off so it can be turned on again in the next loop
             time.sleep(0.5) # wait half second to make sure signal had time to start pump
     
+    def set_relay_side(self, Relay=LC_RELAY, value="Left"):
+        if value == "Left" or value == "LEFT" or value == "left":
+            self.myCoordinator.myModules.myRelays[int(Relay)].relay_off()
+        elif value == "Right"or value == "RIGHT" or value == "right":
+            self.myCoordinator.myModules.myRelays[int(Relay)].relay_on()
+        else:
+            print(f"{value} is not a valid side")
+
     def Wait_Contact_Closure(self, Logic, Input = MS_INPUT, Port = MS_INPUT_PORT):
         Logic = Logic == "True"
         #print(self.myCoordinator.myModules.myPorts[int(Port)].getPinState(Input))
