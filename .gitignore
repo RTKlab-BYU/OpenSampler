@@ -1,3 +1,6 @@
 settings/*
 Calibrations/*
 logs/*
+Classes/__pycache__/*
+Classes/module_files/__pycache__/*
+gui/__pycache__/*
