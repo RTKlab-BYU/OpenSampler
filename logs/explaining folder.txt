@@ -1,0 +1,1 @@
+Logs will be made here for motors and coordinator (command line)

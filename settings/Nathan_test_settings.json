@@ -1,0 +1,144 @@
+{
+    "ports": [
+        {
+            "pattern": "COM5"
+        }
+    ],
+    "motors_configurations": {
+        "Right_OT": {
+            "type": "Opentrons",
+            "motors": {
+                "z": [
+                    "30",
+                    "2",
+                    "135"
+                ],
+                "y": [
+                    "100",
+                    "1",
+                    "200"
+                ],
+                "x": [
+                    "100",
+                    "0",
+                    "350"
+                ]
+            },
+            "syringes": {
+                "s": [
+                    "30",
+                    "3",
+                    "100"
+                ]
+            },
+            "port": "COM4",
+            "side": "Right",
+            "joystick": {
+                "A": "step_z_motor_down",
+                "B": "unassigned",
+                "X": "unassigned",
+                "Y": "step_z_motor_up",
+                "LSTICK": "unassigned",
+                "RSTICK": "unassigned",
+                "RB": "step_size_up",
+                "LB": "step_size_down",
+                "BACK": "home_all",
+                "START": "stop_listening",
+                "HAT_UP": "step_y_motor_forward",
+                "HAT_DOWN": "step_y_motor_back",
+                "HAT_RIGHT": "step_x_motor_right",
+                "HAT_LEFT": "step_x_motor_left",
+                "L_STICK_LEFT": "unassigned",
+                "L_STICK_RIGHT": "unassigned",
+                "L_STICK_DOWN": "unassigned",
+                "L_STICK_UP": "unassigned",
+                "R_STICK_LEFT": "unassigned",
+                "R_STICK_RIGHT": "unassigned",
+                "R_STICK_DOWN": "unassigned",
+                "R_STICK_UP": "unassigned",
+                "R_TRIGGER": "unassigned",
+                "L_TRIGGER": "unassigned"
+            }
+        },
+        "Left_OT": {
+            "type": "Opentrons",
+            "motors": {
+                "z": [
+                    "30",
+                    "2",
+                    "135"
+                ],
+                "y": [
+                    "100",
+                    "1",
+                    "200"
+                ],
+                "x": [
+                    "100",
+                    "0",
+                    "350"
+                ]
+            },
+            "syringes": {
+                "s": [
+                    "30",
+                    "3",
+                    "100"
+                ]
+            },
+            "port": "COM4",
+            "side": "Left",
+            "joystick": {
+                "A": "step_z_motor_down",
+                "B": "unassigned",
+                "X": "unassigned",
+                "Y": "step_z_motor_up",
+                "LSTICK": "unassigned",
+                "RSTICK": "unassigned",
+                "RB": "step_size_up",
+                "LB": "step_size_down",
+                "BACK": "home_all",
+                "START": "stop_listening",
+                "HAT_UP": "step_y_motor_forward",
+                "HAT_DOWN": "step_y_motor_back",
+                "HAT_RIGHT": "step_x_motor_right",
+                "HAT_LEFT": "step_x_motor_left",
+                "L_STICK_LEFT": "unassigned",
+                "L_STICK_RIGHT": "unassigned",
+                "L_STICK_DOWN": "unassigned",
+                "L_STICK_UP": "unassigned",
+                "R_STICK_LEFT": "unassigned",
+                "R_STICK_RIGHT": "unassigned",
+                "R_STICK_DOWN": "unassigned",
+                "R_STICK_UP": "unassigned",
+                "R_TRIGGER": "unassigned",
+                "L_TRIGGER": "unassigned"
+            }
+        }
+    },
+    "2_position_actuators": [
+        {
+            "port": 0,
+            "Position A Out": "G26",
+            "Position B Out": "G19",
+            "Position A In": "G34",
+            "Position B In": "G18",
+            "pin": "G5"
+        }
+    ],
+    "selector_actuators": [],
+    "relays": [
+        {
+            "port": 0,
+            "pin": "G4"
+        }
+    ],
+    "switches": [],
+    "temp_decks": {},
+    "feedbacks": [
+        {
+            "port": 0,
+            "pin": "G33"
+        }
+    ]
+}
