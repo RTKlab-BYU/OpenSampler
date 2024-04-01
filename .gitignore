@@ -1,2 +1,3 @@
-settings/.*
-Calibrations/.*
+settings/*
+Calibrations/*
+logs/*
