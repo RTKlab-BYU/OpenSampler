@@ -3,6 +3,7 @@ from Classes.stopIndicator import StopIndicator
 import time
 import logging
 import json
+import pandas as pd
 
 
 '''
@@ -25,6 +26,8 @@ class MethodReader:  #should call read from coordinator file
         self.queueCompletionDate = 0 # holds date for when the queue will be finished
         self.running = False
         self.queue_changed = True
+        self.current_method = None
+        self.scheduled_queue = None
         
         # *note: gradient^-1 indicates the gradient time from the previous sample. SPE^-2 would be the SPE time from two samples ago
 
@@ -76,8 +79,6 @@ class MethodReader:  #should call read from coordinator file
                         return False
             return True
                     
-
-
     def verify_methods(self, compiled_queue): # checks all the json files in CSV to make sure they all exist
         print("Verifying Method files...")
 
@@ -151,16 +152,6 @@ class MethodReader:  #should call read from coordinator file
 
         self.methodIndex = 0 # resets the self.methodIndex
 
-    def hard_stop(self): # stops queue entirely, stops loading and the rest of the LC and MS calls
-        self.myStopIndicator.turn_on_hardStop()
-
-    # NOT IMPLEMENTED AT THE MOMENT. need to add queue queueing first
-    def pause_queue(self): # this pauses the queue so you can add methods to the queue (stops you from runnning the finishup routine and starting over. saves maybe 3 hours)
-        self.myStopIndicator.pause()
-    
-    def resume_queue(self):
-        self.myStopIndicator.resume()
-
     def verify(self, scheduled_methods):  # check excel file to make sure its format is valid, sets first gradient, estimate end time
         #method ([str]): [the name of the method used to prepare the sample at the well location. e.g., "qc.json"]
         
@@ -181,13 +172,15 @@ class MethodReader:  #should call read from coordinator file
             
             return True #allows code to continue
 
-    def load_sample(self, path_to_method):  # reads and calls commands from method to load next sample
+    def load_sample(self):  # reads and calls commands from method to load next sample
         """
             Args:
                 well ([str]): [holds the location of the sample we want to load. e.g., 'P1c4']
                 methodName ([str]): [the name of the method used to prepare the sample at the well location. e.g., "qc.json"]
         """
-        logging.info(f"Loading sample {self.methodIndex} with {path_to_method}: Started") # print message stating that a method has begun
+
+        path_to_method = self.mySample["Method"]
+        
         
         # read file
         with open(path_to_method, 'r') as myfile:
@@ -197,6 +190,7 @@ class MethodReader:  #should call read from coordinator file
         #loop for all commands in json method
         for command in obj['commands']:
             if self.myStopIndicator.hardStop == True: # check to see if we should stop loading
+                self.myStopIndicator.pause()
                 break # if hardStop then we break to loop and stop loading
 
             
@@ -206,9 +200,10 @@ class MethodReader:  #should call read from coordinator file
             #calls correct function in coordinator & unpacks the parameters list with (*params): logs each parameter
             getattr(self.myCoordinator.actionOptions, command['type'])(*params)
 
-        logging.info("Loading Sample '%s': Complete!") # print that the sample is done being loaded      
+        logging.info("Loading Sample '%s': Complete!") # print that the sample is done being loaded
+     
 
-    def run(self, scheduled_methods): #main function: handles looping and threads
+    def run_scheduled_methods(self): #main function: handles looping and threads
         """
             
         """
@@ -218,37 +213,49 @@ class MethodReader:  #should call read from coordinator file
         self.myStopIndicator.reset() # reset the stop indicators back to false for every queue
         
         #loop for all wells. this may also include wellplate_wells for QC loading
-        total_number = scheduled_methods.shape[0]
-        for index, row in scheduled_methods.iterrows():
-            self.queue_changed = True
-            self.running = True
+        self.running = True
+        sample_count = 0
+        while self.running:
+        
+            # self.queue_changed = True
+            
         
             while self.myStopIndicator.paused:
-                pass
-            print("\n")
+                if self.running == False:
+                    # Add any end of run commands if not elsewhere
+                    self.mySample = None
+                    return
+                else:
+                    continue
 
-
-            self.mySample = row # set the location of 'mySample' to well for each loops
-
-
-
-            #make gradient threads
             
-            # load next sample while thread is running--------------------------------------------------
-            self.load_sample(row["Method"]) # load next sample with appropirate method
 
-            # make sure loading next sample is faster than gradient thread--------------------------------------------------
+            self.scheduled_queue: pd.DataFrame
+            if self.scheduled_queue.shape[0] > 0:
+                self.mySample = self.scheduled_queue.iloc[0] # set the location of 'mySample' to the first row of the scheduled queue
+                self.scheduled_queue = self.scheduled_queue.drop(self.scheduled_queue.index[0])
+                
 
-            print(f"Sample {str(index+1)} of {str(total_number)} complete!")#: {str(self.percentComplete)}%") # print percent complete
-            self.methodIndex += 1 # next well may have a different method than the one we just did
+                sample_count += 1
+
+                logging.info(f'Running sample {sample_count} with {self.mySample["Method"]}') # print message stating that a method has begun
+                print(f"\nRunning Sample {sample_count}. \nSamples remaining in scheduled queue: {int(self.scheduled_queue.shape[0])}")
+                self.load_sample() # run current self.mySample
+                print(f"\nRun for sample {sample_count} completed.")
+                self.mySample = None
+
+            else:
+                # End of run commands
+                self.mySample = None
+                self.running = False
+
             
-            print("----------------------------------------------------------") #white space for output readibility
+            print("\n----------------------------------------------------------\n") #white space for output readibility
             
             if self.myStopIndicator.stopLoad or self.myStopIndicator.hardStop:
                 print("No more samples will be loaded. Either stopLoad or hardStop was called")
                 break # stop loading more samples if either is set to true
             
-        self.methodIndex = 0 #reset the method index for the next queue
         
 
         # self.get_method_times(self.methodList[self.methodIndex])
