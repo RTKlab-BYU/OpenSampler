@@ -14,7 +14,7 @@ class StopIndicator:
         self.stopLoad = False
         self.paused = False
 
-    def turn_on_hardStop(self):
+    def stop(self):
         self.hardStop = True
         self.paused = False
 
@@ -25,8 +25,9 @@ class StopIndicator:
         self.paused = False
     
     def reset(self):
-        self.turn_off_stopLoad()
-        self.turn_off_hardStop()
+        self.stop()
+        self.hardStop = False
+        self.paused = False
 
 
 
