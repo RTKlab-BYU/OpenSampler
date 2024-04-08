@@ -202,7 +202,7 @@ class Queue_Gui(tk.Toplevel,):
             return
         
         try: 
-            empty_queue = self.coordinator.myReader.scheduled_queue.empty()
+            empty_queue = self.coordinator.myReader.scheduled_queue.empty
         except:
             empty_queue = (self.coordinator.myReader.scheduled_queue == None)
         if empty_queue:
@@ -238,7 +238,7 @@ class Queue_Gui(tk.Toplevel,):
         self.PauseButton["state"] =  "disabled"
         self.ResumeButton["state"] = "disabled"
       
-        self.coordinator.myReader.hard_stop()
+        self.coordinator.myReader.myStopIndicator.stop()
 
     # move to active queue
     def PauseQueue(self):
@@ -246,7 +246,7 @@ class Queue_Gui(tk.Toplevel,):
         self.PauseButton["state"] =  "disabled"
         self.grab_release()
         
-        self.coordinator.myReader.pause_queue()           
+        self.coordinator.myReader.myStopIndicator.pause()           
 
     # move to active queue
     def ResumeQueue(self):
@@ -254,7 +254,7 @@ class Queue_Gui(tk.Toplevel,):
         self.ResumeButton["state"] =  "disabled"
       
 
-        self.coordinator.myReader.resume_queue()
+        self.coordinator.myReader.myStopIndicator.resume()
 
     # rework 
     def clear_queue(self):
@@ -537,17 +537,28 @@ class Queue_Handler:
 
     def update_active_queue_display(self):
         pass
-
-
-
-
     # functions for active queue handling
+    
+    def watch_status(self):
+
+        time.sleep(5)
+        
+        while self.coordinator.myReader.running:
+            time.sleep(1)
+            if self.coordinator.myReader.queue_changed:
+                self.update_active_queue_display()
+                self.coordinator.myReader.queue_changed = False
+            if not self.coordinator.myReader.running:
+                self.active_queue = None
+
+
+    
 
     def stop_immediately(self):
         '''
         Pauses queue and interupts current run.
         '''
-        self.coordinator.myReader.myStopIndicator.turn_on_hardStop()
+        self.coordinator.myReader.myStopIndicator.stop()
         print("stop immediately")
 
     def pause_resume_active_queue(self):
@@ -663,17 +674,7 @@ class Active_Queue(tk.Frame,):
         self.current_headers = None
         self.current_specs = None
 
-    def watch_status(self):
-
-        time.sleep(5)
-        
-        while self.coordinator.myReader.running:
-            time.sleep(1)
-            if self.coordinator.myReader.queue_changed:
-                self.handler.update_active_queue_display()
-                self.coordinator.myReader.queue_changed = False
-            if not self.coordinator.myReader.running:
-                self.handler.active_queue = None
+    
         
     def update_active_queue_type(self, queue_type):
 
