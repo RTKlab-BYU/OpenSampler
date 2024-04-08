@@ -17,6 +17,9 @@ ACTION_TYPES = {
 "move_to_custom_location": ["Stage Name", "Location Name"],
 "move_to_well": ["Stage Name", "Wellplate", "Well"],
 "run_sub_method": ["Method to Run (file path)"],
+"run_sub_method_simultaneously": ["Method to Run (include folder)"],
+"start_sub_method": ["Method to Run (include folder)","Thread Index (starts with 0)"],
+"wait_sub_method": ["Thread Index (starts with 0)"],
 "aspirate_in_place": ["Stage Name", "Amount (nL)", "Speed (nL/min)"],
 "dispense_in_place": ["Stage Name", "Amount (nL)", "Speed (nL/min)"],
 "wait": ["Time (s)"],
@@ -26,6 +29,7 @@ ACTION_TYPES = {
 "LC_contact_closure": ["Relay (Starts at zero)"],
 "MS_contact_closure": ["Relay", "Input", "Serial Port (Starts at zero)"],
 "Wait_Contact_Closure": ["State of Pin", "Input", "Serial Port (Starts at zero"],
+"set_relay_side": ["Relay (Starts at zero)","Left or Right"],
 "set_tempdeck": ["TempDeck Name", "Set Temperature"],
 }
 
@@ -45,6 +49,9 @@ ACTION_DEFAULTS = {
 "move_to_custom_location": [default_stage, ""],
 "move_to_well": [default_stage, "0", ""],
 "run_sub_method": [""],
+"run_sub_method_simultaneously": ["methods/"],
+"start_sub_method": ["methods/","0"],
+"wait_sub_method": ["0"],
 "aspirate_in_place": [default_stage,"","3000"],
 "dispense_in_place": [default_stage,"","3000"],
 "wait": [""],
@@ -54,6 +61,7 @@ ACTION_DEFAULTS = {
 "LC_contact_closure": ["0"],
 "MS_contact_closure": ["1", "D14", "0"],
 "Wait_Contact_Closure": ["True","D14","0"],
+"set_relay_side": ["0","Left"],
 "set_tempdeck": ["", ""],
 }
 
@@ -64,7 +72,7 @@ class Protocol_Parameter_Instance(tk.Frame,):
         
         self.value_name = value_name
         this_type = frame.protocol[row]["type"]
-        print(index)
+        # print(index)
         tk.Label(frame.command_grid, text=ACTION_TYPES[this_type][index]).grid(row=row, column=column + 6)
         self.this_valuebox = tk.Entry(frame.command_grid)
         self.this_valuebox.insert(tk.END,string=value)
