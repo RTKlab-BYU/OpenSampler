@@ -35,6 +35,7 @@ class Modules:
         self.mySwitches = []
         self.mySelectors = []
         self.myFeedbacks = []
+        self.myThreads = []
         self.myTempDecks = {}
         self.status = "disconnected"
         pass
