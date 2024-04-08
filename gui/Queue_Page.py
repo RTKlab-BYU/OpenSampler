@@ -15,7 +15,6 @@ class Queue_Gui(tk.Toplevel,):
         self.state("zoomed")
         self.coordinator = coordinator
         self.page_type = tk.StringVar()
-        self.scheduled_queue = []
         self.sample_prep_to_schedule = []
 
 
@@ -72,7 +71,7 @@ class Queue_Gui(tk.Toplevel,):
         # run bar for ms and frac queues.
         self.run_bar = tk.Frame(self.upper_frame)
         self.run_bar.pack()
-        self.RunButton = tk.Button(self.run_bar, text="Run Queue",command=lambda: self.RunQueue_Thread(),justify=tk.LEFT)
+        self.RunButton = tk.Button(self.run_bar, text="Run Queue",command=lambda: self.schedule_que(),justify=tk.LEFT)
         self.StopButton = tk.Button(self.run_bar, text="STOP NOW",command=lambda: self.StopQueue(),justify=tk.LEFT)
         self.PauseButton = tk.Button(self.run_bar, text="Pause Queue",command=lambda: self.PauseQueue(),justify=tk.LEFT)
         self.ResumeButton = tk.Button(self.run_bar, text="Resume Queue",command=lambda: self.ResumeQueue(),justify=tk.LEFT)
@@ -88,7 +87,7 @@ class Queue_Gui(tk.Toplevel,):
         self.ResumeButton["state"] =  "disabled"
 
         # active que setup
-        self.active_queue = Active_Queue(self.master_frame)
+        self.active_queue = Active_Queue(self.master_frame, self.handler)
 
         # 
         self.page_type.set("Sample Prep")
@@ -142,13 +141,13 @@ class Queue_Gui(tk.Toplevel,):
             self.queue_frame.pack_forget()
             self.active_queue.pack()
 
-
     # Run Method Functions
         
     def compile_queue(self):
         '''
         This function is used to pull the parameters out of the entry values and package them as pandas dataframe object.
         '''
+
         queue = self.page_type.get()
         self.handler.active_queue = queue
         
@@ -170,7 +169,7 @@ class Queue_Gui(tk.Toplevel,):
         
         elif queue == "Fractionation":
             # package Frac queue
-            self.frac_queue_to_schedule = pd.DataFrame({"Stage": [], "Wellplate": [], "Well": [], "Method": [], "Target Well": []})
+            self.frac_queue_to_schedule = pd.DataFrame({"Stage": [], "Wellplate": [], "Sample Wells": [], "Elution Wells": [], "Method": []})
             for row, entry in enumerate(self.handler.frac_queue, 1):
                 frac_inputs: Frac_Queue_Row_Inputs = self.handler.frac_queue[row]
                 temp_list = [frac_inputs.stage.get(), frac_inputs.plate.get(), frac_inputs.pool_wells.get(), frac_inputs.method.get(), frac_inputs.target_well.get()]
@@ -178,7 +177,7 @@ class Queue_Gui(tk.Toplevel,):
             return self.frac_queue_to_schedule
             
         
-    def RunQueue_Thread(self):
+    def schedule_que(self):
         '''
         Compile the current queue into a pandas dataframe.
         Verify the methods.
@@ -186,45 +185,48 @@ class Queue_Gui(tk.Toplevel,):
         If not currently running, begin running.
         '''
         # set button states        
-        self.StopButton["state"] =  "normal"
-        self.PauseButton["state"] =  "normal"
+        self.StopButton["state"] = "normal"
+        self.PauseButton["state"] = "normal"
 
         # start thread to run queue
-        compiled_queue = self.compile_queue()
+        new_queue_type = self.page_type.get()
+
+        if new_queue_type == self.handler.active_queue:
+            compiled_queue = self.compile_queue()
+        else:
+            print("\n\nYou Shall Not Queue!!!\n(Wait until current active que is finished to schedule new queue type)\n\n")
+            return
+
+        if not self.coordinator.myReader.verify(compiled_queue):
+            print("\n\nInsufficient Vespian Gas\n(method verification failed...)\n\n")
+            return
         
-        if self.coordinator.myReader.verify(compiled_queue):
-            self.scheduled_queue.append(compiled_queue)
-            if self.coordinator.myReader.running:
-                pass
-            else:
-                queueThread = threading.Thread(target = self.Run_Scheduled_Methods, args=[]) #finishes the run
-                queueThread.start()
+        try: 
+            empty_queue = self.coordinator.myReader.scheduled_queue.empty()
+        except:
+            empty_queue = (self.coordinator.myReader.scheduled_queue == None)
+        if empty_queue:
+            self.coordinator.myReader.scheduled_queue = compiled_queue
+        else:
+            self.coordinator.myReader.scheduled_queue.append(compiled_queue)
+            
+            
+
+        if self.coordinator.myReader.running:
+            pass
+        else:
+            # start queue in method_reader
+            queueThread = threading.Thread(target = self.coordinator.myReader.run_scheduled_methods, args=[]) #finishes the run
+            queueThread.start()
+            # start thread to watch status
+            watchThread = threading.Thread(target = self.handler.watch_status, args=[]) #finishes the run
+            watchThread.start()
 
 
-    def Run_Scheduled_Methods(self):        
-        
-        # start thread to watch status
-        watchThread = threading.Thread(target = self.watch_status, args=[]) #finishes the run
-        watchThread.start()
+    def reset_active_queue(self):
+        # add stuff for queue GUI to do when queue finishes
+        self.handler.active_queue = "None"
 
-        while len(self.scheduled_queue) > 0:
-            current = self.scheduled_queue.pop(0)
-            self.coordinator.myReader.run(current)
-
-        
-        self.coordinator.myReader.running = False           
-
-
-    def watch_status(self):
-
-        time.sleep(5)
-        
-        while self.coordinator.myReader.running:
-            time.sleep(1)
-            if self.coordinator.myReader.queue_changed:
-                self.coordinator.myReader.queue_changed = False
-
-        self.RunButton["state"] = "normal"
         self.StopButton["state"] =  "disabled"
         self.PauseButton["state"] =  "disabled"
         self.ResumeButton["state"] = "disabled"
@@ -344,16 +346,26 @@ class Queue_Handler:
         self.add_row.pack(side=tk.LEFT)
 
         # MS queue headers
-        tk.Label(self.ms_queue_header,text="Motor Series", bd=2, relief="solid").pack(side='left')
-        tk.Label(self.ms_queue_header,text="Wellplate Index", bd=2, relief="solid").pack(side='left')
-        tk.Label(self.ms_queue_header,text="Sample Well", bd=2, relief="solid").pack(side='left')
-        tk.Label(self.ms_queue_header,text="Method Path", bd=2, relief="solid").pack(expand=True, fill="x", side='left')
+        self.ms_stage_label = tk.StringVar(self.ms_queue_header, value="Stage")
+        self.ms_wellplate_label = tk.StringVar(self.ms_queue_header, value="Wellplate")
+        self.ms_sample_label = tk.StringVar(self.ms_queue_header, value="Sample Well")
+        self.ms_method_label = tk.StringVar(self.ms_queue_header, value="Method Path")
+        tk.Entry(self.ms_queue_header, textvariable=self.ms_stage_label).pack(side='left')
+        tk.Entry(self.ms_queue_header, textvariable=self.ms_wellplate_label).pack(side='left')
+        tk.Entry(self.ms_queue_header, textvariable=self.ms_sample_label).pack(side='left')
+        tk.Entry(self.ms_queue_header, textvariable=self.ms_method_label).pack(expand=True, fill="x", side='left')
 
         # fractionation queue headers
-        tk.Label(self.frac_queue_header,text="Motor Series").pack(side='left')
-        tk.Label(self.frac_queue_header,text="Wellplate Index").pack(side='left')
-        tk.Label(self.frac_queue_header,text="Sample Well").pack(side='left')
-        tk.Label(self.frac_queue_header,text="Method Path").pack(expand=True, fill="x", side='left')
+        self.frac_stage_label = tk.StringVar(self.frac_queue_header, value="Stage")
+        self.frac_wellplate_label = tk.StringVar(self.frac_queue_header, value="Wellplate")
+        self.frac_sample_label = tk.StringVar(self.frac_queue_header, value="Sample Wells")
+        self.frac_elute_label = tk.StringVar(self.frac_queue_header, value="Elution Wells")
+        self.frac_method_label = tk.StringVar(self.frac_queue_header, value="Method Path")
+        tk.Entry(self.frac_queue_header, textvariable=self.frac_stage_label).pack(side='left')
+        tk.Entry(self.frac_queue_header, textvariable=self.frac_wellplate_label).pack(side='left')
+        tk.Entry(self.frac_queue_header, textvariable=self.frac_sample_label).pack(side='left')
+        tk.Entry(self.frac_queue_header, textvariable=self.frac_elute_label).pack(side='left')
+        tk.Entry(self.frac_queue_header, textvariable=self.frac_method_label).pack(expand=True, fill="x", side='left')
 
         # Add an initial row to queues
         new_buttons = Queue_Row_Buttons(self.row_buttons_frame, self.coordinator, 1, self)
@@ -363,7 +375,7 @@ class Queue_Handler:
         self.frac_queue.insert(1, Frac_Queue_Row_Inputs(self.frac_queue_frame, self.coordinator))
 
 
-
+    # Queue maker display functions
 
     def clear_grid(self):
         '''
@@ -452,7 +464,8 @@ class Queue_Handler:
             self.update_grid()
 
 
-    # Queue Handler Buttons
+
+    # Queue Maker Button functions
 
     def  insert_row(self, buttons_index=None):
         '''
@@ -519,6 +532,51 @@ class Queue_Handler:
         remove_item.destroy() # go last to ensure all other tasks completed
 
 
+    
+    # functinos for active que display
+
+    def update_active_queue_display(self):
+        pass
+
+
+
+
+    # functions for active queue handling
+
+    def stop_immediately(self):
+        '''
+        Pauses queue and interupts current run.
+        '''
+        self.coordinator.myReader.myStopIndicator.turn_on_hardStop()
+        print("stop immediately")
+
+    def pause_resume_active_queue(self):
+        '''
+        Pauses queue after finishing current run. 
+
+        '''
+        if self.coordinator.myReader.paused:
+            self.coordinator.myReader.myStopIndicator.resume()
+        elif not self.coordinator.myReader.paused:
+            self.coordinator.myReader.myStopIndicator.pause()
+        print("pause")
+
+    def clear_selected_runs(self):
+        '''
+        Removes selected runs from scheduled queue (selected using row oriented checkboxes). 
+        Does not affect current run. 
+        '''
+        print("clear selected")
+
+    def clear_all_runs(self):
+        '''
+        remove all runs from scheduled queue. Does not affect current run.
+        '''
+        self.coordinator.myReader.scheduled_queue = None
+        self.coordinator.myReader.myStopIndicator.resume()
+        print("clear all")
+
+
 class Sample_Prep_Frame(tk.Frame,):
     '''
     This class allows the user to select and schedule a sample preparation method
@@ -536,22 +594,67 @@ class Active_Queue(tk.Frame,):
     This class contains and displays the inputs needed for each protocol in the queue.
     It assigns a row index to each instance in order to inform the affect those buttons have on the corresponding rows of inputs
     '''
-    def __init__(self, master_frame):
+    def __init__(self, master_frame, handler):
         super().__init__(master_frame)
         self.run_type = tk.StringVar(value="Nothing in the Active Queue")
+        self.handler: Queue_Handler = handler
 
+        # main frames of active queue page
         self.type_frame = tk.Frame(self)
         self.current_run_frame = tk.Frame(self)
         self.scheduled_runs_frame = tk.Frame(self)
 
+        self.type_frame.pack(side="top")
+        self.current_run_frame.pack(side="top")
+        self.scheduled_runs_frame.pack(side="top")
+
         # inside type frame
-        self.type_label = tk.Label(self, textvariable=self.run_type)
-        self.type_label.pack()
+        self.type_label = tk.Label(self.type_frame, textvariable=self.run_type)
+        self.type_label.pack(side="left", fill="x")
 
         # inside current run frame
-        self.stop_button = tk.Button(self.current_run_frame, command=self.stop_immediately)
+        self.stop_button = tk.Button(self.current_run_frame, text="Stop Run!",command=self.handler.stop_immediately)
         self.current_run_label = tk.Label(self.current_run_frame, text="Currently Running")
         self.current_run_inner = tk.Frame(self.current_run_frame)
+
+        self.stop_button.pack(side="left")
+        self.current_run_label.pack(side="top", anchor="nw")
+        self.current_run_inner.pack(side="top")
+
+        # inside scheduled runs frame
+        self.scheduled_runs_buttons = tk.Frame(self.scheduled_runs_frame)
+        self.scheduled_runs_label = tk.Label(self.scheduled_runs_frame, text="Scheduled")
+        self.scheduled_runs_inner = tk.Frame(self.scheduled_runs_frame)
+
+        self.scheduled_runs_buttons.pack(side="left")
+        
+
+        # scheduled runs buttons
+        self.pause_button = tk.Button(self.scheduled_runs_buttons, text="Pause", command=self.handler.pause_resume_active_queue)
+        self.clear_selected_button = tk.Button(self.scheduled_runs_buttons, text="Clear Selected", command=self.handler.clear_selected_runs)
+        self.clear_all_button = tk.Button(self.scheduled_runs_buttons, text="Clear All", command=self.handler.clear_all_runs)
+        self.pause_button.pack()
+        self.clear_selected_button.pack()
+        self.clear_all_button.pack()
+
+        
+
+        # ms headers 
+        self.ms_current_headers = tk.Frame(self.current_run_inner)
+        self.ms_scheduled_headers = tk.Frame(self.current_run_inner)
+
+        # MS Headers
+        tk.Entry(self.ms_current_headers, textvariable=self.handler.ms_stage_label).pack(side='left')
+        tk.Entry(self.ms_current_headers, textvariable=self.handler.ms_wellplate_label).pack(side='left')
+        tk.Entry(self.ms_current_headers, textvariable=self.handler.ms_sample_label).pack(side='left')
+        tk.Entry(self.ms_current_headers, textvariable=self.handler.ms_method_label).pack(expand=True, fill="x", side='left')
+
+        tk.Entry(self.ms_scheduled_headers, textvariable=self.handler.ms_stage_label).pack(side='left')
+        tk.Entry(self.ms_scheduled_headers, textvariable=self.handler.ms_wellplate_label).pack(side='left')
+        tk.Entry(self.ms_scheduled_headers, textvariable=self.handler.ms_sample_label).pack(side='left')
+        tk.Entry(self.ms_scheduled_headers, textvariable=self.handler.ms_method_label).pack(expand=True, fill="x", side='left')
+
+
 
         
 
@@ -560,7 +663,17 @@ class Active_Queue(tk.Frame,):
         self.current_headers = None
         self.current_specs = None
 
+    def watch_status(self):
+
+        time.sleep(5)
         
+        while self.coordinator.myReader.running:
+            time.sleep(1)
+            if self.coordinator.myReader.queue_changed:
+                self.handler.update_active_queue_display()
+                self.coordinator.myReader.queue_changed = False
+            if not self.coordinator.myReader.running:
+                self.handler.active_queue = None
         
     def update_active_queue_type(self, queue_type):
 
@@ -584,11 +697,7 @@ class Active_Queue(tk.Frame,):
             # forget all displays
             
 
-    def stop_immediately(self):
-        '''
-        Pauses queue and interupts current run.
-        '''
-        pass
+    
 
 
 
@@ -606,16 +715,6 @@ class MS_Queue_Row_Inputs(tk.Frame,):
         self.plate = tk.StringVar()
         self.well = tk.StringVar()
         self.method = tk.StringVar()
-
-        # self.stage_box_frame = tk.Frame(self)
-        # self.plate_box_frame = tk.Frame(self)
-        # self.well_box_frame = tk.Frame(self)
-        # self.method_box_frame = tk.Frame(self)
-
-        # self.stage_box = tk.Entry(self.stage_box_frame, textvariable=self.stage)
-        # self.plate_box = tk.Entry(self.plate_box_frame, textvariable=self.plate)
-        # self.well_box = tk.Entry(self.well_box_frame, textvariable=self.well)
-        # self.method_box = tk.Entry(self.method_box_frame, textvariable=self.method)
 
         self.stage_box = tk.Entry(self, textvariable=self.stage)
         self.plate_box = tk.Entry(self, textvariable=self.plate)
@@ -654,20 +753,20 @@ class Frac_Queue_Row_Inputs(tk.Frame,):
         
         self.stage = tk.StringVar()
         self.plate = tk.StringVar()
-        self.pool_wells = tk.StringVar()
-        self.target_wells = tk.StringVar()
+        self.sample_wells = tk.StringVar()
+        self.elution_wells = tk.StringVar()
         self.method = tk.StringVar()
         
         self.stage_box = tk.Entry(self, textvariable=self.stage)
         self.plate_box = tk.Entry(self, textvariable=self.plate)
-        self.pool_wells_box = tk.Entry(self, textvariable=self.pool_wells)
-        self.target_wells_box = tk.Entry(self, textvariable=self.target_wells)
+        self.sample_wells_box = tk.Entry(self, textvariable=self.sample_wells)
+        self.elution_wells_box = tk.Entry(self, textvariable=self.elution_wells)
         self.method_box = tk.Entry(self, textvariable=self.method)
 
         self.stage_box.pack(side="left")
         self.plate_box.pack(side="left")
-        self.pool_wells_box.pack(side="left")
-        self.target_wells_box.pack(side="left")
+        self.sample_wells_box.pack(side="left")
+        self.elution_wells_box.pack(side="left")
         self.method_box.pack(expand=True, fill="x", side="left")
         
 
