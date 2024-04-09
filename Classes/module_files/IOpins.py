@@ -79,9 +79,9 @@ class SerialPort:
         for each_pin in self.outputs:
             if each_pin == this_pin:
                 self.ser.write(str("turn_on "+this_pin).encode())
-                print(self.port)
-                print(self.ser)
-                print(this_pin)
+                # print(self.port)
+                # print(self.ser)
+                # print(this_pin)
                 return "Success"
 
             else:
@@ -93,9 +93,9 @@ class SerialPort:
         for each_pin in self.outputs:
             if each_pin == this_pin:
                 self.ser.write(str("turn_off "+this_pin).encode())
-                print(self.port)
-                print(self.ser)
-                print(this_pin)
+                # print(self.port)
+                # print(self.ser)
+                # print(this_pin)
                 return "Success"
             else:
                 pass

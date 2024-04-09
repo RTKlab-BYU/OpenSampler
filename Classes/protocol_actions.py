@@ -152,11 +152,11 @@ class ProtocolActions:
     
     def aspirate_in_place(self, stage, volume, speed): 
         self.myCoordinator.myLogger.info(f"Aspirating {float(volume)} nL at speed {float(speed)} nL/min")
-        self.myCoordinator.myModules.myStages[stage].step_syringe_motor_up(volume, speed)
+        self.myCoordinator.myModules.myStages[stage].step_syringe_motor_up(step_size = volume, speed=speed)
     
     def dispense_in_place(self, stage, volume, speed): 
         self.myCoordinator.myLogger.info(f"Aspirating {float(volume)} nL at speed {float(speed)} nL/min")
-        self.myCoordinator.myModules.myStages[stage].step_syringe_motor_down(volume, speed)
+        self.myCoordinator.myModules.myStages[stage].step_syringe_motor_down(step_size = volume, speed=speed)
 
     def syringe_to_max(self, stage, nL_min_speed):
         speed = float(nL_min_speed) # pre min to per sec
