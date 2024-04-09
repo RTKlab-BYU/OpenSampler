@@ -18,13 +18,14 @@ class SerialPort:
         self.inputs = []
         self.outputs = []    
 
-        if self.find_port(portNamePattern) is None:
+        self.port = self.find_port(portNamePattern)
+        if  self.port is None:
             self.ser = None
             print("No GPIO board")
         else:
-            self.ser = Serial(port=self.find_port(portNamePattern), baudrate=115200,
+            self.ser = Serial(port=self.port, baudrate=115200,
                                     bytesize=8, timeout=1, stopbits=STOPBITS_ONE)
-            # print(self.ser)
+            print(self.ser)
 
     def find_port(self, name):
         """Find the serial port with specific name
@@ -56,7 +57,7 @@ class SerialPort:
 
                 self.ser.write(str("input "+this_pin).encode())
                 #print("read output")
-                time.sleep(0.1)
+                time.sleep(0.2)
                 readout = self.ser.readline().decode('ascii',errors="replace")
                 readout = readout.lstrip("pin"+this_pin+" ").rstrip("\r\n").rstrip("\n")
                 if "on" in readout:  
@@ -69,13 +70,18 @@ class SerialPort:
 
     def addOutputPin (self, this_pin):
         self.ser.write(str("config_output "+this_pin).encode())
+        time.sleep(2)
         self.ser.write(str("turn_on "+this_pin).encode())
+        time.sleep(1)
         self.outputs.append(this_pin)
 
     def activatePin (self, this_pin):
         for each_pin in self.outputs:
             if each_pin == this_pin:
                 self.ser.write(str("turn_on "+this_pin).encode())
+                print(self.port)
+                print(self.ser)
+                print(this_pin)
                 return "Success"
 
             else:
@@ -87,6 +93,9 @@ class SerialPort:
         for each_pin in self.outputs:
             if each_pin == this_pin:
                 self.ser.write(str("turn_off "+this_pin).encode())
+                print(self.port)
+                print(self.ser)
+                print(this_pin)
                 return "Success"
             else:
                 pass
@@ -99,19 +108,34 @@ class SerialPort:
                 
                 
 if __name__ == "__main__":
-    myPort = SerialPort()    
+    comPorts = ["COM5","COM6"]   
+    myPorts = []
+    for port in comPorts:
+        myPorts.append(SerialPort(port))
     print("**")
-    myPort.addOutputPin("D17") 
+    myPorts[1].addOutputPin("D19")
+    myPorts[0].addOutputPin("D17") 
+    myPorts[1].addOutputPin("D23")
+    myPorts[1].addInputPin("D27")
     print("^^")
-    print(myPort.activatePin("D17"))
-    time.sleep(1)
-    print(myPort.deactivatePin("D17") )
+    print(myPorts[1].activatePin("D19"))
+    time.sleep(2)
+    print(myPorts[1].deactivatePin("D19") )
     time.sleep(10)  
-    myPort.addOutputPin("D23")    
+    myPorts[0].activatePin("D17")
+    time.sleep(0.2)
+    myPorts[0].deactivatePin("D17")
+    time.sleep(5)
+
     time.sleep(1)
-    myPort.deactivatePin("D23")
-    time.sleep(1)
-    myPort.activatePin("D23")
+    myPorts[1].activatePin("D23")
     time.sleep(20)
-    myPort.t.ser.close()
+    myPorts[1].deactivatePin("D23")
+
+    
+    time.sleep(1)
+    print(myPorts[1].getPinState("D27"))
+    time.sleep(10)
+    for eachPort in myPorts:
+        eachPort.ser.close()
 

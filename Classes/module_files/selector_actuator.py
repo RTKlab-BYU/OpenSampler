@@ -21,6 +21,8 @@ from Classes.module_files.IOpins import SerialPort
 
 import time
 
+SIGNAL_HOLD = 2
+
 class Coordinator(): #test class
     def __init__(self):
         self.myPorts = SerialPort() 
@@ -49,17 +51,22 @@ class SelectorActuator:
     
     def home_actuator(self):
         self.myModules.myPorts[self.port].activatePin(self.home_out_pin) 
-        time.sleep(0.1)
+        time.sleep(SIGNAL_HOLD)
         self.myModules.myPorts[self.port].deactivatePin(self.home_out_pin) 
-        time.sleep(0.1)
+        time.sleep(SIGNAL_HOLD)
+        self.myModules.myPorts[self.port].activatePin(self.home_out_pin) 
+        time.sleep(SIGNAL_HOLD)
+        
         self.current_position = 1
 
     def step_actuator(self):
         #NO TEST FOR ACTUALLY MOVING
         self.myModules.myPorts[self.port].activatePin(self.move_out_pin) 
-        time.sleep(0.1)
+        time.sleep(SIGNAL_HOLD)
         self.myModules.myPorts[self.port].deactivatePin(self.move_out_pin) 
-        time.sleep(0.1)
+        time.sleep(SIGNAL_HOLD)
+        self.myModules.myPorts[self.port].activatePin(self.move_out_pin) 
+        time.sleep(SIGNAL_HOLD)
         self.current_position = self.current_position + 1
         
     

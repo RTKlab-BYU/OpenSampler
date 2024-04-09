@@ -19,7 +19,7 @@
                 "y": [
                     "60",
                     "1",
-                    "100"
+                    "200"
                 ],
                 "x": [
                     "60",
@@ -126,8 +126,8 @@
     "selector_actuators": [
         {
             "port": 1,
-            "Move Out": "D23",
-            "Home Out": "D19",
+            "Move Out": "D19",
+            "Home Out": "D23",
             "Number of Ports": 8
         }
     ],
