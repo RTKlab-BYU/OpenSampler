@@ -415,16 +415,24 @@ class OT2_nanotrons_driver(SM):
         else:
             print(f"Side ({self.side}) not recognized.")   
 
-    def step_syringe_motor_up(self, volume, speed, *args, **kwargs):
+    def step_syringe_motor_up(self, *args, **kwargs):
         '''
         Takes arguments of volume in nL and speed in nL/min
         Converts these into mm and mm/s
         '''
+        if "step_size" in kwargs:
+            vol_size = float(kwargs["step_size"]) / 1000
+            step_size = self.uL_to_mm(vol_size)
+        else:
+            step_size = self.s_step_size
+        if "speed" in kwargs:
+            vol_speed = float(kwargs["speed"]) / 1000 # nL to uL
+            mm_per_s = self.uL_to_mm(vol_speed) / 60 # per min to per s
+        else:
+            mm_per_s = self.s_step_speed
 
         now_pos = self.get_syringe_location()
-        mm = self.uL_to_mm(float(volume)/1000) 
-        move_pos = now_pos + mm
-        mm_per_s = self.uL_to_mm(float(speed)/60000) # nL/min ---> uL/s ---> mm/s 
+        move_pos = now_pos + step_size
         
         if self.side == LEFT:
             if(self.check_for_valid_move(move_pos, 'B')): # if the future position is a valid move 
@@ -435,16 +443,25 @@ class OT2_nanotrons_driver(SM):
         else:
             print("Side not recognized.")
 
-    def step_syringe_motor_down(self, volume, speed, *args, **kwargs):
+    def step_syringe_motor_down(self, *args, **kwargs):
         '''
         Takes arguments of volume in nL and speed in nL/min
         Converts these into mm and mm/s
         '''
 
+        if "step_size" in kwargs:
+            vol_size = float(kwargs["step_size"]) / 1000
+            step_size = self.uL_to_mm(vol_size)
+        else:
+            step_size = self.s_step_size
+        if "speed" in kwargs:
+            vol_speed = float(kwargs["speed"]) / 1000 # nL to uL
+            mm_per_s = self.uL_to_mm(vol_speed) / 60 # per min to per s
+        else:
+            mm_per_s = self.s_step_speed
+
         now_pos = self.get_syringe_location()
-        mm = self.uL_to_mm(float(volume)/1000) 
-        move_pos = now_pos - mm
-        mm_per_s = self.uL_to_mm(float(speed)/60000) # nL/min ---> uL/s ---> mm/s 
+        move_pos = now_pos - step_size
 
         if self.side == LEFT:
             if(self.check_for_valid_move(move_pos, 'B')): # if the future position is a valid move 
