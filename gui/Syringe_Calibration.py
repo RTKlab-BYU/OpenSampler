@@ -50,23 +50,24 @@ class Syringe_Calibration(tk.Toplevel,):
         self.syringe_control = tk.Frame(self)
         self.syringe_control.pack()
 
+        self.volume_var = tk.StringVar(self)  # nL
+        self.volume_var.set("3500")
         self.volume_label = tk.Label(self.syringe_control, text="Volume (nL):")
-        self.volume_label.grid(row=0, column=0)
-        self.target_volume = tk.StringVar(self)  # nL
-        self.target_volume.set("500")
         self.volume = tk.Entry(self.syringe_control, textvariable=self.target_volume)
-        self.volume.grid(row=1, column=0)
 
+        self.speed_var = tk.StringVar(self)  # nL per min
+        self.speed_var.set("3000")
         self.speed_label = tk.Label(self.syringe_control, text="Speed (nL/min)")
-        self.speed_label.grid(row=0, column=1)
-        self.syringe_speed = tk.StringVar(self)  # nL per min
-        self.syringe_speed.set("3000")
         self.speed = tk.Entry(self.syringe_control, textvariable=self.syringe_speed)
+
+        self.volume_label.grid(row=0, column=0)
+        self.speed_label.grid(row=0, column=1)
+        self.volume.grid(row=1, column=0)
         self.speed.grid(row=1, column=1)
 
         self.aspirate_button = tk.Button(self.syringe_control,text="Aspirate",command=lambda: self.Aspirate())
-        self.aspirate_button.grid(row=0,column=2)
         self.dispense_button = tk.Button(self.syringe_control,text="Dispense",command=lambda: self.Dispense())
+        self.aspirate_button.grid(row=0,column=2)
         self.dispense_button.grid(row=1,column=2)
 
         # display the syringe limits
@@ -176,7 +177,7 @@ class Syringe_Calibration(tk.Toplevel,):
         
     def on_closing(self):
         self.kill_joystick()
-        time.sleep(3)
+        # time.sleep(3)
         self.destroy()
         
 
@@ -200,7 +201,7 @@ class Syringe_Calibration(tk.Toplevel,):
                 print(f"Syringe Position After Homing: {current_position}")
                 return
         print("Cannot Home Syringe at this time.")
-        
+
     def Aspirate(self):
         print(f"stage index: {self.selected_stage}")
         print(f"stage side: {self.coordinator.myModules.myStages[self.selected_stage].side}")
