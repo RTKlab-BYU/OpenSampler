@@ -15,7 +15,7 @@ class Calibrator:
         self.well_locations = []
         self.well_nicknames = []
 
-        self.updating_positions = False
+        
         self.tested = False 
         
     # This method receives three calibration (fiducial) points and compiles the 4th
@@ -215,11 +215,7 @@ class Calibration(tk.Toplevel,):
         self.save_button.pack(side=tk.TOP)
         self.save_button["state"] = "disabled"
 
-        # this thread keeps the onscreen positions updated, the thread is killed as part of the on_closing function 
-        self.position_thread = threading.Thread(target=self.update_positions)
-        self.calibrator.updating_positions = True
-        self.position_thread.start()
-
+        # modifies the close button protocol
         self.protocol('WM_DELETE_WINDOW', self.on_closing)    
 
     def set_cal_point(self, cal_point):
@@ -281,14 +277,19 @@ class Calibration(tk.Toplevel,):
 
     # this is run inside a thread to keep the position labels and calibration states updated
     def update_positions(self):
-        while self.calibrator.updating_positions:
+        self.updating_positions = True
+        while self.updating_positions:
             x,y,z = self.coordinator.myModules.myStages[self.selected_stage].get_motor_coordinates()
             self.current_x.set(x)
             self.current_y.set(y)
             self.current_z.set(z)
             time.sleep(1)
-        print("Done Updating Position")
- 
+
+    def stop_updating_positions(self):
+        self.updating_positions = False
+        while self.position_thread.is_alive():
+            pass
+
 
     def update_states(self):
         # if all calibration points have been saved, it uses them to calculate the fourth calibration point, and enables the test_button
@@ -307,18 +308,20 @@ class Calibration(tk.Toplevel,):
             self.save_button["state"] = "disabled"
     
     def start_joystick(self):
+        self.position_thread = threading.Thread(target=self.update_positions)
+        self.position_thread.start()
         self.coordinator.start_joystick(self.selected_stage)
         self.killButton["state"] = "normal"
         self.joyButton["state"] = "disabled"
 
     def kill_joystick(self):
         self.coordinator.stop_joystick()
+        self.stop_updating_positions()
         self.killButton["state"] = "disabled"
         self.joyButton["state"] = "normal"
 
     def on_closing(self):
         self.kill_joystick()
-        self.calibrator.updating_positions = False
-        time.sleep(3)
+        # time.sleep(3)
         self.destroy()
 

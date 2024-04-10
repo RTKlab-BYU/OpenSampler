@@ -73,7 +73,6 @@ class XboxJoystick:
 
         if self.pygame_running == False:
             pygame.init()
-            # pygame.joystick.init()
             self.joystick_1 = pygame.joystick.Joystick(0)
             self.pygame_running = True
             self.initial_buttons = [self.joystick_1.get_button(i) for i in range(self.joystick_1.get_numbuttons())]
@@ -88,7 +87,6 @@ class XboxJoystick:
         
         if self.pygame_running == True:
             pygame.quit()
-            # pygame.joystick.quit()
             self.pygame_running = False
     
     # this function prevents light/unintended axis events from calling axis commands
