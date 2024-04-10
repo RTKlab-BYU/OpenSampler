@@ -35,14 +35,16 @@ class Syringe_Calibration(tk.Toplevel,):
         # these are the buttons that do everything
         self.setterBar = tk.Frame(self)
         self.setterBar.pack(side=tk.TOP)
+
         self.home_button = tk.Button(self.setterBar,text="Home Syringe",command=lambda: self.home_syringe())
-        self.home_button.grid(row=0,column=0)
-        self.minButton = tk.Button(self.setterBar,text="Set Min",command=lambda: self.SetMin())
-        self.minButton.grid(row=0,column=1)
-        self.rest_button = tk.Button(self.setterBar,text="Set Rest",command=lambda: self.SetRest())
-        self.rest_button.grid(row=0,column=2)
         self.max_button = tk.Button(self.setterBar,text="Set Max",command=lambda: self.SetMax())
-        self.max_button.grid(row=0,column=3)
+        self.rest_button = tk.Button(self.setterBar,text="Set Rest",command=lambda: self.SetRest())
+        self.min_button = tk.Button(self.setterBar,text="Set Min",command=lambda: self.SetMin())
+
+        self.home_button.grid(row=0,column=0)
+        self.max_button.grid(row=0,column=1)
+        self.rest_button.grid(row=0,column=2)
+        self.min_button.grid(row=0,column=3)
 
         # specify speed and volume then click buttons for aspirate and dispense
         self.syringe_control = tk.Frame(self)
@@ -184,14 +186,21 @@ class Syringe_Calibration(tk.Toplevel,):
 
 # Action Commands
     def home_syringe(self):
-        try:
-            print("Homing Syringe!")
-            self.coordinator.myModules.myStages[self.selected_stage].home_syringe()
-            current_position = self.coordinator.myModules.myStages[self.selected_stage].get_syringe_location()
-            print(f"Syringe Position After Homing: {current_position}")
-        except:
-            print("Cannot Home Syringe at this time.")
-
+        print("Homing Syringe!")
+        cnt = 0
+        limit = 5
+        while cnt < limit:
+            try:
+                self.myStage.home_syringe()
+            except:
+                cnt += 1
+                print(f"Attempts to Home syringe: {cnt}/{limit}")
+            else:
+                current_position = self.myStage.get_syringe_location()
+                print(f"Syringe Position After Homing: {current_position}")
+                return
+        print("Cannot Home Syringe at this time.")
+        
     def Aspirate(self):
         print(f"stage index: {self.selected_stage}")
         print(f"stage side: {self.coordinator.myModules.myStages[self.selected_stage].side}")
