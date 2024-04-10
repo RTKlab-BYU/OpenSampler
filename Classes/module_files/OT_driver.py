@@ -36,13 +36,13 @@ Y_MAX = 350
 Y_MIN = 5
 Z_MAX = 170
 Z_MIN_NO_SYRINGE = 78
-Z_MIN_WITH_SYRINGE = 35 
+Z_MIN_WITH_SYRINGE = 25 
 A_MAX = 170
 A_MIN_NO_SYRINGE = 78
-A_MIN_WITH_SYRINGE = 35
+A_MIN_WITH_SYRINGE = 25
 
 # These should be moved to syringe model files
-SYRINGE_MAX = 17
+SYRINGE_MAX = 18
 SYRINGE_REST = -80
 SYRINGE_MIN = -170
 
@@ -57,16 +57,15 @@ SHORT_MEDIUM_STEP_LIMIT = 10 # used for determining appropriate motor speeds
 MEDIUM_LONG_STEP_LIMIT = 50 # used for determining appropriate motor speeds
 APPROACH_DISTANCE = 30 # Distance from target where robot slows down if needed
 
-DEFAULT_STEP_SPEED = 10  # default speed for protocols (only used if user forgets to specify speeds) 
-SLOW_SPEED = 10 
-MEDIUM_SPEED = 40
-HIGH_SPEED = 160
+DEFAULT_STEP_SPEED = 10  # default speed for protocols (only used if user forgets to specify speeds)
+SLOW_SPEED = 10  # mm/s?
+MEDIUM_SPEED = 40  # mm/s?
+HIGH_SPEED = 160  # mm/s?
 STEP_CHANGE = 50  # how much to decrease step size for continuous movement
 
-SYRINGE_MM_FACTOR  = 4 #3.8896 4.16
-SYRINGE_SLOW_SPEED = 100 * SYRINGE_MM_FACTOR  # mm/s (The syringe motor distances are off by a factor of SYRINGE_MM_FACTOR) 
-SYRINGE_DEFAULT_VOL = 50 * SYRINGE_MM_FACTOR  # mm (The syringe motor distances are off by a factor of SYRINGE_MM_FACTOR)
-
+SYRINGE_MM_FACTOR = 4  # 3.8896 4.16
+DEFAULT_SYRINGE_STEP = 1 * SYRINGE_MM_FACTOR # mm/s 
+DEFAULT_SYRINGE_SPEED = 1 * SYRINGE_MM_FACTOR # mm/s 
 
 
 DEFAULT_VOL_STEP_SIZE = 400
@@ -415,36 +414,52 @@ class OT2_nanotrons_driver(SM):
         else:
             print(f"Side ({self.side}) not recognized.")   
 
-    def step_syringe_motor_up(self, volume, speed, *args, **kwargs):
+    def step_syringe_motor_up(self, *args, **kwargs):
         '''
         Takes arguments of volume in nL and speed in nL/min
         Converts these into mm and mm/s
         '''
 
+        if "speed" in kwargs:
+            mm_per_s = self.uL_to_mm(float(kwargs["speed"])/60000) # nL/min ---> uL/s ---> mm/s 
+        else:
+            mm_per_s = DEFAULT_SYRINGE_SPEED # mm/s
+
+        if "volume" in kwargs:
+            mm = self.uL_to_mm(float(kwargs["volume"])/1000)  
+        else:
+            mm = DEFAULT_SYRINGE_STEP # mm 
+
         now_pos = self.get_syringe_location()
-        mm = self.uL_to_mm(float(volume)/1000) 
         move_pos = now_pos + mm
-        mm_per_s = self.uL_to_mm(float(speed)/60000) # nL/min ---> uL/s ---> mm/s 
         
         if self.side == LEFT:
             if(self.check_for_valid_move(move_pos, 'B')): # if the future position is a valid move 
-                self.move({'B': move_pos}, speed=self.check_speed(mm_per_s)) # move to the indicated position
+                self.move({'B': move_pos}, speed=mm_per_s) # move to the indicated position
         elif self.side == RIGHT:
             if(self.check_for_valid_move(move_pos, 'C')): # if the future position is a valid move 
-                self.move({'C': move_pos}, speed=self.check_speed(mm_per_s)) # move to the indicated position
+                self.move({'C': move_pos}, speed=mm_per_s) # move to the indicated position
         else:
             print("Side not recognized.")
 
-    def step_syringe_motor_down(self, volume, speed, *args, **kwargs):
+    def step_syringe_motor_down(self, *args, **kwargs):
         '''
         Takes arguments of volume in nL and speed in nL/min
         Converts these into mm and mm/s
         '''
 
+        if "speed" in kwargs:
+            mm_per_s = self.uL_to_mm(float(kwargs["speed"])/60000) # nL/min ---> uL/s ---> mm/s 
+        else:
+            mm_per_s = DEFAULT_SYRINGE_SPEED # mm/s 
+
+        if "volume" in kwargs:
+            mm = self.uL_to_mm(float(kwargs["volume"])/1000)  
+        else:
+            mm = DEFAULT_SYRINGE_STEP # mm
+            
         now_pos = self.get_syringe_location()
-        mm = self.uL_to_mm(float(volume)/1000) 
         move_pos = now_pos - mm
-        mm_per_s = self.uL_to_mm(float(speed)/60000) # nL/min ---> uL/s ---> mm/s 
 
         if self.side == LEFT:
             if(self.check_for_valid_move(move_pos, 'B')): # if the future position is a valid move 

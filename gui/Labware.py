@@ -21,7 +21,6 @@ class Nickname_Row(tk.Frame,):
     def __init__(self, frame, coordinator, stage, nickname_name, row):
         self.row= row
         tk.Label(frame.nicknameBox, text=nickname_name).grid(row=self.row,column=1)
-        print('\n',coordinator.myModules.myStages[stage].myLabware.custom_locations[nickname_name],'\n')
         x, y, z = coordinator.myModules.myStages[stage].myLabware.custom_locations[nickname_name]
         location_string = f"{x}, {y}, {z}"
         tk.Label(frame.nicknameBox, text=location_string).grid(row=self.row,column=2)
