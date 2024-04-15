@@ -262,8 +262,10 @@ class MethodReader:  #should call read from coordinator file
         #finish run: stops whether hard stop or load is done
         if self.myStopIndicator.hardStop:
             print("hardStop Called. All function calls have stopped. Finish up routine Skipped")
+            self.running = False
         else:
             print("stopLoad Called. Finish up routine will be executed and then program will end")
+            self.running = False
 
         print("")
         print("     DONE!!!")
