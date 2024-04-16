@@ -25,7 +25,7 @@ class MethodReader:  #should call read from coordinator file
         self.queueCompletionDate = 0 # holds date for when the queue will be finished
         self.running = False
         self.queue_changed = True
-        self.current_method = None
+        self.current_run = None
         self.scheduled_queue = None
 
         self.stop_run = False
@@ -237,9 +237,11 @@ class MethodReader:  #should call read from coordinator file
             
         
             while self.paused:
-                if self.running == False:
+                if not self.running:
                     # Add any end of run commands if not elsewhere
                     self.mySample = None
+                    print("\n     DONE!!!")
+                    print("\n----------------------------------------------------------\n") #white space for output readibility
                     return
                 else:
                     continue
@@ -265,8 +267,10 @@ class MethodReader:  #should call read from coordinator file
                 self.mySample = None
                 self.running = False
 
+                print("\n     DONE!!!")
+                print("\n----------------------------------------------------------\n") #white space for output readibility
             
-            print("\n----------------------------------------------------------\n") #white space for output readibility
+            
             
             
             
@@ -276,8 +280,7 @@ class MethodReader:  #should call read from coordinator file
         
         
 
-        print("")
-        print("     DONE!!!")
+        
 
             
         

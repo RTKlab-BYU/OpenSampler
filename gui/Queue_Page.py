@@ -82,7 +82,7 @@ class Queue_Gui(tk.Toplevel,):
         self.run_bar = tk.Frame(self.upper_frame)
         self.run_bar.pack()
 
-        self.RunButton = tk.Button(self.run_bar, text="Run Queue",command=lambda: self.schedule_que(),justify=tk.LEFT)
+        self.RunButton = tk.Button(self.run_bar, text="Run Queue",command=lambda: self.schedule_queue(),justify=tk.LEFT)
         self.RunButton.grid(row=0, column=0)
 
         # initial button states
@@ -172,7 +172,7 @@ class Queue_Gui(tk.Toplevel,):
                 self.frac_queue_to_schedule.loc[len(self.frac_queue_to_schedule.index)] = temp_list
             return self.frac_queue_to_schedule
                     
-    def schedule_que(self):
+    def schedule_queue(self):
         '''
         Compile the current queue into a pandas dataframe.
         Verify the methods.
@@ -183,31 +183,37 @@ class Queue_Gui(tk.Toplevel,):
         # start thread to run queue
         new_queue_type = self.page_type.get()
 
-        if new_queue_type == self.handler.active_page:
+        # check for conflict between current and new queue
+        if not self.coordinator.myReader.running:
+            compiled_queue = self.compile_queue()
+            self.scheduled_queue_frame.queue_type = new_queue_type
+        elif (new_queue_type == self.scheduled_queue_frame.queue_type):
             compiled_queue = self.compile_queue()
         else:
             print("\n\nYou Shall Not Queue!!!\n(Wait until current active que is finished to schedule new queue type)\n\n")
             return
-
+        
+        # verify methods in new queue (needs work)
         if not self.coordinator.myReader.verify(compiled_queue):
             print("\n\nInsufficient Vespian Gas\n(method verification failed...)\n\n")
             return
         
+        # add compiled methods to scheduled queue
         try: 
             empty_queue = self.coordinator.myReader.scheduled_queue.empty
         except:
-            empty_queue = (self.coordinator.myReader.scheduled_queue == None)
+            empty_queue = True
         if empty_queue:
             self.coordinator.myReader.scheduled_queue = compiled_queue
+            print("Methods Queued")
         else:
             new_scheduled_queue = pd.concat([self.coordinator.myReader.scheduled_queue, compiled_queue])
-            self.coordinator.myReader.scheduled_queue = new_scheduled_queue  
-            
-            
+            new_scheduled_queue = new_scheduled_queue.reset_index()
+            self.coordinator.myReader.scheduled_queue = new_scheduled_queue
+            print("Methods added to current Queue")
 
-        if self.coordinator.myReader.running:
-            pass
-        else:
+        # if not already running scheduled queue, start running
+        if not self.coordinator.myReader.running:
             # start queue in method_reader
             queueThread = threading.Thread(target = self.coordinator.myReader.run_scheduled_methods, args=[]) #finishes the run
             queueThread.start()
@@ -515,6 +521,7 @@ class Scheduled_Queue(tk.Frame,):
         super().__init__(master_frame)
         self.run_type = tk.StringVar(value="Nothing in the Active Queue")
         self.coordinator: Coordinator = coordinator
+        self.queue_type = None
 
         # main frames of active queue page
         self.type_frame = tk.Frame(self)
