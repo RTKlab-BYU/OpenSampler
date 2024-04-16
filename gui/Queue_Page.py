@@ -201,7 +201,8 @@ class Queue_Gui(tk.Toplevel,):
         if empty_queue:
             self.coordinator.myReader.scheduled_queue = compiled_queue
         else:
-            self.coordinator.myReader.scheduled_queue.append(compiled_queue)  # Not append, this is a pandas
+            new_scheduled_queue = pd.concat([self.coordinator.myReader.scheduled_queue, compiled_queue])
+            self.coordinator.myReader.scheduled_queue = new_scheduled_queue  
             
             
 
