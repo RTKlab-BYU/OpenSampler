@@ -642,15 +642,15 @@ class Scheduled_Queue(tk.Frame,):
         Removes selected runs from scheduled queue (selected using row oriented checkboxes). 
         Does not affect current run. 
         '''
-        print("clear selected")
+        print("clear selected - currently just prints this statement.")
 
     def clear_all_runs(self):
         '''
-        remove all runs from scheduled queue. Does not affect current run.
+        Remove all future runs from scheduled queue. Does not affect current run.
         '''
         self.coordinator.myReader.scheduled_queue = None
         self.coordinator.myReader.resume_scheduled_queue()
-        print("clear all")
+        print("Clear all - This should be working now.")
 
 
 class MS_Queue_Row_Inputs(tk.Frame,):
