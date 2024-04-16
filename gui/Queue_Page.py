@@ -6,7 +6,6 @@ import pathlib
 import pandas as pd
 
 from Classes.coordinator import Coordinator
-from Classes.method_reader import MethodReader
 
 class Queue_Gui(tk.Toplevel,):
 
