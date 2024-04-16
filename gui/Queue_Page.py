@@ -5,6 +5,9 @@ import threading
 import pathlib
 import pandas as pd
 
+from Classes.coordinator import Coordinator
+from Classes.method_reader import MethodReader
+
 class Queue_Gui(tk.Toplevel,):
 
     def __init__(self, coordinator):
@@ -13,30 +16,32 @@ class Queue_Gui(tk.Toplevel,):
         self.title("Run Method")
         self.geometry("1000x1800")
         self.state("zoomed")
-        self.coordinator = coordinator
+        self.coordinator: Coordinator = coordinator
         self.page_type = tk.StringVar()
         self.sample_prep_to_schedule = []
 
-
+        # This frame determines what is displayed in the rest of the page.
         self.page_frame = tk.Frame(self)
         self.page_frame.pack(pady=20)
 
-        # select method type. this determines how page is displayed
         self.sample_prep_page = tk.Radiobutton(self.page_frame, text="Sample Preparation", variable=self.page_type, value="Sample Prep", command=self.load_page)
         self.mass_spec_page = tk.Radiobutton(self.page_frame, text="Mass Spectrometry", variable=self.page_type, value="Mass Spec", command=self.load_page)
         self.fractionation_page = tk.Radiobutton(self.page_frame, text="Fractionation", variable=self.page_type, value="Fractionation", command=self.load_page)
-        self.active_queue_page = tk.Radiobutton(self.page_frame, text="Active Queue", variable=self.page_type, value="Active Queue", command=self.load_page)
+        self.scheduled_queue_page = tk.Radiobutton(self.page_frame, text="Active Queue", variable=self.page_type, value="Active Queue", command=self.load_page)
+
         self.sample_prep_page.grid(row=0,column=0)
         self.mass_spec_page.grid(row=0,column=1)
         self.fractionation_page.grid(row=0,column=2)
-        self.active_queue_page.grid(row=0,column=3)
+        self.scheduled_queue_page.grid(row=0,column=3)
 
         # Frame that changes based on page type
-        self.master_frame = tk.Frame(self) #, highlightthickness=2, highlightbackground="black")
-        self.master_frame.pack(fill="both", )
+        self.master_frame = tk.Frame(self) 
+        self.master_frame.pack(fill="both")
+
         self.upper_frame = tk.Frame(self.master_frame)
-        self.queue_frame = tk.Frame(self.master_frame) #, highlightthickness=2, highlightbackground="green")
-        self.sample_prep_frame = Sample_Prep_Frame(self.master_frame)
+        self.queue_frame = tk.Frame(self.master_frame) 
+        self.sample_prep_frame = tk.Frame(self.master_frame)
+        self.scheduled_queue_frame = Scheduled_Queue(self.master_frame, self.coordinator)
 
         # Canvas for scrolling through long que 
         self.canvas = tk.Canvas(self.queue_frame, width=4000, height = 1800, scrollregion=(0,0,4000,1800), highlightthickness=2,highlightbackground="blue")
@@ -64,38 +69,34 @@ class Queue_Gui(tk.Toplevel,):
         # file bar for ms and frac queues.
         self.file_bar = tk.Frame(self.upper_frame)
         self.file_bar.pack()
-        self.clear_queue = tk.Button(self.file_bar, text='Clear Queue', command= lambda:self.clear_queue())
-        self.select_file = tk.Button(self.file_bar,text='Select Queue File', command= lambda:self.select_file())
-        self.save_queue = tk.Button(self.file_bar,text="Save Queue", command= lambda:self.save_queue())
+
+        self.clear_button = tk.Button(self.file_bar, text='Clear Queue', command= lambda:self.clear_queue())
+        self.load_button = tk.Button(self.file_bar,text='Load Queue', command= lambda:self.select_file())
+        self.save_button = tk.Button(self.file_bar,text="Save Queue", command= lambda:self.save_queue())
+
+        self.clear_button.pack()
+        self.load_button.pack()
+        self.save_button.pack()
+
 
         # run bar for ms and frac queues.
         self.run_bar = tk.Frame(self.upper_frame)
         self.run_bar.pack()
+
         self.RunButton = tk.Button(self.run_bar, text="Run Queue",command=lambda: self.schedule_que(),justify=tk.LEFT)
-        self.StopButton = tk.Button(self.run_bar, text="STOP NOW",command=lambda: self.StopQueue(),justify=tk.LEFT)
-        self.PauseButton = tk.Button(self.run_bar, text="Pause Queue",command=lambda: self.PauseQueue(),justify=tk.LEFT)
-        self.ResumeButton = tk.Button(self.run_bar, text="Resume Queue",command=lambda: self.ResumeQueue(),justify=tk.LEFT)
-        self.RunButton.grid(row=0, column=0, columnspan=1)
-        self.StopButton.grid(row=0,column=1, columnspan=1)
-        self.PauseButton.grid(row=0,column=2, columnspan=1)
-        self.ResumeButton.grid(row=0,column=3, columnspan=1)
+        self.RunButton.grid(row=0, column=0)
 
         # initial button states
         self.RunButton["state"] =  "normal"
-        self.StopButton["state"] =  "disabled"
-        self.PauseButton["state"] =  "disabled"
-        self.ResumeButton["state"] =  "disabled"
 
-        # active que setup
-        self.active_queue = Active_Queue(self.master_frame, self.handler)
+        
 
-        # 
+        # Initial Page
         self.page_type.set("Sample Prep")
         self.load_page()
 
-        #
+        # Reconfigure que when reconfiguring window
         self.bind("<Configure>", lambda x: self.config_my_queue(x))
-
 
     def config_my_queue(self, event):
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
@@ -103,21 +104,19 @@ class Queue_Gui(tk.Toplevel,):
         canvas_width = self.canvas.winfo_width()
         self.canvas.itemconfig(self.queue_grid_window, width = canvas_width-4)
 
-
-
     def load_page(self):
-        queue = self.page_type.get()
-        self.handler.active_queue = queue
+        page_type = self.page_type.get()
+        self.handler.set_active_page(page_type)
         
-        if queue == "Sample Prep":
+        if page_type == "Sample Prep":
             self.upper_frame.pack_forget()
             self.queue_frame.pack_forget()
-            self.active_queue.pack_forget()
+            self.scheduled_queue_frame.pack_forget()
             self.sample_prep_frame.pack()
 
-        elif queue == "Mass Spec":
+        elif page_type == "Mass Spec":
             self.sample_prep_frame.pack_forget()
-            self.active_queue.pack_forget()
+            self.scheduled_queue_frame.pack_forget()
             self.upper_frame.pack()
             self.queue_frame.pack(fill="both", expand=True)
             self.update()
@@ -125,9 +124,9 @@ class Queue_Gui(tk.Toplevel,):
             self.canvas.itemconfig(self.queue_grid_window, width = canvas_width-4)         
             self.handler.clear_grid()
             
-        elif queue == "Fractionation":
+        elif page_type == "Fractionation":
             self.sample_prep_frame.pack_forget()
-            self.active_queue.pack_forget()
+            self.scheduled_queue_frame.pack_forget()
             self.upper_frame.pack()
             self.queue_frame.pack(fill="both", expand=True)
             self.update()
@@ -135,29 +134,27 @@ class Queue_Gui(tk.Toplevel,):
             self.canvas.itemconfig(self.queue_grid_window, width = canvas_width-4)
             self.handler.clear_grid()
 
-        elif queue == "Active Queue":
+        elif page_type == "Active Queue":
             self.sample_prep_frame.pack_forget()
             self.upper_frame.pack_forget()
             self.queue_frame.pack_forget()
-            self.active_queue.pack()
-
-    # Run Method Functions
+            self.scheduled_queue_frame.pack()
         
     def compile_queue(self):
         '''
         This function is used to pull the parameters out of the entry values and package them as pandas dataframe object.
         '''
 
-        queue = self.page_type.get()
-        self.handler.active_queue = queue
+        page_type = self.page_type.get()
+        self.handler.set_active_page(page_type)
         
-        if queue == "Sample Prep":
+        if page_type == "Sample Prep":
             # package sample prep params
 
             # i don't have anything set up for this yet
             pass
 
-        elif queue == "Mass Spec":
+        elif page_type == "Mass Spec":
             # package MS queue
             self.ms_queue_to_schedule = pd.DataFrame({"Stage": [], "Wellplate": [], "Well": [], "Method": []})
             for entry in self.handler.ms_queue[1:]:
@@ -167,7 +164,7 @@ class Queue_Gui(tk.Toplevel,):
                 self.ms_queue_to_schedule.loc[len(self.ms_queue_to_schedule.index)] = temp_list
             return self.ms_queue_to_schedule
         
-        elif queue == "Fractionation":
+        elif page_type == "Fractionation":
             # package Frac queue
             self.frac_queue_to_schedule = pd.DataFrame({"Stage": [], "Wellplate": [], "Sample Wells": [], "Elution Wells": [], "Method": []})
             for row, entry in enumerate(self.handler.frac_queue, 1):
@@ -175,8 +172,7 @@ class Queue_Gui(tk.Toplevel,):
                 temp_list = [frac_inputs.stage.get(), frac_inputs.plate.get(), frac_inputs.pool_wells.get(), frac_inputs.method.get(), frac_inputs.target_well.get()]
                 self.frac_queue_to_schedule.loc[len(self.frac_queue_to_schedule.index)] = temp_list
             return self.frac_queue_to_schedule
-            
-        
+                    
     def schedule_que(self):
         '''
         Compile the current queue into a pandas dataframe.
@@ -184,14 +180,11 @@ class Queue_Gui(tk.Toplevel,):
         Add the dataframe to the schedule queue,
         If not currently running, begin running.
         '''
-        # set button states        
-        self.StopButton["state"] = "normal"
-        self.PauseButton["state"] = "normal"
 
         # start thread to run queue
         new_queue_type = self.page_type.get()
 
-        if new_queue_type == self.handler.active_queue:
+        if new_queue_type == self.handler.active_page:
             compiled_queue = self.compile_queue()
         else:
             print("\n\nYou Shall Not Queue!!!\n(Wait until current active que is finished to schedule new queue type)\n\n")
@@ -208,7 +201,7 @@ class Queue_Gui(tk.Toplevel,):
         if empty_queue:
             self.coordinator.myReader.scheduled_queue = compiled_queue
         else:
-            self.coordinator.myReader.scheduled_queue.append(compiled_queue)
+            self.coordinator.myReader.scheduled_queue.append(compiled_queue)  # Not append, this is a pandas
             
             
 
@@ -219,113 +212,78 @@ class Queue_Gui(tk.Toplevel,):
             queueThread = threading.Thread(target = self.coordinator.myReader.run_scheduled_methods, args=[]) #finishes the run
             queueThread.start()
             # start thread to watch status
-            watchThread = threading.Thread(target = self.handler.watch_status, args=[]) #finishes the run
+            watchThread = threading.Thread(target = self.scheduled_queue_frame.watch_status, args=[]) #finishes the run
             watchThread.start()
-
-
-    def reset_active_queue(self):
-        # add stuff for queue GUI to do when queue finishes
-        self.handler.active_queue = "None"
-
-        self.StopButton["state"] =  "disabled"
-        self.PauseButton["state"] =  "disabled"
-        self.ResumeButton["state"] = "disabled"
     
-    # move to active queue
-    def StopQueue(self):
-        self.RunButton["state"] =  "normal"
-        self.StopButton["state"] =  "disabled"
-        self.PauseButton["state"] =  "disabled"
-        self.ResumeButton["state"] = "disabled"
-      
-        self.coordinator.myReader.myStopIndicator.stop()
+    def clear_queue(self):  # rework 
+        pass
+        # self.wellList = []
+        # self.methodList = []
+    
+    def select_file(self):  # rework
+        pass
+        # filetypes = (
+        #     ('csv files', '*.csv'),
+        #     ('All files', '*')
+        # )
 
-    # move to active queue
-    def PauseQueue(self):
-        self.ResumeButton["state"] =  "normal"
-        self.PauseButton["state"] =  "disabled"
-        self.grab_release()
+        # new_file = fd.askopenfilename(
+        #     title='Add to Queue',
+        #     initialdir='queues',
+        #     filetypes=filetypes)
         
-        self.coordinator.myReader.myStopIndicator.pause()           
-
-    # move to active queue
-    def ResumeQueue(self):
-        self.PauseButton["state"] =  "normal"
-        self.ResumeButton["state"] =  "disabled"
-      
-
-        self.coordinator.myReader.myStopIndicator.resume()
-
-    # rework 
-    def clear_queue(self):
-        self.wellList = []
-        self.methodList = []
-
-    # rework
-    def select_file(self):
-        filetypes = (
-            ('csv files', '*.csv'),
-            ('All files', '*')
-        )
-
-        new_file = fd.askopenfilename(
-            title='Add to Queue',
-            initialdir='queues',
-            filetypes=filetypes)
+        # self.queue_to_run = new_file
+        # self.RunButton["state"] =  "normal"
         
-        self.queue_to_run = new_file
-        self.RunButton["state"] =  "normal"
-        
-        pathToQueue = self.queue_to_run
-        queueFile = pathlib.Path(pathToQueue)
-        if queueFile.exists ():
-            queueFail = True
-        else:
-            queueFail = False
+        # pathToQueue = self.queue_to_run
+        # queueFile = pathlib.Path(pathToQueue)
+        # if queueFile.exists ():
+        #     queueFail = True
+        # else:
+        #     queueFail = False
  
-        while queueFail == False:
-            self.queue_to_run = input("Invalid queue. Try again: ")
-            pathToQueue = self.queue_to_run
-            queueFile = pathlib.Path(pathToQueue)
-            if queueFile.exists ():
-                queueFail = True
-            else:
-                queueFail = False
+        # while queueFail == False:
+        #     self.queue_to_run = input("Invalid queue. Try again: ")
+        #     pathToQueue = self.queue_to_run
+        #     queueFile = pathlib.Path(pathToQueue)
+        #     if queueFile.exists ():
+        #         queueFail = True
+        #     else:
+        #         queueFail = False
 
-        # -----Get list from CSV queue.csv with pd. This is used for the RPi because the RPi doesn't have excel-----
+        # # -----Get list from CSV queue.csv with pd. This is used for the RPi because the RPi doesn't have excel-----
         
-        col_list = ['Locations', 'Methods']
-        df = pd.read_csv(pathToQueue, usecols=col_list)
-        [self.wellList.append(well) for well in df["Locations"].tolist()]
-        [self.methodList.append(method) for method in df["Methods"].tolist()]
+        # col_list = ['Locations', 'Methods']
+        # df = pd.read_csv(pathToQueue, usecols=col_list)
+        # [self.wellList.append(well) for well in df["Locations"].tolist()]
+        # [self.methodList.append(method) for method in df["Methods"].tolist()]
+     
+    def save_queue(self):  # rework 
+        pass
+        # filetypes = (
+        #     ('CSV files', '*.csv'),
+        #     ( 'All files', '*')
+        # )
 
-    # rework  
-    def save_queue(self):
+        # new_file = fd.asksaveasfile(
+        #     title='Save a file',
+        #     initialdir='queues',
+        #     filetypes=filetypes)
         
-        filetypes = (
-            ('CSV files', '*.csv'),
-            ( 'All files', '*')
-        )
-
-        new_file = fd.asksaveasfile(
-            title='Save a file',
-            initialdir='queues',
-            filetypes=filetypes)
+        # if new_file.name.endswith(".csv"):
+        #     new_file = new_file.name.replace(".csv","") + ".csv"
+        # else:
+        #     new_file = new_file.name + ".csv"
         
-        if new_file.name.endswith(".csv"):
-            new_file = new_file.name.replace(".csv","") + ".csv"
-        else:
-            new_file = new_file.name + ".csv"
-        
-        df = pd.DataFrame(data={'Locations':self.wellList,'Methods':self.methodList})
-        df.to_csv(new_file,index=False)      
+        # df = pd.DataFrame(data={'Locations':self.wellList,'Methods':self.methodList})
+        # df.to_csv(new_file,index=False)      
 
 
 class Queue_Handler:
     def __init__(self, queue_grid, coordinator):
         self.queue_handler_master = queue_grid
         self.coordinator = coordinator
-        self.active_queue = None
+        self.active_page = None
         
         self.row_buttons_frame = tk.Frame(self.queue_handler_master)
         self.row_buttons_frame.pack(side="left")
@@ -383,12 +341,12 @@ class Queue_Handler:
         It clears everything from the queue grid so the proper grid can be displayed
         '''
 
-        if self.active_queue == 'Mass Spec':
+        if self.active_page == 'Mass Spec':
             self.frac_queue_frame.pack_forget()
             self.ms_queue_frame.pack(expand=True, fill="x", side="left")
             
 
-        elif self.active_queue == 'Fractionation':
+        elif self.active_page == 'Fractionation':
             self.ms_queue_frame.pack_forget()
             self.frac_queue_frame.pack(expand=True, fill="x", side="left")
 
@@ -400,7 +358,7 @@ class Queue_Handler:
         If the number of needed button rows has changed (eg we switch queue type), rows are added or removed.
         '''
         
-        if self.active_queue == 'Mass Spec':
+        if self.active_page == 'Mass Spec':
              
             for frame in self.ms_queue:
                 frame: tk.Frame = frame
@@ -411,7 +369,7 @@ class Queue_Handler:
                 frame.pack(fill="x", expand=True)
             
                 
-        elif self.active_queue == 'Fractionation':
+        elif self.active_page == 'Fractionation':
             for frame in self.frac_queue:
                 frame: tk.Frame = frame
                 frame.pack_forget()
@@ -426,9 +384,9 @@ class Queue_Handler:
         Disables "Move Down" button on last row.
         Ensures all other buttons are enabled. 
         '''
-        if self.active_queue == 'Mass Spec':
+        if self.active_page == 'Mass Spec':
             queue = len(self.ms_queue)
-        elif self.active_queue == 'Fractionation':
+        elif self.active_page == 'Fractionation':
             queue = len(self.frac_queue)
 
         while len(self.queue_row_buttons) > queue:
@@ -458,9 +416,9 @@ class Queue_Handler:
         self.reset_grid()
         self.maintain_button_rows()
         
-    def set_active_queue(self, active_queue):
-        if self.active_queue != active_queue:
-            self.active_queue = active_queue
+    def set_active_page(self, active_page):
+        if self.active_page != active_page:
+            self.active_page = active_page
             self.update_grid()
 
 
@@ -473,13 +431,13 @@ class Queue_Handler:
         '''
         if buttons_index == None:
             buttons_index = len(self.queue_row_buttons)
-        # print(self.active_queue)
+        # print(self.active_page)
         new_buttons = Queue_Row_Buttons(self.row_buttons_frame, self.coordinator, len(self.queue_row_buttons), self)
         self.queue_row_buttons.append(new_buttons)
         new_buttons.pack()
-        if self.active_queue == 'Mass Spec':
+        if self.active_page == 'Mass Spec':
             self.ms_queue.insert(buttons_index, MS_Queue_Row_Inputs(self.ms_queue_frame, self.coordinator))
-        elif self.active_queue == 'Fractionation':
+        elif self.active_page == 'Fractionation':
             self.frac_queue.insert(buttons_index, Frac_Queue_Row_Inputs(self.frac_queue_frame, self.coordinator))
 
         
@@ -489,11 +447,11 @@ class Queue_Handler:
         '''
         Moves the indicated row's current inputs up one row by poping it out and reinserting it one index less.
         '''
-        print(self.active_queue)
-        if self.active_queue == 'Mass Spec':
+        print(self.active_page)
+        if self.active_page == 'Mass Spec':
             move_item = self.ms_queue.pop(row_index)
             self.ms_queue.insert(row_index-1, move_item)
-        elif self.active_queue == 'Fractionation':
+        elif self.active_page == 'Fractionation':
             move_item = self.frac_queue.pop(row_index)
             self.frac_queue.insert(row_index-1, move_item)
 
@@ -503,11 +461,11 @@ class Queue_Handler:
         '''
         Moves the indicated row's current inputs down one row by poping it out and reinserting it one index greater.
         '''
-        print(self.active_queue)
-        if self.active_queue == 'Mass Spec':
+        print(self.active_page)
+        if self.active_page == 'Mass Spec':
             move_item = self.ms_queue.pop(row_index)
             self.ms_queue.insert(row_index+1, move_item)
-        elif self.active_queue == 'Fractionation':
+        elif self.active_page == 'Fractionation':
             move_item = self.frac_queue.pop(row_index)
             self.frac_queue.insert(row_index+1, move_item)
 
@@ -518,12 +476,12 @@ class Queue_Handler:
         Removes the indicated inputs and destroys them, then removes the last row of buttons.
         Waits until the grid has been updated to destroy the button (in case this was the last row).
         '''
-        print(self.active_queue)
+        print(self.active_page)
         
-        if self.active_queue == 'Mass Spec':
+        if self.active_page == 'Mass Spec':
             remove_item: MS_Queue_Row_Inputs = self.ms_queue.pop(row_index)
             remove_item.destroy()
-        elif self.active_queue == 'Fractionation':
+        elif self.active_page == 'Fractionation':
             remove_item: Frac_Queue_Row_Inputs = self.frac_queue.pop(row_index)
             remove_item.destroy()
 
@@ -535,59 +493,7 @@ class Queue_Handler:
     
     # functinos for active que display
 
-    def update_active_queue_display(self):
-        pass
-    # functions for active queue handling
     
-    def watch_status(self):
-
-        time.sleep(5)
-        
-        while self.coordinator.myReader.running:
-            time.sleep(1)
-            if self.coordinator.myReader.queue_changed:
-                self.update_active_queue_display()
-                self.coordinator.myReader.queue_changed = False
-            if not self.coordinator.myReader.running:
-                self.active_queue = None
-
-
-    
-
-    def stop_immediately(self):
-        '''
-        Pauses queue and interupts current run.
-        '''
-        self.coordinator.myReader.myStopIndicator.stop()
-        print("stop immediately")
-
-    def pause_resume_active_queue(self):
-        '''
-        Pauses queue after finishing current run. 
-
-        '''
-        if self.coordinator.myReader.paused:
-            self.coordinator.myReader.myStopIndicator.resume()
-        elif not self.coordinator.myReader.paused:
-            self.coordinator.myReader.myStopIndicator.pause()
-        print("pause")
-
-    def clear_selected_runs(self):
-        '''
-        Removes selected runs from scheduled queue (selected using row oriented checkboxes). 
-        Does not affect current run. 
-        '''
-        print("clear selected")
-
-    def clear_all_runs(self):
-        '''
-        remove all runs from scheduled queue. Does not affect current run.
-        '''
-        self.coordinator.myReader.scheduled_queue = None
-        self.coordinator.myReader.myStopIndicator.resume()
-        print("clear all")
-
-
 class Sample_Prep_Frame(tk.Frame,):
     '''
     This class allows the user to select and schedule a sample preparation method
@@ -600,15 +506,15 @@ class Sample_Prep_Frame(tk.Frame,):
         self.stage_box.pack()
 
 
-class Active_Queue(tk.Frame,):
+class Scheduled_Queue(tk.Frame,):
     '''
     This class contains and displays the inputs needed for each protocol in the queue.
     It assigns a row index to each instance in order to inform the affect those buttons have on the corresponding rows of inputs
     '''
-    def __init__(self, master_frame, handler):
+    def __init__(self, master_frame, coordinator):
         super().__init__(master_frame)
         self.run_type = tk.StringVar(value="Nothing in the Active Queue")
-        self.handler: Queue_Handler = handler
+        self.coordinator: Coordinator = coordinator
 
         # main frames of active queue page
         self.type_frame = tk.Frame(self)
@@ -624,7 +530,7 @@ class Active_Queue(tk.Frame,):
         self.type_label.pack(side="left", fill="x")
 
         # inside current run frame
-        self.stop_button = tk.Button(self.current_run_frame, text="Stop Run!",command=self.handler.stop_immediately)
+        self.stop_button = tk.Button(self.current_run_frame, text="Stop Run!",command=self.stop_immediately)
         self.current_run_label = tk.Label(self.current_run_frame, text="Currently Running")
         self.current_run_inner = tk.Frame(self.current_run_frame)
 
@@ -639,44 +545,45 @@ class Active_Queue(tk.Frame,):
 
         self.scheduled_runs_buttons.pack(side="left")
         
-
         # scheduled runs buttons
-        self.pause_button = tk.Button(self.scheduled_runs_buttons, text="Pause", command=self.handler.pause_resume_active_queue)
-        self.clear_selected_button = tk.Button(self.scheduled_runs_buttons, text="Clear Selected", command=self.handler.clear_selected_runs)
-        self.clear_all_button = tk.Button(self.scheduled_runs_buttons, text="Clear All", command=self.handler.clear_all_runs)
+        self.pause_button = tk.Button(self.scheduled_runs_buttons, text="Pause", command=self.pause_resume_scheduled_queue)
+        self.clear_selected_button = tk.Button(self.scheduled_runs_buttons, text="Clear Selected", command=self.clear_selected_runs)
+        self.clear_all_button = tk.Button(self.scheduled_runs_buttons, text="Clear All", command=self.clear_all_runs)
         self.pause_button.pack()
         self.clear_selected_button.pack()
         self.clear_all_button.pack()
-
-        
 
         # ms headers 
         self.ms_current_headers = tk.Frame(self.current_run_inner)
         self.ms_scheduled_headers = tk.Frame(self.current_run_inner)
 
         # MS Headers
-        tk.Entry(self.ms_current_headers, textvariable=self.handler.ms_stage_label).pack(side='left')
-        tk.Entry(self.ms_current_headers, textvariable=self.handler.ms_wellplate_label).pack(side='left')
-        tk.Entry(self.ms_current_headers, textvariable=self.handler.ms_sample_label).pack(side='left')
-        tk.Entry(self.ms_current_headers, textvariable=self.handler.ms_method_label).pack(expand=True, fill="x", side='left')
+        self.ms_stage_label_1 = tk.Entry(self.ms_current_headers, textvariable="Stage")
+        self.ms_stage_label_1.pack(side='left')
+        self.ms_wellplate_label_1 = tk.Entry(self.ms_current_headers, textvariable="Wellplate")
+        self.ms_wellplate_label_1.pack(side='left')
+        self.ms_sample_label_1 = tk.Entry(self.ms_current_headers, textvariable="Sample Well")
+        self.ms_sample_label_1.pack(side='left')
+        self.ms_method_label_1 = tk.Entry(self.ms_current_headers, textvariable="Method")
+        self.ms_method_label_1.pack(expand=True, fill="x", side='left')
 
-        tk.Entry(self.ms_scheduled_headers, textvariable=self.handler.ms_stage_label).pack(side='left')
-        tk.Entry(self.ms_scheduled_headers, textvariable=self.handler.ms_wellplate_label).pack(side='left')
-        tk.Entry(self.ms_scheduled_headers, textvariable=self.handler.ms_sample_label).pack(side='left')
-        tk.Entry(self.ms_scheduled_headers, textvariable=self.handler.ms_method_label).pack(expand=True, fill="x", side='left')
+        self.ms_stage_label_2 = tk.Entry(self.ms_current_headers, textvariable="Stage")
+        self.ms_stage_label_2.pack(side='left')
+        self.ms_wellplate_label_2 = tk.Entry(self.ms_current_headers, textvariable="Wellplate")
+        self.ms_wellplate_label_2.pack(side='left')
+        self.ms_sample_label_2 = tk.Entry(self.ms_current_headers, textvariable="Sample Well")
+        self.ms_sample_label_2.pack(side='left')
+        self.ms_method_label_2 = tk.Entry(self.ms_current_headers, textvariable="Method")
+        self.ms_method_label_2.pack(expand=True, fill="x", side='left')
 
-
-
-        
 
         # add 
-
         self.current_headers = None
         self.current_specs = None
 
     
         
-    def update_active_queue_type(self, queue_type):
+    def update_scheduled_queue_display(self, queue_type):
 
         if queue_type == "Sample Prep":
             self.run_type.set("Sample Preparation")
@@ -698,8 +605,52 @@ class Active_Queue(tk.Frame,):
             # forget all displays
             
 
+    # functions for active queue handling
     
+    def watch_status(self):
 
+        time.sleep(5)
+        
+        while self.coordinator.myReader.running:
+            time.sleep(1)
+            if self.coordinator.myReader.queue_changed:
+                self.update_scheduled_queue_display()
+                self.coordinator.myReader.queue_changed = False
+            if not self.coordinator.myReader.running:
+                self.update_scheduled_queue_display("Done")  
+
+    def stop_immediately(self):
+        '''
+        Pauses queue and interupts current run.
+        '''
+        self.coordinator.myReader.stop_current_run()
+
+    def pause_resume_scheduled_queue(self):
+        '''
+        Pauses queue after finishing current run. 
+
+        '''
+        if self.coordinator.myReader.paused:
+            self.coordinator.myReader.resume_scheduled_queue()
+            # Change button color?
+        elif not self.coordinator.myReader.paused:
+            self.coordinator.myReader.pause_scheduled_queue()
+            # Change button color?
+
+    def clear_selected_runs(self):
+        '''
+        Removes selected runs from scheduled queue (selected using row oriented checkboxes). 
+        Does not affect current run. 
+        '''
+        print("clear selected")
+
+    def clear_all_runs(self):
+        '''
+        remove all runs from scheduled queue. Does not affect current run.
+        '''
+        self.coordinator.myReader.scheduled_queue = None
+        self.coordinator.myReader.resume_scheduled_queue()
+        print("clear all")
 
 
 class MS_Queue_Row_Inputs(tk.Frame,):
