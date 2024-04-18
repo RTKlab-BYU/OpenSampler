@@ -7,6 +7,8 @@ import pandas as pd
 
 from Classes.coordinator import Coordinator
 
+STANDARD_ROW_HEIGHT = 100
+
 class Queue_Gui(tk.Toplevel,):
 
     def __init__(self, coordinator):
@@ -43,9 +45,9 @@ class Queue_Gui(tk.Toplevel,):
         self.scheduled_queue_frame = Scheduled_Queue(self.master_frame, self.coordinator)
 
         # Canvas for scrolling through long que 
-        self.canvas = tk.Canvas(self.queue_frame, width=4000, height = 1800, scrollregion=(0,0,4000,1800), highlightthickness=2,highlightbackground="blue")
+        self.canvas = tk.Canvas(self.queue_frame, width=4000, height = 1800, scrollregion=(0,0,4000,1800),)
         canvas_width = self.canvas.winfo_width()
-        self.queue_grid = tk.Frame(self.canvas, width=canvas_width, highlightthickness=2, highlightbackground="red")
+        self.queue_grid = tk.Frame(self.canvas, width=canvas_width)
 
         self.y_scrollbar = tk.Scrollbar(self.queue_frame, orient="vertical", command=self.canvas.yview)       
         self.x_scrollbar = tk.Scrollbar(self.queue_frame, orient="horizontal", command=self.canvas.xview)
@@ -73,9 +75,9 @@ class Queue_Gui(tk.Toplevel,):
         self.load_button = tk.Button(self.file_bar,text='Load Queue', command= lambda:self.select_file())
         self.save_button = tk.Button(self.file_bar,text="Save Queue", command= lambda:self.save_queue())
 
-        self.clear_button.pack()
-        self.load_button.pack()
-        self.save_button.pack()
+        self.clear_button.grid(row=0, column=1)
+        self.load_button.grid(row=0, column=2)
+        self.save_button.grid(row=0, column=3)
 
 
         # run bar for ms and frac queues.
@@ -292,7 +294,7 @@ class Queue_Handler:
         self.active_page = None
         
         self.row_buttons_frame = tk.Frame(self.queue_handler_master)
-        self.row_buttons_frame.pack(side="left")
+        self.row_buttons_frame.pack(side="left", fill="y")
 
         self.ms_queue_frame = tk.Frame(self.queue_handler_master)
         self.frac_queue_frame = tk.Frame(self.queue_handler_master)
@@ -332,9 +334,7 @@ class Queue_Handler:
         tk.Entry(self.frac_queue_header, textvariable=self.frac_method_label).pack(expand=True, fill="x", side='left')
 
         # Add an initial row to queues
-        new_buttons = Queue_Row_Buttons(self.row_buttons_frame, self.coordinator, 1, self)
-        self.queue_row_buttons.append(new_buttons)
-        new_buttons.pack()
+        self.add_row_buttons(1)
         self.ms_queue.insert(1, MS_Queue_Row_Inputs(self.ms_queue_frame, self.coordinator))
         self.frac_queue.insert(1, Frac_Queue_Row_Inputs(self.frac_queue_frame, self.coordinator))
 
@@ -349,12 +349,12 @@ class Queue_Handler:
 
         if self.active_page == 'Mass Spec':
             self.frac_queue_frame.pack_forget()
-            self.ms_queue_frame.pack(expand=True, fill="x", side="left")
+            self.ms_queue_frame.pack(expand=True, fill="both", side="left")
             
 
         elif self.active_page == 'Fractionation':
             self.ms_queue_frame.pack_forget()
-            self.frac_queue_frame.pack(expand=True, fill="x", side="left")
+            self.frac_queue_frame.pack(expand=True, fill="both", side="left")
 
         self.update_grid()
       
@@ -372,7 +372,8 @@ class Queue_Handler:
             
             for frame in self.ms_queue:
                 frame: tk.Frame = frame
-                frame.pack(fill="x", expand=True)
+                frame.pack(fill="both", expand=True)
+                # frame.config(height=STANDARD_ROW_HEIGHT)
             
                 
         elif self.active_page == 'Fractionation':
@@ -382,7 +383,8 @@ class Queue_Handler:
 
             for frame in self.frac_queue:
                 frame: tk.Frame = frame
-                frame.pack(fill="x", expand=True) 
+                frame.pack(fill="both", expand=True)
+                # frame.config(height=STANDARD_ROW_HEIGHT) 
 
     def maintain_button_rows(self):
         '''
@@ -391,18 +393,18 @@ class Queue_Handler:
         Ensures all other buttons are enabled. 
         '''
         if self.active_page == 'Mass Spec':
-            queue = len(self.ms_queue)
+            queue_length = len(self.ms_queue)
         elif self.active_page == 'Fractionation':
-            queue = len(self.frac_queue)
+            queue_length = len(self.frac_queue)
+        else:
+            queue_length = 1
 
-        while len(self.queue_row_buttons) > queue:
+        while len(self.queue_row_buttons) > queue_length:
             remove_buttons: Queue_Row_Buttons = self.queue_row_buttons.pop()
             remove_buttons.destroy()
 
-        while len(self.queue_row_buttons) < queue:
-            new_buttons = Queue_Row_Buttons(self.row_buttons_frame, self.coordinator, len(self.queue_row_buttons), self)
-            self.queue_row_buttons.append(new_buttons)
-            new_buttons.pack()
+        while len(self.queue_row_buttons) < queue_length:
+            self.add_row_buttons(len(self.queue_row_buttons))
 
         for row in range(1, len(self.queue_row_buttons)):
             if row == 1:
@@ -427,6 +429,11 @@ class Queue_Handler:
             self.active_page = active_page
             self.update_grid()
 
+    def add_row_buttons(self, index):
+        new_buttons = Queue_Row_Buttons(self.row_buttons_frame, self.coordinator, index, self)
+        self.queue_row_buttons.append(new_buttons)
+        new_buttons.pack()
+        # new_buttons.config(height=STANDARD_ROW_HEIGHT)
 
 
     # Queue Maker Button functions
@@ -437,16 +444,13 @@ class Queue_Handler:
         '''
         if buttons_index == None:
             buttons_index = len(self.queue_row_buttons)
-        # print(self.active_page)
-        new_buttons = Queue_Row_Buttons(self.row_buttons_frame, self.coordinator, len(self.queue_row_buttons), self)
-        self.queue_row_buttons.append(new_buttons)
-        new_buttons.pack()
+        self.add_row_buttons(len(self.queue_row_buttons))
+
         if self.active_page == 'Mass Spec':
             self.ms_queue.insert(buttons_index, MS_Queue_Row_Inputs(self.ms_queue_frame, self.coordinator))
         elif self.active_page == 'Fractionation':
             self.frac_queue.insert(buttons_index, Frac_Queue_Row_Inputs(self.frac_queue_frame, self.coordinator))
 
-        
         self.update_grid()
 
     def move_up(self, row_index):
