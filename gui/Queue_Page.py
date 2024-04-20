@@ -22,13 +22,13 @@ class Queue_Gui(tk.Toplevel,):
         self.sample_prep_to_schedule = []
 
         # This frame determines what is displayed in the rest of the page.
-        self.page_frame = tk.Frame(self)
-        self.page_frame.pack(pady=20)
+        self.page_selection_frame = tk.Frame(self)
+        self.page_selection_frame.pack(pady=20)
 
-        self.sample_prep_page = tk.Radiobutton(self.page_frame, text="Sample Preparation", variable=self.page_type, value="Sample Prep", command=self.load_page)
-        self.mass_spec_page = tk.Radiobutton(self.page_frame, text="Mass Spectrometry", variable=self.page_type, value="Mass Spec", command=self.load_page)
-        self.fractionation_page = tk.Radiobutton(self.page_frame, text="Fractionation", variable=self.page_type, value="Fractionation", command=self.load_page)
-        self.scheduled_queue_page = tk.Radiobutton(self.page_frame, text="Active Queue", variable=self.page_type, value="Active Queue", command=self.load_page)
+        self.sample_prep_page = tk.Radiobutton(self.page_selection_frame, text="Sample Preparation", variable=self.page_type, value="Sample Prep", command=self.load_page)
+        self.mass_spec_page = tk.Radiobutton(self.page_selection_frame, text="Mass Spectrometry", variable=self.page_type, value="Mass Spec", command=self.load_page)
+        self.fractionation_page = tk.Radiobutton(self.page_selection_frame, text="Fractionation", variable=self.page_type, value="Fractionation", command=self.load_page)
+        self.scheduled_queue_page = tk.Radiobutton(self.page_selection_frame, text="Active Queue", variable=self.page_type, value="Active Queue", command=self.load_page)
 
         self.sample_prep_page.grid(row=0,column=0)
         self.mass_spec_page.grid(row=0,column=1)
@@ -36,13 +36,14 @@ class Queue_Gui(tk.Toplevel,):
         self.scheduled_queue_page.grid(row=0,column=3)
 
         # Frame that changes based on page type
-        self.master_frame = tk.Frame(self) 
-        self.master_frame.pack(fill="both")
+        self.page_display_frame = tk.Frame(self) 
+        self.page_display_frame.pack(fill="both", expand=True)
 
-        self.upper_frame = tk.Frame(self.master_frame)
-        self.queue_frame = tk.Frame(self.master_frame) 
-        self.sample_prep_frame = tk.Frame(self.master_frame)
-        self.scheduled_queue_frame = Scheduled_Queue(self.master_frame, self.coordinator)
+        self.upper_frame = tk.Frame(self.page_display_frame) #, highlightbackground="pink", highlightthickness=2)
+        self.queue_frame = tk.Frame(self.page_display_frame) #, highlightbackground="yellow", highlightthickness=2) 
+        self.sample_prep_frame = tk.Frame(self.page_display_frame)
+        self.scheduled_queue_frame = Scheduled_Queue(self.page_display_frame, self.coordinator)
+        # self.scheduled_queue_frame.config(highlightbackground="green", highlightthickness=2)
 
         # Canvas for scrolling through long que 
         self.canvas = tk.Canvas(self.queue_frame, width=4000, height = 1800, scrollregion=(0,0,4000,1800),)
@@ -118,7 +119,7 @@ class Queue_Gui(tk.Toplevel,):
         elif page_type == "Mass Spec":
             self.sample_prep_frame.pack_forget()
             self.scheduled_queue_frame.pack_forget()
-            self.upper_frame.pack()
+            self.upper_frame.pack(fill="x")
             self.queue_frame.pack(fill="both", expand=True)
             self.update()
             canvas_width = self.canvas.winfo_width()
@@ -128,7 +129,7 @@ class Queue_Gui(tk.Toplevel,):
         elif page_type == "Fractionation":
             self.sample_prep_frame.pack_forget()
             self.scheduled_queue_frame.pack_forget()
-            self.upper_frame.pack()
+            self.upper_frame.pack(fill="x")
             self.queue_frame.pack(fill="both", expand=True)
             self.update()
             canvas_width = self.canvas.winfo_width()
@@ -139,7 +140,7 @@ class Queue_Gui(tk.Toplevel,):
             self.sample_prep_frame.pack_forget()
             self.upper_frame.pack_forget()
             self.queue_frame.pack_forget()
-            self.scheduled_queue_frame.pack()
+            self.scheduled_queue_frame.pack(expand=True, fill="both")
         
     def compile_queue(self):
         '''
@@ -523,46 +524,80 @@ class Scheduled_Queue(tk.Frame,):
     '''
     def __init__(self, master_frame, coordinator):
         super().__init__(master_frame)
-        self.run_type = tk.StringVar(value="Nothing in the Active Queue")
+        self.queue_type_string = tk.StringVar(value="Nothing in the Active Queue")
         self.coordinator: Coordinator = coordinator
         self.queue_type = None
 
         # main frames of active queue page
-        self.type_frame = tk.Frame(self)
-        self.current_run_frame = tk.Frame(self)
-        self.scheduled_runs_frame = tk.Frame(self)
+        self.type_frame = tk.Frame(self, highlightbackground="black", highlightthickness=2)
+        self.current_run_frame = tk.Frame(self, pady=20, padx=5) #, highlightbackground="green", highlightthickness=2)
+        self.scheduled_runs_frame = tk.Frame(self, padx=5) #, pady=20, highlightbackground="orange", highlightthickness=2)
 
-        self.type_frame.pack(side="top")
-        self.current_run_frame.pack(side="top")
-        self.scheduled_runs_frame.pack(side="top")
+        self.type_frame.pack() 
+        self.current_run_frame.pack(fill="x")
+        self.scheduled_runs_frame.pack(fill="both", expand=True)
+
+
 
         # inside type frame
-        self.type_label = tk.Label(self.type_frame, textvariable=self.run_type)
+        self.type_label = tk.Label(self.type_frame, textvariable=self.queue_type_string, font=(25))
         self.type_label.pack(side="left", fill="x")
 
-        # inside current run frame
-        self.stop_button = tk.Button(self.current_run_frame, text="Stop Run!",command=self.stop_immediately)
-        self.current_run_label = tk.Label(self.current_run_frame, text="Currently Running")
-        self.current_run_inner = tk.Frame(self.current_run_frame)
 
-        self.stop_button.pack(side="left")
+
+        # inside current run frame
+        self.stop_button_frame = tk.Frame(self.current_run_frame, padx=5) #, highlightbackground="purple", highlightthickness=2)
+        self.current_run_label = tk.Label(self.current_run_frame, text="Currently Running")
+        self.current_run_inner = tk.Frame(self.current_run_frame, highlightbackground="black", highlightthickness=2)
+
+        self.stop_button_frame.pack(side="left", fill="y")
         self.current_run_label.pack(side="top", anchor="nw")
-        self.current_run_inner.pack(side="top")
+        self.current_run_inner.pack(side="top", fill="x")
+
+        # inside stop button frame
+        self.stop_button_spacer = tk.Label(self.stop_button_frame, text="")
+        self.stop_button = tk.Button(self.stop_button_frame, text="Stop Run!", command=self.stop_immediately, width=12, background="indian red")
+
+        self.stop_button_spacer.pack()
+        self.stop_button.pack()
+
+        # inside current run inner frame
+        self.temp_label_1 = tk.Label(self.current_run_inner, text="")
+        self.temp_label_2 = tk.Label(self.current_run_inner, text="")
+
+        self.temp_label_1.pack()
+        self.temp_label_2.pack()
+
+
 
         # inside scheduled runs frame
-        self.scheduled_runs_buttons = tk.Frame(self.scheduled_runs_frame)
-        self.scheduled_runs_label = tk.Label(self.scheduled_runs_frame, text="Scheduled")
-        self.scheduled_runs_inner = tk.Frame(self.scheduled_runs_frame)
+        self.scheduled_runs_buttons = tk.Frame(self.scheduled_runs_frame, padx=5) 
+        self.scheduled_runs_label = tk.Label(self.scheduled_runs_frame, text="Scheduled Runs")
+        self.scheduled_runs_inner = tk.Frame(self.scheduled_runs_frame, highlightbackground="black", highlightthickness=2)
 
-        self.scheduled_runs_buttons.pack(side="left")
+        self.scheduled_runs_buttons.pack(side="left", fill="y")
+        self.scheduled_runs_label.pack(side="top", anchor="nw")
+        self.scheduled_runs_inner.pack(side="top", fill="both", expand=True)
         
-        # scheduled runs buttons
-        self.pause_button = tk.Button(self.scheduled_runs_buttons, text="Pause", command=self.pause_resume_scheduled_queue)
+        # inside scheduled runs buttons
+        self.scheduled_buttons_spacer = tk.Label(self.scheduled_runs_buttons, text="")
+        self.pause_button = tk.Button(self.scheduled_runs_buttons, text="Pause", command=self.pause_resume_scheduled_queue, width=12)
         self.clear_selected_button = tk.Button(self.scheduled_runs_buttons, text="Clear Selected", command=self.clear_selected_runs)
         self.clear_all_button = tk.Button(self.scheduled_runs_buttons, text="Clear All", command=self.clear_all_runs)
-        self.pause_button.pack()
-        self.clear_selected_button.pack()
-        self.clear_all_button.pack()
+
+        self.scheduled_buttons_spacer.pack()
+        self.pause_button.pack(fill="x")
+        self.clear_selected_button.pack(fill="x")
+        self.clear_all_button.pack(fill="x")
+
+        # inside scheduled runs inner frame
+        self.temp_label_3 = tk.Label(self.scheduled_runs_inner, text="")
+        self.temp_label_4 = tk.Label(self.scheduled_runs_inner, text="")
+
+        self.temp_label_3.pack()
+        self.temp_label_4.pack()
+
+
 
         # ms headers 
         self.ms_current_headers = tk.Frame(self.current_run_inner)
@@ -592,27 +627,38 @@ class Scheduled_Queue(tk.Frame,):
         self.current_headers = None
         self.current_specs = None
 
+
+        self.update_scheduled_queue_display()
+
+    def add_entry_headers(self):
+        '''
+        This method uses the pandas objects found
+        '''
+        pass
     
         
-    def update_scheduled_queue_display(self, queue_type):
+    def update_scheduled_queue_display(self):
+
+        queue_type = self.queue_type
+        queue_type = "Sample Prep"  #override for testing purposes
 
         if queue_type == "Sample Prep":
-            self.run_type.set("Sample Preparation")
+            self.queue_type_string.set("Sample Preparation")
             # forget other displays 
             # pack sample prep display
             
         elif queue_type == "Mass Spec":
-            self.run_type.set("LC-MS")
+            self.queue_type_string.set("LC-MS")
             # forget other displays 
             # pack mass spec display
  
         elif queue_type == "Fractionation":
-            self.run_type.set("Fractionation")
+            self.queue_type_string.set("Fractionation")
             # forget other displays 
             # pack fractionation  display
 
         else:
-            self.run_type.set("Nothing in the Active Queue")
+            self.queue_type_string.set("Nothing in the Active Queue")
             # forget all displays
             
 
@@ -671,7 +717,6 @@ class MS_Queue_Row_Inputs(tk.Frame,):
     '''
     def __init__(self, master_frame, coordinator):
         super().__init__(master_frame)
-        self.master_frame: tk.Frame = master_frame
         self.coordinator = coordinator
         
         self.stage = tk.StringVar()
