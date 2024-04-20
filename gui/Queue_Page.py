@@ -8,6 +8,9 @@ import pandas as pd
 from Classes.coordinator import Coordinator
 
 STANDARD_ROW_HEIGHT = 100
+SP_HEADERS = ["Method"]
+MS_HEADERS = ["Stage", "Wellplate", "Well", "Method"]
+FRAC_HEADERS = ["Stage", "Wellplate", "Sample Wells", "Elution Wells", "Method"]
 
 class Queue_Gui(tk.Toplevel,):
 
@@ -158,7 +161,7 @@ class Queue_Gui(tk.Toplevel,):
 
         elif page_type == "Mass Spec":
             # package MS queue
-            self.ms_queue_to_schedule = pd.DataFrame({"Stage": [], "Wellplate": [], "Well": [], "Method": []})
+            self.ms_queue_to_schedule = pd.DataFrame({MS_HEADERS[0]: [], MS_HEADERS[1]: [], MS_HEADERS[2]: [], MS_HEADERS[3]: []})
             for entry in self.handler.ms_queue[1:]:
                 ms_inputs: MS_Queue_Row_Inputs = entry
             
@@ -168,7 +171,7 @@ class Queue_Gui(tk.Toplevel,):
         
         elif page_type == "Fractionation":
             # package Frac queue
-            self.frac_queue_to_schedule = pd.DataFrame({"Stage": [], "Wellplate": [], "Sample Wells": [], "Elution Wells": [], "Method": []})
+            self.frac_queue_to_schedule = pd.DataFrame({FRAC_HEADERS[0]: [], FRAC_HEADERS[1]: [], FRAC_HEADERS[2]: [], FRAC_HEADERS[3]: [], FRAC_HEADERS[4]: []})
             for row, entry in enumerate(self.handler.frac_queue, 1):
                 frac_inputs: Frac_Queue_Row_Inputs = self.handler.frac_queue[row]
                 temp_list = [frac_inputs.stage.get(), frac_inputs.plate.get(), frac_inputs.pool_wells.get(), frac_inputs.method.get(), frac_inputs.target_well.get()]
@@ -190,6 +193,7 @@ class Queue_Gui(tk.Toplevel,):
         if not self.coordinator.myReader.running:
             compiled_queue = self.compile_queue()
             self.scheduled_queue_frame.queue_type = new_queue_type
+            self.scheduled_queue_frame.update_scheduled_queue_display()
         elif (new_queue_type == self.scheduled_queue_frame.queue_type):
             compiled_queue = self.compile_queue()
         else:
@@ -313,21 +317,21 @@ class Queue_Handler:
         self.add_row.pack(side=tk.LEFT)
 
         # MS queue headers
-        self.ms_stage_label = tk.StringVar(self.ms_queue_header, value="Stage")
-        self.ms_wellplate_label = tk.StringVar(self.ms_queue_header, value="Wellplate")
-        self.ms_sample_label = tk.StringVar(self.ms_queue_header, value="Sample Well")
-        self.ms_method_label = tk.StringVar(self.ms_queue_header, value="Method Path")
+        self.ms_stage_label = tk.StringVar(self.ms_queue_header, value=MS_HEADERS[0])
+        self.ms_wellplate_label = tk.StringVar(self.ms_queue_header, value=MS_HEADERS[1])
+        self.ms_sample_label = tk.StringVar(self.ms_queue_header, value=MS_HEADERS[2])
+        self.ms_method_label = tk.StringVar(self.ms_queue_header, value=MS_HEADERS[3])
         tk.Entry(self.ms_queue_header, textvariable=self.ms_stage_label).pack(side='left')
         tk.Entry(self.ms_queue_header, textvariable=self.ms_wellplate_label).pack(side='left')
         tk.Entry(self.ms_queue_header, textvariable=self.ms_sample_label).pack(side='left')
         tk.Entry(self.ms_queue_header, textvariable=self.ms_method_label).pack(expand=True, fill="x", side='left')
 
         # fractionation queue headers
-        self.frac_stage_label = tk.StringVar(self.frac_queue_header, value="Stage")
-        self.frac_wellplate_label = tk.StringVar(self.frac_queue_header, value="Wellplate")
-        self.frac_sample_label = tk.StringVar(self.frac_queue_header, value="Sample Wells")
-        self.frac_elute_label = tk.StringVar(self.frac_queue_header, value="Elution Wells")
-        self.frac_method_label = tk.StringVar(self.frac_queue_header, value="Method Path")
+        self.frac_stage_label = tk.StringVar(self.frac_queue_header, value=FRAC_HEADERS[0])
+        self.frac_wellplate_label = tk.StringVar(self.frac_queue_header, value=FRAC_HEADERS[1])
+        self.frac_sample_label = tk.StringVar(self.frac_queue_header, value=FRAC_HEADERS[2])
+        self.frac_elute_label = tk.StringVar(self.frac_queue_header, value=FRAC_HEADERS[3])
+        self.frac_method_label = tk.StringVar(self.frac_queue_header, value=FRAC_HEADERS[4])
         tk.Entry(self.frac_queue_header, textvariable=self.frac_stage_label).pack(side='left')
         tk.Entry(self.frac_queue_header, textvariable=self.frac_wellplate_label).pack(side='left')
         tk.Entry(self.frac_queue_header, textvariable=self.frac_sample_label).pack(side='left')
@@ -505,18 +509,6 @@ class Queue_Handler:
     # functinos for active que display
 
     
-class Sample_Prep_Frame(tk.Frame,):
-    '''
-    This class allows the user to select and schedule a sample preparation method
-    '''
-    def __init__(self, master_frame):
-        super().__init__(master_frame)
-
-        self.stage = tk.StringVar()
-        self.stage_box = tk.Entry(self, textvariable=self.stage)
-        self.stage_box.pack()
-
-
 class Scheduled_Queue(tk.Frame,):
     '''
     This class contains and displays the inputs needed for each protocol in the queue.
@@ -540,7 +532,7 @@ class Scheduled_Queue(tk.Frame,):
 
 
         # inside type frame
-        self.type_label = tk.Label(self.type_frame, textvariable=self.queue_type_string, font=(25))
+        self.type_label = tk.Label(self.type_frame, textvariable=self.queue_type_string, font=(40))
         self.type_label.pack(side="left", fill="x")
 
 
@@ -562,11 +554,8 @@ class Scheduled_Queue(tk.Frame,):
         self.stop_button.pack()
 
         # inside current run inner frame
-        self.temp_label_1 = tk.Label(self.current_run_inner, text="")
-        self.temp_label_2 = tk.Label(self.current_run_inner, text="")
-
-        self.temp_label_1.pack()
-        self.temp_label_2.pack()
+        self.space_label_1 = tk.Label(self.current_run_inner, text="")
+        self.space_label_2 = tk.Label(self.current_run_inner, text="")
 
 
 
@@ -590,42 +579,37 @@ class Scheduled_Queue(tk.Frame,):
         self.clear_selected_button.pack(fill="x")
         self.clear_all_button.pack(fill="x")
 
-        # inside scheduled runs inner frame
-        self.temp_label_3 = tk.Label(self.scheduled_runs_inner, text="")
-        self.temp_label_4 = tk.Label(self.scheduled_runs_inner, text="")
-
-        self.temp_label_3.pack()
-        self.temp_label_4.pack()
-
-
+        # sample prep header
+        self.sp_current_headers = Sample_Prep_Inputs(self.current_run_inner, self.coordinator)
+        self.sp_current_headers.method.set(MS_HEADERS[0])
 
         # ms headers 
-        self.ms_current_headers = tk.Frame(self.current_run_inner)
-        self.ms_scheduled_headers = tk.Frame(self.current_run_inner)
+        self.ms_current_headers = MS_Queue_Row_Inputs(self.current_run_inner, self.coordinator)
+        self.ms_current_headers.stage.set(MS_HEADERS[0])
+        self.ms_current_headers.plate.set(MS_HEADERS[1])
+        self.ms_current_headers.well.set(MS_HEADERS[2])
+        self.ms_current_headers.method.set(MS_HEADERS[3])
 
-        # MS Headers
-        self.ms_stage_label_1 = tk.Entry(self.ms_current_headers, textvariable="Stage")
-        self.ms_stage_label_1.pack(side='left')
-        self.ms_wellplate_label_1 = tk.Entry(self.ms_current_headers, textvariable="Wellplate")
-        self.ms_wellplate_label_1.pack(side='left')
-        self.ms_sample_label_1 = tk.Entry(self.ms_current_headers, textvariable="Sample Well")
-        self.ms_sample_label_1.pack(side='left')
-        self.ms_method_label_1 = tk.Entry(self.ms_current_headers, textvariable="Method")
-        self.ms_method_label_1.pack(expand=True, fill="x", side='left')
+        self.ms_scheduled_headers = MS_Queue_Row_Inputs(self.scheduled_runs_inner, self.coordinator)
+        self.ms_scheduled_headers.stage.set(MS_HEADERS[0])
+        self.ms_scheduled_headers.plate.set(MS_HEADERS[1])
+        self.ms_scheduled_headers.well.set(MS_HEADERS[2])
+        self.ms_scheduled_headers.method.set(MS_HEADERS[3])
 
-        self.ms_stage_label_2 = tk.Entry(self.ms_current_headers, textvariable="Stage")
-        self.ms_stage_label_2.pack(side='left')
-        self.ms_wellplate_label_2 = tk.Entry(self.ms_current_headers, textvariable="Wellplate")
-        self.ms_wellplate_label_2.pack(side='left')
-        self.ms_sample_label_2 = tk.Entry(self.ms_current_headers, textvariable="Sample Well")
-        self.ms_sample_label_2.pack(side='left')
-        self.ms_method_label_2 = tk.Entry(self.ms_current_headers, textvariable="Method")
-        self.ms_method_label_2.pack(expand=True, fill="x", side='left')
-
-
-        # add 
-        self.current_headers = None
-        self.current_specs = None
+        # frac headers 
+        self.frac_current_headers = Frac_Queue_Row_Inputs(self.current_run_inner, self.coordinator)
+        self.frac_current_headers.stage.set(FRAC_HEADERS[0])
+        self.frac_current_headers.plate.set(FRAC_HEADERS[1])
+        self.frac_current_headers.sample_wells.set(FRAC_HEADERS[2])
+        self.frac_current_headers.elution_wells.set(FRAC_HEADERS[3])
+        self.frac_current_headers.method.set(FRAC_HEADERS[4])
+        
+        self.frac_scheduled_headers = Frac_Queue_Row_Inputs(self.scheduled_runs_inner, self.coordinator)
+        self.frac_scheduled_headers.stage.set(FRAC_HEADERS[0])
+        self.frac_scheduled_headers.plate.set(FRAC_HEADERS[1])
+        self.frac_scheduled_headers.sample_wells.set(FRAC_HEADERS[2])
+        self.frac_scheduled_headers.elution_wells.set(FRAC_HEADERS[3])
+        self.frac_scheduled_headers.method.set(FRAC_HEADERS[4])
 
 
         self.update_scheduled_queue_display()
@@ -636,37 +620,80 @@ class Scheduled_Queue(tk.Frame,):
         '''
         pass
     
+    def display_current_run(self):
+        '''
+        This method populates the current run frame when a method is running 
+        '''
+        pass
+
+    def clear_current_run_display(self):
+        '''
+        This method clears the current run frame when a run has finished
+        '''
+        pass
+
+    def display_scheduled_runs(self):
+        '''
+        This method populates the scheduled runs frame when there are runs in the scheduled queue
+        '''
+        pass
+
+    def clear_scheduled_runs_display(self):
+        '''
+        This method removes all 
+        '''
+        pass
         
     def update_scheduled_queue_display(self):
 
         queue_type = self.queue_type
-        queue_type = "Sample Prep"  #override for testing purposes
+        queue_type = "Mass Spec"  #override for testing purposes
 
         if queue_type == "Sample Prep":
             self.queue_type_string.set("Sample Preparation")
-            # forget other displays 
+            self.ms_current_headers.pack_forget()
+            self.ms_scheduled_headers.pack_forget()
+            self.frac_current_headers.pack_forget()
+            self.frac_scheduled_headers.pack_forget() 
             # pack sample prep display
             
         elif queue_type == "Mass Spec":
-            self.queue_type_string.set("LC-MS")
-            # forget other displays 
-            # pack mass spec display
+            self.queue_type_string.set("Mass Spectrometry")
+            # forget other displays
+            self.frac_current_headers.pack_forget()
+            self.frac_scheduled_headers.pack_forget()
+            self.space_label_1.pack_forget()
+            self.space_label_2.pack_forget()
+
+            self.ms_current_headers.pack()
+            self.ms_scheduled_headers.pack()
+            
  
         elif queue_type == "Fractionation":
             self.queue_type_string.set("Fractionation")
-            # forget other displays 
-            # pack fractionation  display
+            # forget other displays
+            self.ms_current_headers.pack_forget()
+            self.ms_scheduled_headers.pack_forget()
+            self.space_label_1.pack_forget()
+            self.space_label_2.pack_forget()
+
+            self.frac_current_headers.pack()
+            self.frac_scheduled_headers.pack()
 
         else:
             self.queue_type_string.set("Nothing in the Active Queue")
-            # forget all displays
+            self.ms_current_headers.pack_forget()
+            self.ms_scheduled_headers.pack_forget()
+            self.frac_current_headers.pack_forget()
+            self.frac_scheduled_headers.pack_forget()
+
+            self.space_label_1.pack()
+            self.space_label_2.pack()
             
 
     # functions for active queue handling
     
     def watch_status(self):
-
-        time.sleep(5)
         
         while self.coordinator.myReader.running:
             time.sleep(1)
@@ -674,7 +701,8 @@ class Scheduled_Queue(tk.Frame,):
                 self.update_scheduled_queue_display()
                 self.coordinator.myReader.queue_changed = False
             if not self.coordinator.myReader.running:
-                self.update_scheduled_queue_display("Done")  
+                self.queue_type = None
+                self.update_scheduled_queue_display()  
 
     def stop_immediately(self):
         '''
@@ -708,6 +736,35 @@ class Scheduled_Queue(tk.Frame,):
         self.coordinator.myReader.scheduled_queue = None
         self.coordinator.myReader.resume_scheduled_queue()
         print("Clear all - This should be working now.")
+
+
+class Sample_Prep_Inputs(tk.Frame,):
+    '''
+    This class contains and displays the method for a sample prep protocol.
+    It is designed to match the formating of the Mass Spec and Fractionation queues. 
+    '''
+    def __init__(self, master_frame, coordinator):
+        super().__init__(master_frame)
+        self.coordinator = coordinator
+        
+        self.method = tk.StringVar()
+
+        self.method_box = tk.Entry(self, textvariable=self.method)
+
+        self.method_box.pack(expand=True, fill="x", side="left")
+        
+        self.method_box.bind('<Double-Button-1>', lambda x: self.select_method(x))
+
+
+    def select_method(self, event):
+        filetypes = (
+            ('JSON files', '*.json'),
+            ('All files', '*')
+        )
+
+        file_path = fd.askopenfilename(title='Choose a Method', initialdir='methods', filetypes=filetypes)
+        self.method.set(file_path)
+        # self.handler.ms_default_file_path = file_path #README: Make it so method is default populated
 
 
 class MS_Queue_Row_Inputs(tk.Frame,):
