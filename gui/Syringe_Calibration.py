@@ -26,9 +26,9 @@ class Syringe_Calibration(tk.Toplevel,):
         # buttons to start and stop joystick
         self.joyBar = tk.Frame(self)
         self.joyBar.pack(side=tk.TOP)
-        self.joyButton = tk.Button(self.joyBar,text="Start Joystick",command=lambda: self.start_joystick(),justify=tk.LEFT)
+        self.joyButton = tk.Button(self.joyBar, text="Start Joystick", command=lambda: self.start_joystick(), justify=tk.LEFT)
         self.joyButton.grid(row=0,column=1)
-        self.killButton = tk.Button(self.joyBar,text="Kill Joystick",command=lambda: self.kill_joystick(),justify=tk.LEFT)
+        self.killButton = tk.Button(self.joyBar, text="Kill Joystick", command=lambda: self.kill_joystick(), justify=tk.LEFT)
         self.killButton.grid(row=0,column=2)
         self.killButton["state"] = "disabled"
 
@@ -36,15 +36,15 @@ class Syringe_Calibration(tk.Toplevel,):
         self.setterBar = tk.Frame(self)
         self.setterBar.pack(side=tk.TOP)
 
-        self.home_button = tk.Button(self.setterBar,text="Home Syringe",command=lambda: self.home_syringe())
-        self.max_button = tk.Button(self.setterBar,text="Set Max",command=lambda: self.SetMax())
-        self.rest_button = tk.Button(self.setterBar,text="Set Rest",command=lambda: self.SetRest())
-        self.min_button = tk.Button(self.setterBar,text="Set Min",command=lambda: self.SetMin())
+        self.home_button = tk.Button(self.setterBar, text="Home Syringe", command=lambda: self.home_syringe())
+        self.max_button = tk.Button(self.setterBar, text="Set Max", command=lambda: self.SetMax())
+        self.rest_button = tk.Button(self.setterBar, text="Set Rest", command=lambda: self.SetRest())
+        self.min_button = tk.Button(self.setterBar, text="Set Min", command=lambda: self.SetMin())
 
-        self.home_button.grid(row=0,column=0)
-        self.max_button.grid(row=0,column=1)
-        self.rest_button.grid(row=0,column=2)
-        self.min_button.grid(row=0,column=3)
+        self.home_button.grid(row=0, column=0)
+        self.max_button.grid(row=0, column=1)
+        self.rest_button.grid(row=0, column=2)
+        self.min_button.grid(row=0, column=3)
 
         # specify speed and volume then click buttons for aspirate and dispense
         self.syringe_control = tk.Frame(self)
@@ -53,20 +53,20 @@ class Syringe_Calibration(tk.Toplevel,):
         self.volume_var = tk.StringVar(self)  # nL
         self.volume_var.set("3500")
         self.volume_label = tk.Label(self.syringe_control, text="Volume (nL):")
-        self.volume = tk.Entry(self.syringe_control, textvariable=self.target_volume)
+        self.volume = tk.Entry(self.syringe_control, textvariable=self.volume_var)
 
         self.speed_var = tk.StringVar(self)  # nL per min
         self.speed_var.set("3000")
         self.speed_label = tk.Label(self.syringe_control, text="Speed (nL/min)")
-        self.speed = tk.Entry(self.syringe_control, textvariable=self.syringe_speed)
+        self.speed = tk.Entry(self.syringe_control, textvariable=self.speed_var)
 
         self.volume_label.grid(row=0, column=0)
         self.speed_label.grid(row=0, column=1)
         self.volume.grid(row=1, column=0)
         self.speed.grid(row=1, column=1)
 
-        self.aspirate_button = tk.Button(self.syringe_control,text="Aspirate",command=lambda: self.Aspirate())
-        self.dispense_button = tk.Button(self.syringe_control,text="Dispense",command=lambda: self.Dispense())
+        self.aspirate_button = tk.Button(self.syringe_control, text="Aspirate",command=lambda: self.Aspirate())
+        self.dispense_button = tk.Button(self.syringe_control, text="Dispense",command=lambda: self.Dispense())
         self.aspirate_button.grid(row=0,column=2)
         self.dispense_button.grid(row=1,column=2)
 
