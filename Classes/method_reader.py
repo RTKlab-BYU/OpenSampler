@@ -1,4 +1,4 @@
-from Classes.stopIndicator import StopIndicator
+
 
 import time
 import logging
@@ -14,7 +14,6 @@ class MethodReader:  #should call read from coordinator file
     def __init__(self, myCoordinator, queue): # initialize all variables and store needed data
         # you may need to also pass in a coordinator object to access the function names 
         self.myCoordinator = myCoordinator # this has the functions that move the motors
-        self.myStopIndicator = StopIndicator() # holds values for stop values
         # self.emptyTimingValues = ScriptTimingValues(0, 0, 0, 0, 0) # make object with zero values to fill array at start
 
         self.methodIndex = 0 # this lets you know what number sample you are on. 
@@ -26,8 +25,11 @@ class MethodReader:  #should call read from coordinator file
         self.queueCompletionDate = 0 # holds date for when the queue will be finished
         self.running = False
         self.queue_changed = True
-        self.current_method = None
+        self.current_run = None
         self.scheduled_queue = None
+
+        self.stop_run = False
+        self.paused = False
         
         # *note: gradient^-1 indicates the gradient time from the previous sample. SPE^-2 would be the SPE time from two samples ago
 
@@ -172,7 +174,21 @@ class MethodReader:  #should call read from coordinator file
             
             return True #allows code to continue
 
-    def load_sample(self):  # reads and calls commands from method to load next sample
+    def reset(self):
+        self.stop_run = False
+        self.paused = False
+
+    def stop_current_run(self):
+        print("Stopping current run...")
+        self.stop_run = True
+
+    def pause_scheduled_queue(self):
+        self.paused = True
+
+    def resume_scheduled_queue(self):
+        self.paused = False
+    
+    def run_next_sample(self):  # reads and calls commands from method to load next sample
         """
             Args:
                 well ([str]): [holds the location of the sample we want to load. e.g., 'P1c4']
@@ -189,9 +205,10 @@ class MethodReader:  #should call read from coordinator file
 
         #loop for all commands in json method
         for command in obj['commands']:
-            if self.myStopIndicator.hardStop == True: # check to see if we should stop loading
-                self.myStopIndicator.pause()
-                break # if hardStop then we break to loop and stop loading
+            if self.stop_run == True: # check to see if we should stop loading
+                self.pause_scheduled_queue()
+                print("Current run has been halted. Scheduled queue has been paused.")
+                break # if stop_run then we break out of the command execution loop
 
             
             params = command['parameters'] # save command parameters in a list
@@ -201,7 +218,6 @@ class MethodReader:  #should call read from coordinator file
             getattr(self.myCoordinator.actionOptions, command['type'])(*params)
 
         logging.info("Loading Sample '%s': Complete!") # print that the sample is done being loaded
-     
 
     def run_scheduled_methods(self): #main function: handles looping and threads
         """
@@ -210,7 +226,7 @@ class MethodReader:  #should call read from coordinator file
         print("") #Add line to make output easier to read
         
         self.methodIndex = 0 # used to track the index of the wellList to get corresponding method. reset for every queue
-        self.myStopIndicator.reset() # reset the stop indicators back to false for every queue
+        self.reset() # reset the stop indicators back to false for every queue
         
         #loop for all wells. this may also include wellplate_wells for QC loading
         self.running = True
@@ -220,10 +236,12 @@ class MethodReader:  #should call read from coordinator file
             # self.queue_changed = True
             
         
-            while self.myStopIndicator.paused:
-                if self.running == False:
+            while self.paused:
+                if not self.running:
                     # Add any end of run commands if not elsewhere
                     self.mySample = None
+                    print("\n     DONE!!!")
+                    print("\n----------------------------------------------------------\n") #white space for output readibility
                     return
                 else:
                     continue
@@ -240,7 +258,7 @@ class MethodReader:  #should call read from coordinator file
 
                 logging.info(f'Running sample {sample_count} with {self.mySample["Method"]}') # print message stating that a method has begun
                 print(f"\nRunning Sample {sample_count}. \nSamples remaining in scheduled queue: {int(self.scheduled_queue.shape[0])}")
-                self.load_sample() # run current self.mySample
+                self.run_next_sample() # run current self.mySample
                 print(f"\nRun for sample {sample_count} completed.")
                 self.mySample = None
 
@@ -249,24 +267,20 @@ class MethodReader:  #should call read from coordinator file
                 self.mySample = None
                 self.running = False
 
+                print("\n     DONE!!!")
+                print("\n----------------------------------------------------------\n") #white space for output readibility
             
-            print("\n----------------------------------------------------------\n") #white space for output readibility
             
-            if self.myStopIndicator.stopLoad or self.myStopIndicator.hardStop:
-                print("No more samples will be loaded. Either stopLoad or hardStop was called")
-                break # stop loading more samples if either is set to true
+            
+            
             
         
 
         # self.get_method_times(self.methodList[self.methodIndex])
-        #finish run: stops whether hard stop or load is done
-        if self.myStopIndicator.hardStop:
-            print("hardStop Called. All function calls have stopped. Finish up routine Skipped")
-        else:
-            print("stopLoad Called. Finish up routine will be executed and then program will end")
+        
+        
 
-        print("")
-        print("     DONE!!!")
+        
 
             
         

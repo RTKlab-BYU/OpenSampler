@@ -174,12 +174,12 @@ class ProtocolActions:
         self.myCoordinator.myModules.myStages[stage].move_syringe_to(rest_position, speed)
 
     def wait(self, seconds):
-        # pauses system, but checks for hardStop 
+        # pauses system, but checks for stop_run
         t = time.localtime()
         current_time = time.strftime("%H:%M:%S", t)
         print(f"{current_time}: Wait for {int(seconds)} seconds")
         seconds_waited = 0
-        while seconds_waited < int(seconds) and not self.myCoordinator.myReader.myStopIndicator.hardStop == True:
+        while seconds_waited < int(seconds) and not self.myCoordinator.myReader.stop_run == True:
             time.sleep(1)
             seconds_waited = seconds_waited + 1
 
@@ -204,8 +204,8 @@ class ProtocolActions:
         
         #loop for all commands in json script
         for command in obj['commands']:
-            if self.myCoordinator.myReader.myStopIndicator.hardStop == True: # check to see if we should stop loading
-                break # if hardStop then we break to loop and stop loading
+            if self.myCoordinator.myReader.stop_run == True: # check to see if we should stop loading
+                break # if stop_run then we break to loop and stop loading
 
             
             params = command['parameters'] # save command parameters in a list
@@ -236,7 +236,7 @@ class ProtocolActions:
         wait_to_analyze_timer = 0
         analyze_to_wait_timer = 0
         MS_Ready = True
-        if not self.myCoordinator.myReader.myStopIndicator.hardStop == True:
+        if not self.myCoordinator.myReader.stop_run == True:
             self.myCoordinator.myLogger.info("THREAD: self.myCoordinator.MS_contact_closure()")
             while not(self.myCoordinator.myModules.myPorts[int(Port)].getPinState(Input)):
              #   self.ms_indicator
@@ -267,7 +267,7 @@ class ProtocolActions:
           #  return "Skipped MS Trigger"
 
     def LC_contact_closure(self, Relay = LC_RELAY):
-        if not self.myCoordinator.myReader.myStopIndicator.hardStop == True:
+        if not self.myCoordinator.myReader.stop_run == True:
             self.myCoordinator.myLogger.info("THREAD: self.myCoordinator.LC_contact_closure()")  
             self.myCoordinator.myModules.myRelays[int(Relay)].relay_on() # you need to pass in the number relay you want to switch
                                             # in this case the LC is connected to relay 2
@@ -295,7 +295,7 @@ class ProtocolActions:
        # print((Logic))
         while (self.myCoordinator.myModules.myPorts[int(Port)].getPinState(Input) != Logic):
             time.sleep(1)
-            if self.myCoordinator.myReader.myStopIndicator.hardStop == True:
+            if self.myCoordinator.myReader.stop_run == True:
                 break
         #print("Contact Closure")
 
