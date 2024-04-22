@@ -151,10 +151,10 @@ class Syringe_Calibration(tk.Toplevel,):
         self.update_syringe_states()
 
     def set_syringe_speed(self, speed):
-        self.syringe_speed = speed
+        self.speed_var = speed
 
     def set_target_volume(self, volume):
-        self.target_volume = volume
+        self.volume_var = volume
 
     def update_syringe_states(self):
         if self.min_set and self.max_set and self.rest_set:
@@ -205,15 +205,15 @@ class Syringe_Calibration(tk.Toplevel,):
     def Aspirate(self):
         print(f"stage index: {self.selected_stage}")
         print(f"stage side: {self.coordinator.myModules.myStages[self.selected_stage].side}")
-        self.coordinator.myLogger.info(f"Aspirating {self.target_volume.get()} nL at speed {self.syringe_speed.get()} nL/min")
-        self.coordinator.myModules.myStages[self.selected_stage].step_syringe_motor_up(volume = float(self.target_volume.get()), speed = float(self.syringe_speed.get()))
+        self.coordinator.myLogger.info(f"Aspirating {self.volume_var.get()} nL at speed {self.speed_var.get()} nL/min")
+        self.coordinator.myModules.myStages[self.selected_stage].step_syringe_motor_up(volume = float(self.volume_var.get()), speed = float(self.speed_var.get()))
         self.update_syringe_states()
 
     def Dispense(self):
         print(f"stage index: {self.selected_stage}")
         print(f"stage side: {self.coordinator.myModules.myStages[self.selected_stage].side}")
-        self.coordinator.myLogger.info(f"Aspirating {self.target_volume.get()} nL at speed {self.syringe_speed.get()} nL/min")
-        self.coordinator.myModules.myStages[self.selected_stage].step_syringe_motor_down(volume = float(self.target_volume.get()), speed = float(self.syringe_speed.get()))
+        self.coordinator.myLogger.info(f"Aspirating {self.volume_var.get()} nL at speed {self.speed_var.get()} nL/min")
+        self.coordinator.myModules.myStages[self.selected_stage].step_syringe_motor_down(volume = float(self.volume_var.get()), speed = float(self.speed_var.get()))
         self.update_syringe_states()
 
     
