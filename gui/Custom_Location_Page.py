@@ -91,8 +91,11 @@ class Custom_Location(tk.Toplevel,):
 
     # sets flag to false, then waits until position_thread has ended to proceed
     def stop_updating_positions(self):
+        print("Thread is live: ", self.updating_positions)
         self.updating_positions = False
+        print("Thread is live: ", self.updating_positions)
         while self.position_thread.is_alive():
+            print("Thread is live: ", self.updating_positions)
             print("I'm not dead yet!")
             time.sleep(1)
     
