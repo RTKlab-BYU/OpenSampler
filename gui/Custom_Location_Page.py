@@ -2,6 +2,9 @@ import tkinter as tk
 import threading
 import time
 
+from Classes.coordinator import Coordinator
+from Classes.module_files.labware import Labware
+
 class Custom_Location(tk.Toplevel,):
     def __init__(self, coordinator, selected_stage):
         tk.Toplevel.__init__(self)    
@@ -9,14 +12,15 @@ class Custom_Location(tk.Toplevel,):
         self.title("Calibrate New Location")
         self.geometry("500x500")
 
-        self.coordinator = coordinator
-        self.selected_stage = selected_stage
+        self.coordinator: Coordinator = coordinator
+        self.selected_stage = self.coordinator.myModules.myStages[selected_stage]
+        self.my_labware: Labware = self.coordinator.myModules.myStages[selected_stage].myLabware
 
         self.joyBar = tk.Frame(self)
         self.joyBar.pack(side=tk.TOP)
-        self.joyButton = tk.Button(self.joyBar,text="Start Joystick",command=lambda: self.StartJoystick(self.coordinator, self.selected_stage),justify=tk.LEFT)
+        self.joyButton = tk.Button(self.joyBar,text="Start Joystick",command=lambda: self.StartJoystick(selected_stage),justify=tk.LEFT)
         self.joyButton.grid(row=0,column=1)
-        self.killButton = tk.Button(self.joyBar,text="Kill Joystick",command=lambda: self.KillJoystick(self.coordinator),justify=tk.LEFT)
+        self.killButton = tk.Button(self.joyBar,text="Kill Joystick",command=lambda: self.KillJoystick(),justify=tk.LEFT)
         self.killButton.grid(row=0,column=2)
         self.killButton["state"] = "disabled"
 
@@ -29,7 +33,7 @@ class Custom_Location(tk.Toplevel,):
         self.LocationFrame = tk.Frame(self)
         self.LocationFrame.pack(side=tk.TOP)
 
-        x,y,z = coordinator.myModules.myStages[selected_stage].get_motor_coordinates()
+        x,y,z = self.coordinator.myModules.myStages[selected_stage].get_motor_coordinates()
 
         self.x_var = tk.DoubleVar(self,value=x)
         self.y_var = tk.DoubleVar(self,value=y)
@@ -53,27 +57,35 @@ class Custom_Location(tk.Toplevel,):
         self.y_var.set(y)
         self.z_var.set(z)
 
-        self.save_button = tk.Button(self,text="Save Named Location",command=lambda: self.CreateNickname(coordinator, selected_stage),justify=tk.LEFT)
+        self.save_button = tk.Button(self,text="Save Named Location",command=lambda: self.CreateNickname(),justify=tk.LEFT)
         self.save_button.pack(side=tk.TOP)
+
+        self.position_thread = threading.Thread(target=self.update_positions)
 
         self.protocol('WM_DELETE_WINDOW', self.on_closing)
 
-    def CreateNickname(self, coordinator, selected_stage: int):
+    def CreateNickname(self):
         location_name = self.newNickname.get()
-        location: tuple = coordinator.myModules.myStages[selected_stage].get_motor_coordinates()
-        coordinator.myModules.myStages[selected_stage].my_locware.add_custom_location(location_name, location)
+        location: tuple = self.selected_stage.get_motor_coordinates()
+        self.my_labware.add_custom_location(location_name, location)
         self.on_closing()
 
     # this method is run inside a thread
     def update_positions(self):
         self.updating_positions = True
+        cnt =0
 
         while self.updating_positions:
-            x,y,z = self.coordinator.myModules.myStages[self.selected_stage].get_motor_coordinates()
+            x,y,z = self.selected_stage.get_motor_coordinates()
             self.x_var.set(x)
             self.y_var.set(y)
             self.z_var.set(z)
             time.sleep(1)
+            cnt += 1
+            if cnt == 10:
+                cnt = 0
+                print("still updating: ",self.updating_positions)
+
 
     # sets flag to false, then waits until position_thread has ended to proceed
     def stop_updating_positions(self):
@@ -81,10 +93,10 @@ class Custom_Location(tk.Toplevel,):
         while self.position_thread.is_alive():
             pass
     
-    def StartJoystick(self):
+    def StartJoystick(self, selected_stage):
         self.position_thread = threading.Thread(target=self.update_positions)
         self.position_thread.start()
-        self.coordinator.start_joystick()
+        self.coordinator.start_joystick(selected_stage)
         self.killButton["state"] = "normal"
         self.joyButton["state"] = "disabled"
         
