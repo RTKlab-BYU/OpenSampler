@@ -80,18 +80,21 @@ class Custom_Location(tk.Toplevel,):
             self.x_var.set(x)
             self.y_var.set(y)
             self.z_var.set(z)
-            time.sleep(1)
             cnt += 1
             if cnt == 10:
                 cnt = 0
                 print("Thread is live: ", self.updating_positions)
+            time.sleep(1)
+
+        print("done with position thread")
 
 
     # sets flag to false, then waits until position_thread has ended to proceed
     def stop_updating_positions(self):
         self.updating_positions = False
         while self.position_thread.is_alive():
-            pass
+            print("I'm not dead yet!")
+            time.sleep(1)
     
     def start_joystick(self):
         print("checkpoint 1")
