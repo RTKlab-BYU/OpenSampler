@@ -463,10 +463,10 @@ class OT2_nanotrons_driver(SM):
 
         if self.side == LEFT:
             if(self.check_for_valid_move(move_pos, 'B')): # if the future position is a valid move 
-                self.move({'B': move_pos}, speed=self.check_speed(mm_per_s)) # move to the indicated position
+                self.move({'B': move_pos}, speed=mm_per_s) # move to the indicated position
         elif self.side == RIGHT:
             if(self.check_for_valid_move(move_pos, 'C')): # if the future position is a valid move 
-                self.move({'C': move_pos}, speed=self.check_speed(mm_per_s)) # move to the indicated position
+                self.move({'C': move_pos}, speed=mm_per_s) # move to the indicated position
         else:
             print("Side not recognized.")
 
