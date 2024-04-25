@@ -80,6 +80,7 @@ class Coordinator:
         #----------------------
     
         self.monitoring_joystick = False
+        self.updating_positions = False
 
         #----------------------
         #--------------------- Comment in/out quotation marks below to test GUI on own laptop --------------------
