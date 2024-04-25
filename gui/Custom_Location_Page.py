@@ -63,6 +63,7 @@ class Custom_Location(tk.Toplevel,):
         self.position_thread = threading.Thread(target=self.update_positions)
 
         self.protocol('WM_DELETE_WINDOW', self.on_closing)
+        self.updating_positions = False
 
     def CreateNickname(self):
         location_name = self.newNickname.get()
@@ -73,18 +74,19 @@ class Custom_Location(tk.Toplevel,):
     # this method is run inside a thread
     def update_positions(self):
         self.updating_positions = True
-        cnt = 0
+
 
         while self.updating_positions:
             x,y,z = self.coordinator.myModules.myStages[self.selected_stage].get_motor_coordinates()
             self.x_var.set(x)
             self.y_var.set(y)
             self.z_var.set(z)
-            cnt += 1
-            if cnt == 10:
-                cnt = 0
-                print("Thread is live: ", self.updating_positions)
+
             time.sleep(1)
+            print("I refuse to die!")
+            if not self.updating_positions:
+                print("Die!!!!")
+                break
 
         print("done with position thread")
 
@@ -94,10 +96,10 @@ class Custom_Location(tk.Toplevel,):
         print("Thread is live: ", self.updating_positions)
         self.updating_positions = False
         print("Thread is live: ", self.updating_positions)
-        while self.position_thread.is_alive():
-            print("Thread is live: ", self.updating_positions)
-            print("I'm not dead yet!")
-            time.sleep(1)
+        # while self.position_thread.is_alive():
+        #     print("Thread is live: ", self.updating_positions)
+        #     print("I'm not dead yet!")
+        #     time.sleep(1)
     
     def start_joystick(self):
         print("checkpoint 1")
