@@ -91,6 +91,13 @@ class Queue_Gui(tk.Toplevel,):
         self.RunButton = tk.Button(self.run_bar, text="Run Queue",command=lambda: self.schedule_queue(),justify=tk.LEFT)
         self.RunButton.grid(row=0, column=0)
 
+        # In sample prep frame
+        self.sp_run_button = tk.Button(self.sample_prep_frame, text="Run Method",command=lambda: self.schedule_queue(),justify=tk.LEFT)
+        self.sp_inputs = Sample_Prep_Inputs(self.sample_prep_frame)
+
+        self.sp_run_button.pack()
+        self.sp_inputs.pack()
+
         # initial button states
         self.RunButton["state"] =  "normal"
 
@@ -117,7 +124,7 @@ class Queue_Gui(tk.Toplevel,):
             self.upper_frame.pack_forget()
             self.queue_frame.pack_forget()
             self.scheduled_queue_frame.pack_forget()
-            self.sample_prep_frame.pack()
+            self.sample_prep_frame.pack(pady=50)
 
         elif page_type == "Mass Spec":
             self.sample_prep_frame.pack_forget()
@@ -340,8 +347,8 @@ class Queue_Handler:
 
         # Add an initial row to queues
         self.add_row_buttons(1)
-        self.ms_queue.insert(1, MS_Queue_Row_Inputs(self.ms_queue_frame, self.coordinator))
-        self.frac_queue.insert(1, Frac_Queue_Row_Inputs(self.frac_queue_frame, self.coordinator))
+        self.ms_queue.insert(1, MS_Queue_Row_Inputs(self.ms_queue_frame))
+        self.frac_queue.insert(1, Frac_Queue_Row_Inputs(self.frac_queue_frame))
 
 
     # Queue maker display functions
@@ -435,7 +442,7 @@ class Queue_Handler:
             self.update_grid()
 
     def add_row_buttons(self, index):
-        new_buttons = Queue_Row_Buttons(self.row_buttons_frame, self.coordinator, index, self)
+        new_buttons = Queue_Row_Buttons(self.row_buttons_frame, index, self)
         self.queue_row_buttons.append(new_buttons)
         new_buttons.pack()
         # new_buttons.config(height=STANDARD_ROW_HEIGHT)
@@ -452,9 +459,9 @@ class Queue_Handler:
         self.add_row_buttons(len(self.queue_row_buttons))
 
         if self.active_page == 'Mass Spec':
-            self.ms_queue.insert(buttons_index, MS_Queue_Row_Inputs(self.ms_queue_frame, self.coordinator))
+            self.ms_queue.insert(buttons_index, MS_Queue_Row_Inputs(self.ms_queue_frame))
         elif self.active_page == 'Fractionation':
-            self.frac_queue.insert(buttons_index, Frac_Queue_Row_Inputs(self.frac_queue_frame, self.coordinator))
+            self.frac_queue.insert(buttons_index, Frac_Queue_Row_Inputs(self.frac_queue_frame))
 
         self.update_grid()
 
@@ -580,31 +587,31 @@ class Scheduled_Queue(tk.Frame,):
         self.clear_all_button.pack(fill="x")
 
         # sample prep header
-        self.sp_current_headers = Sample_Prep_Inputs(self.current_run_inner, self.coordinator)
+        self.sp_current_headers = Sample_Prep_Inputs(self.current_run_inner)
         self.sp_current_headers.method.set(MS_HEADERS[0])
 
         # ms headers 
-        self.ms_current_headers = MS_Queue_Row_Inputs(self.current_run_inner, self.coordinator)
+        self.ms_current_headers = MS_Queue_Row_Inputs(self.current_run_inner)
         self.ms_current_headers.stage.set(MS_HEADERS[0])
         self.ms_current_headers.plate.set(MS_HEADERS[1])
         self.ms_current_headers.well.set(MS_HEADERS[2])
         self.ms_current_headers.method.set(MS_HEADERS[3])
 
-        self.ms_scheduled_headers = MS_Queue_Row_Inputs(self.scheduled_runs_inner, self.coordinator)
+        self.ms_scheduled_headers = MS_Queue_Row_Inputs(self.scheduled_runs_inner)
         self.ms_scheduled_headers.stage.set(MS_HEADERS[0])
         self.ms_scheduled_headers.plate.set(MS_HEADERS[1])
         self.ms_scheduled_headers.well.set(MS_HEADERS[2])
         self.ms_scheduled_headers.method.set(MS_HEADERS[3])
 
         # frac headers 
-        self.frac_current_headers = Frac_Queue_Row_Inputs(self.current_run_inner, self.coordinator)
+        self.frac_current_headers = Frac_Queue_Row_Inputs(self.current_run_inner)
         self.frac_current_headers.stage.set(FRAC_HEADERS[0])
         self.frac_current_headers.plate.set(FRAC_HEADERS[1])
         self.frac_current_headers.sample_wells.set(FRAC_HEADERS[2])
         self.frac_current_headers.elution_wells.set(FRAC_HEADERS[3])
         self.frac_current_headers.method.set(FRAC_HEADERS[4])
         
-        self.frac_scheduled_headers = Frac_Queue_Row_Inputs(self.scheduled_runs_inner, self.coordinator)
+        self.frac_scheduled_headers = Frac_Queue_Row_Inputs(self.scheduled_runs_inner)
         self.frac_scheduled_headers.stage.set(FRAC_HEADERS[0])
         self.frac_scheduled_headers.plate.set(FRAC_HEADERS[1])
         self.frac_scheduled_headers.sample_wells.set(FRAC_HEADERS[2])
@@ -743,14 +750,15 @@ class Sample_Prep_Inputs(tk.Frame,):
     This class contains and displays the method for a sample prep protocol.
     It is designed to match the formating of the Mass Spec and Fractionation queues. 
     '''
-    def __init__(self, master_frame, coordinator):
+    def __init__(self, master_frame):
         super().__init__(master_frame)
-        self.coordinator = coordinator
         
         self.method = tk.StringVar()
 
+        self.method_label = tk.Label(self, text="Method")
         self.method_box = tk.Entry(self, textvariable=self.method)
 
+        self.method_label.pack(side="left")
         self.method_box.pack(expand=True, fill="x", side="left")
         
         self.method_box.bind('<Double-Button-1>', lambda x: self.select_method(x))
@@ -772,9 +780,8 @@ class MS_Queue_Row_Inputs(tk.Frame,):
     This class contains and displays the inputs needed for each protocol in the queue.
     It assigns a row index to each instance in order to inform the affect those buttons have on the corresponding rows of inputs
     '''
-    def __init__(self, master_frame, coordinator):
+    def __init__(self, master_frame):
         super().__init__(master_frame)
-        self.coordinator = coordinator
         
         self.stage = tk.StringVar()
         self.plate = tk.StringVar()
@@ -812,9 +819,8 @@ class Frac_Queue_Row_Inputs(tk.Frame,):
     This class contains and displays the inputs needed for each protocol in the queue.
     It assigns a row index to each instance in order to inform the affect those buttons have on the corresponding rows of inputs
     '''
-    def __init__(self, master_frame, coordinator):
+    def __init__(self, master_frame):
         super().__init__(master_frame)
-        self.coordinator = coordinator
         
         self.stage = tk.StringVar()
         self.plate = tk.StringVar()
@@ -855,9 +861,8 @@ class Queue_Row_Buttons(tk.Frame,):
     Button rows do not need to move around as the inputs do, but the number of button rows should always match 
         the number of input rows.
     '''
-    def __init__(self, master_frame, coordinator, row_index, handler: Queue_Handler):
+    def __init__(self, master_frame, row_index, handler: Queue_Handler):
         super().__init__(master_frame)
-        self.coordinator = coordinator
         self.row = row_index
         self.handler = handler
 
