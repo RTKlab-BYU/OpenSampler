@@ -7,7 +7,14 @@ import pandas as pd
 
 
 '''
-
+This file handles the active que. 
+It verifies some aspects of proposed methods before adding them to the scheduled queue.
+It removes and executes the first entry in the scheduled queue until there are none.
+It monitors the current run for errors, and will end the run and pause the queue if one occurs.
+The current run can be interupted by the user, which automatically pauses the remaining queue.
+The scheduled que can be paused (and resumed) without interupting the current run.
+The scheduled que can be cleared (this will also not interupt the current run).
+These controls are operated from the Queue_Gui.
 '''
 
 class MethodReader:  # should call read from coordinator file
@@ -25,7 +32,7 @@ class MethodReader:  # should call read from coordinator file
         self.current_run
         self.stop_run = False
         self.paused = False
-        self.queue_changed = False
+        self.queue_changed = True
         
         
         
@@ -84,7 +91,6 @@ class MethodReader:  # should call read from coordinator file
         print("SUCCESS!", "\n")
         return True
 
-
     def verify(self, scheduled_methods):  # check excel file to make sure its format is valid, sets first gradient, estimate end time
         #method ([str]): [the name of the method used to prepare the sample at the well location. e.g., "qc.json"]
         
@@ -110,15 +116,17 @@ class MethodReader:  # should call read from coordinator file
         self.paused = False
 
     def stop_current_run(self):
-        print("Stopping current run...")
+        print("\nStopping current run...\n")
         self.stop_run = True
 
     def pause_scheduled_queue(self):
         self.paused = True
+        print("\nScheduled queue has been paused.")
 
     def resume_scheduled_queue(self):
         self.paused = False
-    
+        print("\nScheduled queue has been resumed.")
+
     def run_next_sample(self):  # reads and calls commands from method to load next sample
         """
             Args:
@@ -136,20 +144,16 @@ class MethodReader:  # should call read from coordinator file
 
         #loop for all commands in json method
         for command in obj['commands']:
-            if self.stop_run == True: # check to see if we should stop loading
+
+            # check to see if method should be interupted
+            if self.stop_run == True: 
                 self.pause_scheduled_queue()
-                print("Current run has been halted. Scheduled queue has been paused.")
                 run_completed = False
-                return run_completed # if stop_run is True, break out of the command execution loop
+                return run_completed 
+            else:
+                # calls correct function in coordinator & unpacks the parameters list with (*params): logs each parameter
+                getattr(self.myCoordinator.actionOptions, command['type'])(*command['parameters'])
 
-            
-            params = command['parameters'] # save command parameters in a list
-
-            
-            #calls correct function in coordinator & unpacks the parameters list with (*params): logs each parameter
-            getattr(self.myCoordinator.actionOptions, command['type'])(*params)
-
-        logging.info("Loading Sample '%s': Complete!") # print that the sample is done being loaded
         run_completed = True
         return run_completed
 
@@ -208,6 +212,7 @@ class MethodReader:  # should call read from coordinator file
                     now_time = datetime.now().strftime("%I:%M %p")
                     logging.info(f"Run for sample {sample_count} !EXPERIENCED AN ERROR! at {now_time} on {now_date}.")
                     print(f"\nRun for sample {sample_count} !EXPERIENCED AN ERROR! at {now_time} on {now_date}.")
+                    self.pause_scheduled_queue()
                 else:
                     now_date = datetime.now().strftime("%m/%d/%Y")
                     now_time = datetime.now().strftime("%I:%M %p")
@@ -228,6 +233,7 @@ class MethodReader:  # should call read from coordinator file
         # End of run commands
         self.current_run = None
         self.running = False
+        self.queue_changed = True
         # 
 
         print("\n     DONE!!!")

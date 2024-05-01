@@ -77,7 +77,7 @@ class Queue_Gui(tk.Toplevel,):
         self.file_bar.pack()
 
         self.clear_button = tk.Button(self.file_bar, text='Clear Queue', command= lambda:self.clear_queue())
-        self.load_button = tk.Button(self.file_bar,text='Load Queue', command= lambda:self.select_file())
+        self.load_button = tk.Button(self.file_bar,text='Load Queue', command= lambda:self.load_from_file())
         self.save_button = tk.Button(self.file_bar,text="Save Queue", command= lambda:self.save_queue())
 
         self.clear_button.grid(row=0, column=1)
@@ -239,12 +239,10 @@ class Queue_Gui(tk.Toplevel,):
             watchThread = threading.Thread(target = self.scheduled_queue_frame.watch_status, args=[]) #finishes the run
             watchThread.start()
     
-    def clear_queue(self):  # rework 
-        pass
-        # self.wellList = []
-        # self.methodList = []
+    def clear_queue(self):  # removes all entries from the proposed MS or Frac queue pages
+        self.handler.delete_grid()
     
-    def select_file(self):  # rework
+    def load_from_file(self):  # rework
 
         pass
         # filetypes = (
@@ -357,6 +355,20 @@ class Queue_Handler:
 
 
     # Queue maker display functions
+    def delete_grid(self):
+
+        if self.active_page == 'Mass Spec':
+            while len(self.ms_queue) > 1:
+                remove_item: MS_Queue_Row_Inputs = self.ms_queue.pop(-1)
+                remove_item.destroy()
+        elif self.active_page == 'Fractionation':
+            while len(self.frac_queue) > 1:
+                remove_item: Frac_Queue_Row_Inputs = self.frac_queue.pop(-1)
+                remove_item.destroy()
+
+        self.update_grid()
+
+
 
     def clear_grid(self):
         '''
@@ -377,7 +389,7 @@ class Queue_Handler:
       
     def reset_grid(self):
         '''
-        This function returns the column headers to the grid, then checks on the nimber of button rows needed.
+        This function returns the column headers to the grid, then checks on the number of button rows needed.
         If the number of needed button rows has changed (eg we switch queue type), rows are added or removed.
         '''
         
@@ -488,7 +500,7 @@ class Queue_Handler:
         '''
         Moves the indicated row's current inputs down one row by poping it out and reinserting it one index greater.
         '''
-        print(self.active_page)
+
         if self.active_page == 'Mass Spec':
             move_item = self.ms_queue.pop(row_index)
             self.ms_queue.insert(row_index+1, move_item)
@@ -503,7 +515,6 @@ class Queue_Handler:
         Removes the indicated inputs and destroys them, then removes the last row of buttons.
         Waits until the grid has been updated to destroy the button (in case this was the last row).
         '''
-        print(self.active_page)
         
         if self.active_page == 'Mass Spec':
             remove_item: MS_Queue_Row_Inputs = self.ms_queue.pop(row_index)
@@ -512,9 +523,8 @@ class Queue_Handler:
             remove_item: Frac_Queue_Row_Inputs = self.frac_queue.pop(row_index)
             remove_item.destroy()
 
-        remove_item: Queue_Row_Buttons = self.queue_row_buttons.pop()      
         self.update_grid()
-        remove_item.destroy() # go last to ensure all other tasks completed
+
 
 
     
@@ -713,9 +723,8 @@ class Scheduled_Queue(tk.Frame,):
             if self.my_reader.queue_changed:
                 self.update_scheduled_queue_display()
                 self.my_reader.queue_changed = False
-            if not self.my_reader.running:
-                self.queue_type = None
-                self.update_scheduled_queue_display()  
+        
+        self.update_scheduled_queue_display()  
 
     def stop_immediately(self):
         '''
