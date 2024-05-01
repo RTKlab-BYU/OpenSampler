@@ -214,9 +214,12 @@ class Queue_Gui(tk.Toplevel,):
             return
         
         # add compiled methods to scheduled queue
-        try: 
+        try:
+            # if scheduled queue is an empty dataframe, this returns True
+            # if not empty, this will return False 
             empty_queue = self.my_reader.scheduled_queue.empty
         except:
+            # if scheduled queue doesn't exist
             empty_queue = True
         if empty_queue:
             self.my_reader.scheduled_queue = compiled_queue
@@ -227,7 +230,7 @@ class Queue_Gui(tk.Toplevel,):
             self.my_reader.scheduled_queue = new_scheduled_queue
             print("Methods added to current Queue")
 
-        # if not already running scheduled queue, start running
+        # if not already running, activate scheduled queue
         if not self.my_reader.running:
             # start queue in method_reader
             queueThread = threading.Thread(target = self.my_reader.run_scheduled_methods, args=[]) #finishes the run
@@ -743,8 +746,10 @@ class Scheduled_Queue(tk.Frame,):
         '''
         Remove all future runs from scheduled queue. Does not affect current run.
         '''
-        self.my_reader.scheduled_queue = None
-        self.my_reader.resume_scheduled_queue()
+
+        
+        self.my_reader.scheduled_queue = None  # overwrite any scheduled runs
+        self.my_reader.resume_scheduled_queue()  # if paused, resume
         print("Clear all - This should be working now.")
 
 
@@ -775,7 +780,7 @@ class Sample_Prep_Inputs(tk.Frame,):
 
         file_path = fd.askopenfilename(title='Choose a Method', initialdir='methods', filetypes=filetypes)
         self.method.set(file_path)
-        # self.handler.ms_default_file_path = file_path #README: Make it so method is default populated
+        
 
 
 class MS_Queue_Row_Inputs(tk.Frame,):

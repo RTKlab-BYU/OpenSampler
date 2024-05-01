@@ -26,9 +26,9 @@ class ProtocolActions:
         it moves to the well, waits for a specified time, aspirates the volume, waits again.
         '''
         # need stage, plate, well
-        stage = self.myCoordinator.myReader.mySample["Stage"] 
-        plate = int(self.myCoordinator.myReader.mySample["Wellplate"])  # uses index value for now...
-        well = self.myCoordinator.myReader.mySample["Well"]
+        stage = self.myCoordinator.myReader.current_run["Stage"] 
+        plate = int(self.myCoordinator.myReader.current_run["Wellplate"])  # uses index value for now...
+        well = self.myCoordinator.myReader.current_run["Well"]
 
         self.move_to_well(stage, plate, well)
         self.wait(wait_seconds)
@@ -42,9 +42,9 @@ class ProtocolActions:
         it moves to the well, waits for a specified time, aspirates the volume, waits again.
         '''
         # need stage, plate, well
-        stage = self.myCoordinator.myReader.mySample["Stage"]
-        plate = int(self.myCoordinator.myReader.mySample["Wellplate"])  # uses index value for now...
-        wells: str = self.myCoordinator.myReader.mySample["Well"]
+        stage = self.myCoordinator.myReader.current_run["Stage"]
+        plate = int(self.myCoordinator.myReader.current_run["Wellplate"])  # uses index value for now...
+        wells: str = self.myCoordinator.myReader.current_run["Well"]
         
         wells = wells.replace(" ", "")
 
@@ -61,9 +61,9 @@ class ProtocolActions:
         it moves to the well, waits for a specified time, aspirates the volume, waits again.
         '''
         # need stage, plate, well
-        stage = self.myCoordinator.myReader.mySample["Stage"] 
-        plate = int(self.myCoordinator.myReader.mySample["Wellplate"])  # uses index value for now...
-        well = self.myCoordinator.myReader.mySample["Well"]
+        stage = self.myCoordinator.myReader.current_run["Stage"] 
+        plate = int(self.myCoordinator.myReader.current_run["Wellplate"])  # uses index value for now...
+        well = self.myCoordinator.myReader.current_run["Well"]
 
         self.move_to_well(stage, plate, well)
         self.wait(wait_seconds)
@@ -77,9 +77,9 @@ class ProtocolActions:
         it moves to the well, waits for a specified time, aspirates the volume, waits again.
         '''
         # need stage, plate, well
-        stage = self.myCoordinator.myReader.mySample["Stage"]
-        plate = int(self.myCoordinator.myReader.mySample["Wellplate"])  # uses index value for now...
-        wells: str = self.myCoordinator.myReader.mySample["Well"]
+        stage = self.myCoordinator.myReader.current_run["Stage"]
+        plate = int(self.myCoordinator.myReader.current_run["Wellplate"])  # uses index value for now...
+        wells: str = self.myCoordinator.myReader.current_run["Well"]
         
         wells.replace(" ", "")
 

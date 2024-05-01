@@ -1,6 +1,6 @@
 
 
-import time
+from datetime import datetime 
 import logging
 import json
 import pandas as pd
@@ -10,32 +10,23 @@ import pandas as pd
 
 '''
 
-class MethodReader:  #should call read from coordinator file
-    def __init__(self, myCoordinator, queue): # initialize all variables and store needed data
-        # you may need to also pass in a coordinator object to access the function names 
+class MethodReader:  # should call read from coordinator file
+    def __init__(self, myCoordinator): # initialize all variables and store needed data
+
         self.myCoordinator = myCoordinator # this has the functions that move the motors
-        # self.emptyTimingValues = ScriptTimingValues(0, 0, 0, 0, 0) # make object with zero values to fill array at start
+
 
         self.methodIndex = 0 # this lets you know what number sample you are on. 
         self.queueName = "queues//queue.csv" # stores name of the queue
         
-        # self.secondsEstimatedTotal = 0 # stores variable that is added to secondsTillComplete (sTC) and is later subtracted to get updated variable (sTC)
-        # self.percentComplete = 0 # stores the percent complete to display in the GUI
-        # self.secondsTillComplete = 0 # stores approximate number of seconds it will take to complete queue
-        # self.queueCompletionDate = 0 # holds date for when the queue will be finished
         self.running = False
-        self.queue_changed = True
-        self.current_run = None
         self.scheduled_queue = None
 
+        self.current_run
         self.stop_run = False
         self.paused = False
+        self.queue_changed = False
         
-        # *note: gradient^-1 indicates the gradient time from the previous sample. SPE^-2 would be the SPE time from two samples ago
-
-        # format = "%(asctime)s: %(message)s" #format logging
-        # logging.basicConfig(format=format, level=logging.ERROR,
-        #                     datefmt="%H:%M:%S")
         
         
     def verify_wells(self, proposed_queue):  # checks all the wells in CSV to make sure they all exist
@@ -93,66 +84,6 @@ class MethodReader:  #should call read from coordinator file
         print("SUCCESS!", "\n")
         return True
 
-    # def convert_sec_to_day(self, n): # takes in time in seconds and converts to day, hour, minute, second
-    #     #n = number of seconds to complete a queue
-        
-    #     days = int(n / (24 * 3600))  # calculate days
-  
-    #     n = n % (24 * 3600)
-    #     hours = int(n / 3600) # calculate hours
-  
-    #     n %= 3600
-    #     minutes = int(n / 60) # calculate minutes
-  
-    #     n %= 60
-    #     seconds = int(n)#calculate seconds
-        
-    #     logging.info("\"%s\" estimated completion in: %s d %s h %s m %s s", self.queueName, days, hours, minutes, seconds) #log this info
-
-    # def estimate_end_time(self): #estimates how long the method will take to complete
-    #     # add the first gradient time (thread) and all gradients from queue methods
-    #     # add first gradient to this. (About 35 minutes for dry or QCtime for wet)
-
-    #     firstFile = True #variable that allows estimated time to be more accurate: only adds self.secondsEstimatedTotal one extra time
-    #     extraSeconds = 0
-        
-    #     for method in self.methodList: # for all the methods in queue
-                  
-    #         path_to_method = method # moves to method folder
-    #         with open(path_to_method, 'r') as myfile: # open file
-    #             data = myfile.read()
-    #         obj = json.loads(data) # parse file and sets variables
-    #         extraSeconds = (max((int(obj['SPEtime'])),(int(obj['gradientTime'])))) - (int(obj['LCtime'])) - (int(obj['MStime']))
-    #         self.secondsEstimatedTotal = int(obj['LCtime'])
-    #         self.secondsEstimatedTotal += int(obj['MStime'])
-    #         self.secondsEstimatedTotal += extraSeconds
-    #         # add up all gradient times from each method to see how long it will take
-            
-    #         if firstFile:
-    #             turnOnLC = (max((int(obj['SPEtime'])),(int(obj['gradientTime']))))*2 - (int(obj['LCtime']))
-    #             self.secondsEstimatedTotal += turnOnLC
-    #             self.secondsEstimatedTotal -= extraSeconds
-    #             firstFile = False #updates variable
-
-    #         self.secondsTillComplete += self.secondsEstimatedTotal # note that this is in seconds
-
-    #     methodLength = 4
-    #     for methodLength in self.wellList: #adds one to self.methodIndex to accuratly find the time of each middleLoop
-    #         self.methodIndex += 1
-    #         if methodLength > 4:
-    #             methodLength = self.methodIndex
-    #     self.lastLoop = extraSeconds*2 + int(obj['LCtime'])*2 + int(obj['MStime'])*3
-    #     self.firstTwoLoops = turnOnLC + int(obj['LCtime'])
-    #     self.middleLoops = (self.secondsTillComplete - self.lastLoop - self.firstTwoLoops) / (methodLength - 3)
-
-    #     self.queueCompletionDate = time.asctime( time.localtime(time.time() + self.secondsTillComplete)) #find estimated time of completion
-    #     logging.info("\"%s\" estimated completion on: %s", self.queueName, self.queueCompletionDate)
-
-    #     self.convert_sec_to_day(self.secondsTillComplete) # prints message for when it will be done
-    #     #if input("          Is this okay? (y/n): ") == "n":
-    #      #   sys.exit()
-
-    #     self.methodIndex = 0 # resets the self.methodIndex
 
     def verify(self, scheduled_methods):  # check excel file to make sure its format is valid, sets first gradient, estimate end time
         #method ([str]): [the name of the method used to prepare the sample at the well location. e.g., "qc.json"]
@@ -195,7 +126,7 @@ class MethodReader:  #should call read from coordinator file
                 methodName ([str]): [the name of the method used to prepare the sample at the well location. e.g., "qc.json"]
         """
 
-        path_to_method = self.mySample["Method"]
+        path_to_method = self.current_run["Method"]
         
         
         # read file
@@ -208,7 +139,8 @@ class MethodReader:  #should call read from coordinator file
             if self.stop_run == True: # check to see if we should stop loading
                 self.pause_scheduled_queue()
                 print("Current run has been halted. Scheduled queue has been paused.")
-                break # if stop_run then we break out of the command execution loop
+                run_completed = False
+                return run_completed # if stop_run is True, break out of the command execution loop
 
             
             params = command['parameters'] # save command parameters in a list
@@ -218,6 +150,8 @@ class MethodReader:  #should call read from coordinator file
             getattr(self.myCoordinator.actionOptions, command['type'])(*params)
 
         logging.info("Loading Sample '%s': Complete!") # print that the sample is done being loaded
+        run_completed = True
+        return run_completed
 
     def run_scheduled_methods(self): #main function: handles looping and threads
         """
@@ -233,42 +167,71 @@ class MethodReader:  #should call read from coordinator file
         sample_count = 0
         while self.running:
         
-            # self.queue_changed = True
+
             
         
             while self.paused:
                 if not self.running:
                     # Add any end of run commands if not elsewhere
-                    self.mySample = None
-                    print("\n     DONE!!!")
+                    self.current_run = None
+                    print("\nN!!!")
                     print("\n----------------------------------------------------------\n") #white space for output readibility
                     return
                 else:
                     continue
 
-            
+            self.reset()
+            if self.scheduled_queue == None:
+                break
 
             self.scheduled_queue: pd.DataFrame
             if self.scheduled_queue.shape[0] > 0:
-                self.mySample = self.scheduled_queue.iloc[0] # set the location of 'mySample' to the first row of the scheduled queue
+                
+                self.current_run = self.scheduled_queue.iloc[0] # set the location of 'current_run' to the first row of the scheduled queue
                 self.scheduled_queue = self.scheduled_queue.drop(self.scheduled_queue.index[0])
                 
-
+                now_date = datetime.now().strftime("%m/%d/%Y")
+                now_time = datetime.now().strftime("%H:%M %p")
                 sample_count += 1
 
-                logging.info(f'Running sample {sample_count} with {self.mySample["Method"]}') # print message stating that a method has begun
+                logging.info(f"Run for sample {sample_count} started at {now_time} on {now_date}.")
+                print("\n*****************************************************************\n")
+                print(f"\nRun for sample {sample_count} started at {now_time} on {now_date}.")  
+
+                logging.info(f'Running sample {sample_count} with {self.current_run["Method"]}') # print message stating that a method has begun
                 print(f"\nRunning Sample {sample_count}. \nSamples remaining in scheduled queue: {int(self.scheduled_queue.shape[0])}")
-                self.run_next_sample() # run current self.mySample
-                print(f"\nRun for sample {sample_count} completed.")
-                self.mySample = None
 
+                try:
+                    run_completed = self.run_next_sample() # run current self.current_run, return True if completed without stopping
+                except:
+                    now_date = datetime.now().strftime("%m/%d/%Y")
+                    now_time = datetime.now().strftime("%I:%M %p")
+                    logging.info(f"Run for sample {sample_count} !EXPERIENCED AN ERROR! at {now_time} on {now_date}.")
+                    print(f"\nRun for sample {sample_count} !EXPERIENCED AN ERROR! at {now_time} on {now_date}.")
+                else:
+                    now_date = datetime.now().strftime("%m/%d/%Y")
+                    now_time = datetime.now().strftime("%I:%M %p")
+                    
+                    if run_completed:
+                        logging.info(f"Run for sample {sample_count} completed at {now_time} on {now_date}.")
+                        print(f"\nRun for sample {sample_count} completed at {now_time} on {now_date}.")
+                    else:
+                        logging.info(f"Run for sample {sample_count} was interupted by user at {now_time} on {now_date}.")
+                        print(f"\nRun for sample {sample_count} was interupted by user at {now_time} on {now_date}.")
+                finally:
+                    print("\n*****************************************************************\n")
+                    self.current_run = None
             else:
-                # End of run commands
-                self.mySample = None
-                self.running = False
+                break
 
-                print("\n     DONE!!!")
-                print("\n----------------------------------------------------------\n") #white space for output readibility
+            
+        # End of run commands
+        self.current_run = None
+        self.running = False
+        # 
+
+        print("\n     DONE!!!")
+        print("\n----------------------------------------------------------\n") #white space for output readibility
             
             
             
