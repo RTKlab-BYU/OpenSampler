@@ -68,40 +68,43 @@ ACTION_DEFAULTS = {
 class Protocol_Parameter_Instance(tk.Frame,):
     def __init__(self, frame, value_name, value, row, column):
         index = int(column/2) #column changes by two each time
+        self.master_frame: Method_Creator = frame
         #print(index)
 
         self.value_name = value_name
-        this_type = frame.protocol[row]["type"]
+        this_type = self.master_frame.commands_list[row]["type"]
         # print(index)
-        tk.Label(frame.command_grid, text=ACTION_TYPES[this_type][index]).grid(row=row, column=column + 6)
-        self.this_valuebox = tk.Entry(frame.command_grid)
+        tk.Label(self.master_frame.command_grid, text=ACTION_TYPES[this_type][index]).grid(row=row, column=column + 6)
+        self.this_valuebox = tk.Entry(self.master_frame.command_grid)
         self.this_valuebox.insert(tk.END,string=value)
         self.this_valuebox.grid(row=row,column=column + 7)
-        self.this_valuebox.bind('<FocusOut>',lambda x: self.UpdateParameter(frame, row, index))
+        self.this_valuebox.bind('<FocusOut>',lambda x: self.UpdateParameter(self.master_frame, row, index))
+        
     def UpdateParameter(self, frame, row, index):
-        frame.protocol[row]["parameters"][index] = self.this_valuebox.get()
+        self.master_frame.commands_list[row]["parameters"][index] = self.this_valuebox.get()
 
 
 class Protocol_Row(tk.Frame,):
     def __init__(self, frame, row, command):
+        self.master_frame: Method_Creator = frame
         self.row = row
         self.protocol_parameters = command["parameters"]
-        tk.Button(frame.command_grid, text="Insert", command=lambda: self.InsertRow(frame)).grid(row=self.row, column=0)
-        tk.Button(frame.command_grid, text="Delete", command=lambda: self.DeleteRow(frame)).grid(row=self.row, column=1)
-        tk.Button(frame.command_grid, text="Up", command=lambda: self.MoveUp(frame)).grid(row=self.row, column=2)
-        tk.Button(frame.command_grid, text="Down", command=lambda: self.MoveDown(frame)).grid(row=self.row, column=3)
-        tk.Label(frame.command_grid, text="Command Type: ").grid(row=self.row,column=4)
-        self.type_box = ttk.Combobox(frame.command_grid, state='readonly')
+        tk.Button(self.master_frame.command_grid, text="Insert", command=lambda: self.InsertRow(self.master_frame)).grid(row=self.row, column=0)
+        tk.Button(self.master_frame.command_grid, text="Delete", command=lambda: self.DeleteRow(self.master_frame)).grid(row=self.row, column=1)
+        tk.Button(self.master_frame.command_grid, text="Up", command=lambda: self.MoveUp(self.master_frame)).grid(row=self.row, column=2)
+        tk.Button(self.master_frame.command_grid, text="Down", command=lambda: self.MoveDown(self.master_frame)).grid(row=self.row, column=3)
+        tk.Label(self.master_frame.command_grid, text="Command Type: ").grid(row=self.row,column=4)
+        self.type_box = ttk.Combobox(self.master_frame.command_grid, state='readonly')
         self.type_box.grid(row=self.row,column=5)
         self.type_box["values"] = [*ACTION_TYPES.keys()]
         self.type_box.set(command["type"])
-        self.type_box.bind("<<ComboboxSelected>>", lambda x: self.UpdateCommandGrid(frame, self.row))
+        self.type_box.bind("<<ComboboxSelected>>", lambda x: self.UpdateCommandGrid(self.master_frame, self.row))
         #first two are type
         if len(ACTION_TYPES[command["type"]]) == len(self.protocol_parameters):
             i = 0
             for eachParameter in ACTION_TYPES[command["type"]]:
                 #print(command)
-                Protocol_Parameter_Instance(frame, eachParameter, command["parameters"][int(i/2)], self.row, i )
+                Protocol_Parameter_Instance(self.master_frame, eachParameter, command["parameters"][int(i/2)], self.row, i )
                 i = i + 2
         else:
             for eachParameter in list(ACTION_DEFAULTS.get(command["type"])[len(self.protocol_parameters):]):
@@ -110,7 +113,7 @@ class Protocol_Row(tk.Frame,):
             i = 0
             for eachParameter in self.protocol_parameters:
                 #print(command)
-                Protocol_Parameter_Instance(frame, eachParameter, command["parameters"][int(i/2)], self.row, i )
+                Protocol_Parameter_Instance(self.master_frame, eachParameter, command["parameters"][int(i/2)], self.row, i )
                 i = i + 2
 
 
@@ -118,32 +121,33 @@ class Protocol_Row(tk.Frame,):
 
     def UpdateCommandGrid(self, frame, row):
         new_type = self.type_box.get()
+        frame: Method_Creator = frame
 
-        if not frame.protocol[row]["type"].__eq__(str(new_type)):
+        if not frame.commands_list[row]["type"].__eq__(str(new_type)):
             #print("different")
-            frame.protocol[row]["type"] = new_type
-            frame.protocol[row].pop("parameters")
-            frame.protocol[row]["parameters"] = list(ACTION_DEFAULTS.get(new_type))
+            frame.commands_list[row]["type"] = new_type
+            frame.commands_list[row].pop("parameters")
+            frame.commands_list[row]["parameters"] = list(ACTION_DEFAULTS.get(new_type))
         frame.UpdateCommandGrid()
 
     def InsertRow(self, frame):
         new_key = list(ACTION_TYPES.keys())[0]
-        frame.protocol.insert(self.row, {"type": new_key, "parameters": list(ACTION_DEFAULTS.get(new_key))})
-        frame.UpdateCommandGrid()
+        self.master_frame.commands_list.insert(self.row, {"type": new_key, "parameters": list(ACTION_DEFAULTS.get(new_key))})
+        self.master_frame.UpdateCommandGrid()
 
     def MoveUp(self, frame):
-        row_to_move = frame.protocol.pop(self.row)
-        frame.protocol.insert(abs(self.row - 1),row_to_move)
-        frame.UpdateCommandGrid()
+        row_to_move = self.master_frame.commands_list.pop(self.row)
+        self.master_frame.commands_list.insert(abs(self.row - 1),row_to_move)
+        self.master_frame.UpdateCommandGrid()
 
     def MoveDown(self, frame):
-        row_to_move = frame.protocol.pop(self.row)
-        frame.protocol.insert(abs(self.row + 1),row_to_move)
-        frame.UpdateCommandGrid()
+        row_to_move = frame.commands_list.pop(self.row)
+        self.master_frame.commands_list.insert(abs(self.row + 1),row_to_move)
+        self.master_frame.UpdateCommandGrid()
 
     def DeleteRow(self, frame):
-        frame.protocol.pop(self.row)
-        frame.UpdateCommandGrid()
+        self.master_frame.commands_list.pop(self.row)
+        self.master_frame.UpdateCommandGrid()
 
 class Method_Creator(tk.Toplevel,):
     def __init__(self, coordinator):
@@ -156,11 +160,11 @@ class Method_Creator(tk.Toplevel,):
 
         self.header_bar = tk.Frame(self)
         self.header_bar.pack(side=tk.TOP)
-        tk.Button(self.header_bar, text="Save Protocol", command=self.SaveProtocol).grid(row=0, column=0)
-        tk.Button(self.header_bar, text="Load Protocol", command=self.LoadProtocol).grid(row=0, column=1)
-        tk.Button(self.header_bar, text="Append Commands", command=self.AddCommands).grid(row=0, column=2)        
+        tk.Button(self.header_bar, text="Save Method", command=self.save_method).grid(row=0, column=0)
+        tk.Button(self.header_bar, text="Load Method", command=self.load_method).grid(row=0, column=1)
+        tk.Button(self.header_bar, text="Add to Method", command=self.append_commands).grid(row=0, column=2)        
 
-        self.protocol = []
+        self.commands_list = []
 
         self.scrollbar = tk.Scrollbar(self, orient="vertical")
         self.scrollbar.pack( side = tk.RIGHT, fill = tk.Y )
@@ -225,6 +229,8 @@ class Method_Creator(tk.Toplevel,):
         
         if new_file == None:  # in the event of a cancel 
             return
+        else:
+            print(new_file)
 
         my_dict = self.LoadFromFile(new_file)
         
@@ -282,7 +288,7 @@ class Method_Creator(tk.Toplevel,):
         self.command_grid.pack(side=tk.TOP)
         self.cow = []
         i = 0
-        for eachCommand in self.protocol:
+        for eachCommand in self.commands_list:
             self.cow.append(Protocol_Row(self, i, eachCommand))
             i = i + 1
 
@@ -291,5 +297,5 @@ class Method_Creator(tk.Toplevel,):
     def AddRow(self, row):
         new_key = list(ACTION_TYPES.keys())[0]
         parameters = list(ACTION_DEFAULTS.get(new_key)) # if you don't make it changes the default dictionary when updated
-        self.protocol.append({"type": new_key, "parameters": parameters})
+        self.commands_list.append({"type": new_key, "parameters": parameters})
         self.UpdateCommandGrid()
