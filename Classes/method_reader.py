@@ -1,6 +1,7 @@
 
 
 import time
+from datetime import datetime
 import logging
 import json
 import pandas as pd
@@ -253,13 +254,22 @@ class MethodReader:  #should call read from coordinator file
                 self.mySample = self.scheduled_queue.iloc[0] # set the location of 'mySample' to the first row of the scheduled queue
                 self.scheduled_queue = self.scheduled_queue.drop(self.scheduled_queue.index[0])
                 
-
+                now_date = datetime.now().strftime("%m/%d/%Y")
+                now_time = datetime.now().strftime("%H:%M")
                 sample_count += 1
+
+                logging.info(f"Run for sample {sample_count} started at {now_time} on {now_date}.")
+                print("\n*****************************************************************\n")
+                print(f"\nRun for sample {sample_count} started at {now_time} on {now_date}.")
 
                 logging.info(f'Running sample {sample_count} with {self.mySample["Method"]}') # print message stating that a method has begun
                 print(f"\nRunning Sample {sample_count}. \nSamples remaining in scheduled queue: {int(self.scheduled_queue.shape[0])}")
                 self.run_next_sample() # run current self.mySample
-                print(f"\nRun for sample {sample_count} completed.")
+                now_date = datetime.now().strftime("%m/%d/%Y")
+                now_time = datetime.now().strftime("%H:%M")
+                logging.info(f"Run for sample {sample_count} completed at {now_time} on {now_date}.")
+                print(f"\nRun for sample {sample_count} completed at {now_time} on {now_date}.")
+                print("\n*****************************************************************\n")
                 self.mySample = None
 
             else:
