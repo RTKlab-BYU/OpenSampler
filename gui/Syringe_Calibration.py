@@ -203,15 +203,15 @@ class Syringe_Calibration(tk.Toplevel,):
         print("Cannot Home Syringe at this time.")
 
     def Aspirate(self):
-        print(f"stage index: {self.selected_stage}")
-        print(f"stage side: {self.coordinator.myModules.myStages[self.selected_stage].side}")
+        # print(f"stage index: {self.selected_stage}")
+        # print(f"stage side: {self.coordinator.myModules.myStages[self.selected_stage].side}")
         self.coordinator.myLogger.info(f"Aspirating {self.volume_var.get()} nL at speed {self.speed_var.get()} nL/min")
         self.coordinator.myModules.myStages[self.selected_stage].step_syringe_motor_up(volume = float(self.volume_var.get()), speed = float(self.speed_var.get()))
         self.update_syringe_states()
 
     def Dispense(self):
-        print(f"stage index: {self.selected_stage}")
-        print(f"stage side: {self.coordinator.myModules.myStages[self.selected_stage].side}")
+        # print(f"stage index: {self.selected_stage}")
+        # print(f"stage side: {self.coordinator.myModules.myStages[self.selected_stage].side}")
         self.coordinator.myLogger.info(f"Aspirating {self.volume_var.get()} nL at speed {self.speed_var.get()} nL/min")
         self.coordinator.myModules.myStages[self.selected_stage].step_syringe_motor_down(volume = float(self.volume_var.get()), speed = float(self.speed_var.get()))
         self.update_syringe_states()
