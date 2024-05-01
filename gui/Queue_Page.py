@@ -21,6 +21,7 @@ class Queue_Gui(tk.Toplevel,):
         self.geometry("1000x1800")
         self.state("zoomed")
         self.coordinator: Coordinator = coordinator
+        self.my_reader = self.coordinator.myReader
         self.page_type = tk.StringVar()
         self.sample_prep_to_schedule = []
 
@@ -152,7 +153,7 @@ class Queue_Gui(tk.Toplevel,):
             self.queue_frame.pack_forget()
             self.scheduled_queue_frame.pack(expand=True, fill="both")
         
-    def compile_queue(self):
+    def compile_queue_to_schedule(self):
         '''
         This function is used to pull the parameters out of the entry values and package them as pandas dataframe object.
         '''
@@ -168,22 +169,22 @@ class Queue_Gui(tk.Toplevel,):
 
         elif page_type == "Mass Spec":
             # package MS queue
-            self.ms_queue_to_schedule = pd.DataFrame({MS_HEADERS[0]: [], MS_HEADERS[1]: [], MS_HEADERS[2]: [], MS_HEADERS[3]: []})
+            queue_to_schedule = pd.DataFrame({MS_HEADERS[0]: [], MS_HEADERS[1]: [], MS_HEADERS[2]: [], MS_HEADERS[3]: []})
             for entry in self.handler.ms_queue[1:]:
                 ms_inputs: MS_Queue_Row_Inputs = entry
             
                 temp_list = [ms_inputs.stage.get(), ms_inputs.plate.get(), ms_inputs.well.get(), ms_inputs.method.get()]
-                self.ms_queue_to_schedule.loc[len(self.ms_queue_to_schedule.index)] = temp_list
-            return self.ms_queue_to_schedule
+                queue_to_schedule.loc[len(queue_to_schedule.index)] = temp_list
+            return queue_to_schedule
         
         elif page_type == "Fractionation":
             # package Frac queue
-            self.frac_queue_to_schedule = pd.DataFrame({FRAC_HEADERS[0]: [], FRAC_HEADERS[1]: [], FRAC_HEADERS[2]: [], FRAC_HEADERS[3]: [], FRAC_HEADERS[4]: []})
+            queue_to_schedule = pd.DataFrame({FRAC_HEADERS[0]: [], FRAC_HEADERS[1]: [], FRAC_HEADERS[2]: [], FRAC_HEADERS[3]: [], FRAC_HEADERS[4]: []})
             for row, entry in enumerate(self.handler.frac_queue, 1):
                 frac_inputs: Frac_Queue_Row_Inputs = self.handler.frac_queue[row]
-                temp_list = [frac_inputs.stage.get(), frac_inputs.plate.get(), frac_inputs.pool_wells.get(), frac_inputs.method.get(), frac_inputs.target_well.get()]
-                self.frac_queue_to_schedule.loc[len(self.frac_queue_to_schedule.index)] = temp_list
-            return self.frac_queue_to_schedule
+                temp_list = [frac_inputs.stage.get(), frac_inputs.plate.get(), frac_inputs.sample_wells.get(), frac_inputs.method.get(), frac_inputs.elution_wells.get()]
+                queue_to_schedule.loc[len(queue_to_schedule)] = temp_list
+            return queue_to_schedule
                     
     def schedule_queue(self):
         '''
@@ -197,39 +198,39 @@ class Queue_Gui(tk.Toplevel,):
         new_queue_type = self.page_type.get()
 
         # check for conflict between current and new queue
-        if not self.coordinator.myReader.running:
-            compiled_queue = self.compile_queue()
+        if not self.my_reader.running:
+            compiled_queue = self.compile_queue_to_schedule()
             self.scheduled_queue_frame.queue_type = new_queue_type
             self.scheduled_queue_frame.update_scheduled_queue_display()
         elif (new_queue_type == self.scheduled_queue_frame.queue_type):
-            compiled_queue = self.compile_queue()
+            compiled_queue = self.compile_queue_to_schedule()
         else:
             print("\n\nYou Shall Not Queue!!!\n(Wait until current active que is finished to schedule new queue type)\n\n")
             return
         
         # verify methods in new queue (needs work)
-        if not self.coordinator.myReader.verify(compiled_queue):
+        if not self.my_reader.verify(compiled_queue):
             print("\n\nInsufficient Vespian Gas\n(method verification failed...)\n\n")
             return
         
         # add compiled methods to scheduled queue
         try: 
-            empty_queue = self.coordinator.myReader.scheduled_queue.empty
+            empty_queue = self.my_reader.scheduled_queue.empty
         except:
             empty_queue = True
         if empty_queue:
-            self.coordinator.myReader.scheduled_queue = compiled_queue
+            self.my_reader.scheduled_queue = compiled_queue
             print("Methods Queued")
         else:
-            new_scheduled_queue = pd.concat([self.coordinator.myReader.scheduled_queue, compiled_queue])
+            new_scheduled_queue = pd.concat([self.my_reader.scheduled_queue, compiled_queue])
             new_scheduled_queue = new_scheduled_queue.reset_index()
-            self.coordinator.myReader.scheduled_queue = new_scheduled_queue
+            self.my_reader.scheduled_queue = new_scheduled_queue
             print("Methods added to current Queue")
 
         # if not already running scheduled queue, start running
-        if not self.coordinator.myReader.running:
+        if not self.my_reader.running:
             # start queue in method_reader
-            queueThread = threading.Thread(target = self.coordinator.myReader.run_scheduled_methods, args=[]) #finishes the run
+            queueThread = threading.Thread(target = self.my_reader.run_scheduled_methods, args=[]) #finishes the run
             queueThread.start()
             # start thread to watch status
             watchThread = threading.Thread(target = self.scheduled_queue_frame.watch_status, args=[]) #finishes the run
@@ -241,6 +242,7 @@ class Queue_Gui(tk.Toplevel,):
         # self.methodList = []
     
     def select_file(self):  # rework
+
         pass
         # filetypes = (
         #     ('csv files', '*.csv'),
@@ -525,6 +527,7 @@ class Scheduled_Queue(tk.Frame,):
         super().__init__(master_frame)
         self.queue_type_string = tk.StringVar(value="Nothing in the Active Queue")
         self.coordinator: Coordinator = coordinator
+        self.my_reader = self.coordinator.myReader
         self.queue_type = None
 
         # main frames of active queue page
@@ -702,12 +705,12 @@ class Scheduled_Queue(tk.Frame,):
     
     def watch_status(self):
         
-        while self.coordinator.myReader.running:
+        while self.my_reader.running:
             time.sleep(1)
-            if self.coordinator.myReader.queue_changed:
+            if self.my_reader.queue_changed:
                 self.update_scheduled_queue_display()
-                self.coordinator.myReader.queue_changed = False
-            if not self.coordinator.myReader.running:
+                self.my_reader.queue_changed = False
+            if not self.my_reader.running:
                 self.queue_type = None
                 self.update_scheduled_queue_display()  
 
@@ -715,18 +718,18 @@ class Scheduled_Queue(tk.Frame,):
         '''
         Pauses queue and interupts current run.
         '''
-        self.coordinator.myReader.stop_current_run()
+        self.my_reader.stop_current_run()
 
     def pause_resume_scheduled_queue(self):
         '''
         Pauses queue after finishing current run. 
 
         '''
-        if self.coordinator.myReader.paused:
-            self.coordinator.myReader.resume_scheduled_queue()
+        if self.my_reader.paused:
+            self.my_reader.resume_scheduled_queue()
             # Change button color?
-        elif not self.coordinator.myReader.paused:
-            self.coordinator.myReader.pause_scheduled_queue()
+        elif not self.my_reader.paused:
+            self.my_reader.pause_scheduled_queue()
             # Change button color?
 
     def clear_selected_runs(self):
@@ -740,8 +743,8 @@ class Scheduled_Queue(tk.Frame,):
         '''
         Remove all future runs from scheduled queue. Does not affect current run.
         '''
-        self.coordinator.myReader.scheduled_queue = None
-        self.coordinator.myReader.resume_scheduled_queue()
+        self.my_reader.scheduled_queue = None
+        self.my_reader.resume_scheduled_queue()
         print("Clear all - This should be working now.")
 
 

@@ -19,10 +19,10 @@ class MethodReader:  #should call read from coordinator file
         self.methodIndex = 0 # this lets you know what number sample you are on. 
         self.queueName = "queues//queue.csv" # stores name of the queue
         
-        self.secondsEstimatedTotal = 0 # stores variable that is added to secondsTillComplete (sTC) and is later subtracted to get updated variable (sTC)
-        self.percentComplete = 0 # stores the percent complete to display in the GUI
-        self.secondsTillComplete = 0 # stores approximate number of seconds it will take to complete queue
-        self.queueCompletionDate = 0 # holds date for when the queue will be finished
+        # self.secondsEstimatedTotal = 0 # stores variable that is added to secondsTillComplete (sTC) and is later subtracted to get updated variable (sTC)
+        # self.percentComplete = 0 # stores the percent complete to display in the GUI
+        # self.secondsTillComplete = 0 # stores approximate number of seconds it will take to complete queue
+        # self.queueCompletionDate = 0 # holds date for when the queue will be finished
         self.running = False
         self.queue_changed = True
         self.current_run = None
@@ -33,15 +33,15 @@ class MethodReader:  #should call read from coordinator file
         
         # *note: gradient^-1 indicates the gradient time from the previous sample. SPE^-2 would be the SPE time from two samples ago
 
-        format = "%(asctime)s: %(message)s" #format logging
-        logging.basicConfig(format=format, level=logging.ERROR,
-                            datefmt="%H:%M:%S")
+        # format = "%(asctime)s: %(message)s" #format logging
+        # logging.basicConfig(format=format, level=logging.ERROR,
+        #                     datefmt="%H:%M:%S")
         
         
-    def verify_wells(self, compiled_queue):  # checks all the wells in CSV to make sure they all exist
+    def verify_wells(self, proposed_queue):  # checks all the wells in CSV to make sure they all exist
         print("Verifying Wells...")
 
-        for index, row in compiled_queue.iterrows():
+        for index, row in proposed_queue.iterrows():
 
             row["Well"] = row["Well"].replace(" ", "")
             for well in row["Well"].split(","):
@@ -52,7 +52,7 @@ class MethodReader:  #should call read from coordinator file
                     print(f"ERROR: {well} does not exist. Verify that the queue file contains only existing wells", "\n")
                     return False
 
-        print("All Wells Verified!", "\n")
+        print("All Wells Verified!\n")
         return True
     
     def verify_method(self, path_to_method):
@@ -93,66 +93,66 @@ class MethodReader:  #should call read from coordinator file
         print("SUCCESS!", "\n")
         return True
 
-    def convert_sec_to_day(self, n): # takes in time in seconds and converts to day, hour, minute, second
-        #n = number of seconds to complete a queue
+    # def convert_sec_to_day(self, n): # takes in time in seconds and converts to day, hour, minute, second
+    #     #n = number of seconds to complete a queue
         
-        days = int(n / (24 * 3600))  # calculate days
+    #     days = int(n / (24 * 3600))  # calculate days
   
-        n = n % (24 * 3600)
-        hours = int(n / 3600) # calculate hours
+    #     n = n % (24 * 3600)
+    #     hours = int(n / 3600) # calculate hours
   
-        n %= 3600
-        minutes = int(n / 60) # calculate minutes
+    #     n %= 3600
+    #     minutes = int(n / 60) # calculate minutes
   
-        n %= 60
-        seconds = int(n)#calculate seconds
+    #     n %= 60
+    #     seconds = int(n)#calculate seconds
         
-        logging.info("\"%s\" estimated completion in: %s d %s h %s m %s s", self.queueName, days, hours, minutes, seconds) #log this info
+    #     logging.info("\"%s\" estimated completion in: %s d %s h %s m %s s", self.queueName, days, hours, minutes, seconds) #log this info
 
-    def estimate_end_time(self): #estimates how long the method will take to complete
-        # add the first gradient time (thread) and all gradients from queue methods
-        # add first gradient to this. (About 35 minutes for dry or QCtime for wet)
+    # def estimate_end_time(self): #estimates how long the method will take to complete
+    #     # add the first gradient time (thread) and all gradients from queue methods
+    #     # add first gradient to this. (About 35 minutes for dry or QCtime for wet)
 
-        firstFile = True #variable that allows estimated time to be more accurate: only adds self.secondsEstimatedTotal one extra time
-        extraSeconds = 0
+    #     firstFile = True #variable that allows estimated time to be more accurate: only adds self.secondsEstimatedTotal one extra time
+    #     extraSeconds = 0
         
-        for method in self.methodList: # for all the methods in queue
+    #     for method in self.methodList: # for all the methods in queue
                   
-            path_to_method = method # moves to method folder
-            with open(path_to_method, 'r') as myfile: # open file
-                data = myfile.read()
-            obj = json.loads(data) # parse file and sets variables
-            extraSeconds = (max((int(obj['SPEtime'])),(int(obj['gradientTime'])))) - (int(obj['LCtime'])) - (int(obj['MStime']))
-            self.secondsEstimatedTotal = int(obj['LCtime'])
-            self.secondsEstimatedTotal += int(obj['MStime'])
-            self.secondsEstimatedTotal += extraSeconds
-            # add up all gradient times from each method to see how long it will take
+    #         path_to_method = method # moves to method folder
+    #         with open(path_to_method, 'r') as myfile: # open file
+    #             data = myfile.read()
+    #         obj = json.loads(data) # parse file and sets variables
+    #         extraSeconds = (max((int(obj['SPEtime'])),(int(obj['gradientTime'])))) - (int(obj['LCtime'])) - (int(obj['MStime']))
+    #         self.secondsEstimatedTotal = int(obj['LCtime'])
+    #         self.secondsEstimatedTotal += int(obj['MStime'])
+    #         self.secondsEstimatedTotal += extraSeconds
+    #         # add up all gradient times from each method to see how long it will take
             
-            if firstFile:
-                turnOnLC = (max((int(obj['SPEtime'])),(int(obj['gradientTime']))))*2 - (int(obj['LCtime']))
-                self.secondsEstimatedTotal += turnOnLC
-                self.secondsEstimatedTotal -= extraSeconds
-                firstFile = False #updates variable
+    #         if firstFile:
+    #             turnOnLC = (max((int(obj['SPEtime'])),(int(obj['gradientTime']))))*2 - (int(obj['LCtime']))
+    #             self.secondsEstimatedTotal += turnOnLC
+    #             self.secondsEstimatedTotal -= extraSeconds
+    #             firstFile = False #updates variable
 
-            self.secondsTillComplete += self.secondsEstimatedTotal # note that this is in seconds
+    #         self.secondsTillComplete += self.secondsEstimatedTotal # note that this is in seconds
 
-        methodLength = 4
-        for methodLength in self.wellList: #adds one to self.methodIndex to accuratly find the time of each middleLoop
-            self.methodIndex += 1
-            if methodLength > 4:
-                methodLength = self.methodIndex
-        self.lastLoop = extraSeconds*2 + int(obj['LCtime'])*2 + int(obj['MStime'])*3
-        self.firstTwoLoops = turnOnLC + int(obj['LCtime'])
-        self.middleLoops = (self.secondsTillComplete - self.lastLoop - self.firstTwoLoops) / (methodLength - 3)
+    #     methodLength = 4
+    #     for methodLength in self.wellList: #adds one to self.methodIndex to accuratly find the time of each middleLoop
+    #         self.methodIndex += 1
+    #         if methodLength > 4:
+    #             methodLength = self.methodIndex
+    #     self.lastLoop = extraSeconds*2 + int(obj['LCtime'])*2 + int(obj['MStime'])*3
+    #     self.firstTwoLoops = turnOnLC + int(obj['LCtime'])
+    #     self.middleLoops = (self.secondsTillComplete - self.lastLoop - self.firstTwoLoops) / (methodLength - 3)
 
-        self.queueCompletionDate = time.asctime( time.localtime(time.time() + self.secondsTillComplete)) #find estimated time of completion
-        logging.info("\"%s\" estimated completion on: %s", self.queueName, self.queueCompletionDate)
+    #     self.queueCompletionDate = time.asctime( time.localtime(time.time() + self.secondsTillComplete)) #find estimated time of completion
+    #     logging.info("\"%s\" estimated completion on: %s", self.queueName, self.queueCompletionDate)
 
-        self.convert_sec_to_day(self.secondsTillComplete) # prints message for when it will be done
-        #if input("          Is this okay? (y/n): ") == "n":
-         #   sys.exit()
+    #     self.convert_sec_to_day(self.secondsTillComplete) # prints message for when it will be done
+    #     #if input("          Is this okay? (y/n): ") == "n":
+    #      #   sys.exit()
 
-        self.methodIndex = 0 # resets the self.methodIndex
+    #     self.methodIndex = 0 # resets the self.methodIndex
 
     def verify(self, scheduled_methods):  # check excel file to make sure its format is valid, sets first gradient, estimate end time
         #method ([str]): [the name of the method used to prepare the sample at the well location. e.g., "qc.json"]
