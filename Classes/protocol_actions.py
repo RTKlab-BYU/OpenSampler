@@ -89,7 +89,6 @@ class ProtocolActions:
             self.aspirate_in_place(stage, volume, speed)
             self.wait(wait_seconds)
     
-
     def move_to_custom_location(self, stage, location_name):
 
         #find location in
