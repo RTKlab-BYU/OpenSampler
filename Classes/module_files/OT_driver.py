@@ -509,14 +509,14 @@ class OT2_nanotrons_driver(SM):
                         self.move({'A': z}, speed= SLOW_SPEED)
                 
     def move_syringe_to(self, location, vol_speed=3000): #nL/min
-        mm_speed = self.uL_to_mm(vol_speed/1000)  * SYRINGE_MM_FACTOR /60 #nL to uL
+        mm_per_s = self.uL_to_mm(float(vol_speed)/60000) # nL/min ---> uL/s ---> mm/s 
         self.update_position()
         if self.side == LEFT:
             if(self.check_for_valid_move(location, 'B')):
-                self.move({'B': location}, speed= mm_speed)
+                self.move({'B': location}, speed= mm_per_s)
         elif self.side == RIGHT:
             if(self.check_for_valid_move(location, 'C')):
-                self.move({'C': location}, speed= mm_speed)
+                self.move({'C': location}, speed= mm_per_s)
         else:
             print("Side not recognized.")
 
