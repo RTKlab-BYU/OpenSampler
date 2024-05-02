@@ -18,23 +18,28 @@ These controls are operated from the Queue_Gui.
 '''
 
 class MethodReader:  # should call read from coordinator file
+    '''
+    This class handles the active que. 
+    It verifies some aspects of proposed methods before adding them to the scheduled queue.
+    It removes and executes the first entry in the scheduled queue until there are none.
+    It monitors the current run for errors, and will end the run and pause the queue if one occurs.
+    The current run can be interupted by the user, which automatically pauses the remaining queue.
+    The scheduled que can be paused (and resumed) without interupting the current run.
+    The scheduled que can be cleared (this will also not interupt the current run).
+    These controls are operated from the Queue_Gui.
+    '''
+
     def __init__(self, myCoordinator): # initialize all variables and store needed data
 
         self.myCoordinator = myCoordinator # this has the functions that move the motors
-
-
-        self.methodIndex = 0 # this lets you know what number sample you are on. 
-        self.queueName = "queues//queue.csv" # stores name of the queue
         
-        self.running = False
-        self.scheduled_queue = None
-
-        self.current_run
+        self.current_run = None
         self.stop_run = False
         self.paused = False
+
+        self.running = False
+        self.scheduled_queue = None
         self.queue_changed = True
-        
-        
         
     def verify_wells(self, proposed_queue):  # checks all the wells in CSV to make sure they all exist
         print("Verifying Wells...")
@@ -114,6 +119,7 @@ class MethodReader:  # should call read from coordinator file
     def reset(self):
         self.stop_run = False
         self.paused = False
+        self.current_run = None
 
     def stop_current_run(self):
         print("\nStopping current run...\n")
@@ -159,7 +165,7 @@ class MethodReader:  # should call read from coordinator file
 
     def run_scheduled_methods(self): #main function: handles looping and threads
         """
-            
+        This method operates the     
         """
         print("") #Add line to make output easier to read
         
@@ -206,7 +212,7 @@ class MethodReader:  # should call read from coordinator file
                 print(f"\nRunning Sample {sample_count}. \nSamples remaining in scheduled queue: {int(self.scheduled_queue.shape[0])}")
 
                 try:
-                    run_completed = self.run_next_sample() # run current self.current_run, return True if completed without stopping
+                    run_completed = self.run_next_sample() # run self.current_run, return True if completed without stopping
                 except:
                     now_date = datetime.now().strftime("%m/%d/%Y")
                     now_time = datetime.now().strftime("%I:%M %p")
