@@ -65,82 +65,87 @@ ACTION_DEFAULTS = {
 "set_tempdeck": ["", ""],
 }
 
-class Command_Parameter(tk.Frame,):
-    def __init__(self, frame, parameter, value, row_index, parameter_index):
+class Protocol_Parameter_Instance(tk.Frame,):
+    def __init__(self, frame, value_name, value, row, column):
+        index = int(column/2) #column changes by two each time
         self.master_frame: Method_Creator = frame
-        self.parameter_index = parameter_index
-        self.row_index = row_index
-        self.static_columns = 6
-        self.parameter_var = tk.StringVar()
+        #print(index)
+
+        self.value_name = value_name
+        this_type = self.master_frame.commands_list[row]["type"]
+        # print(index)
+        tk.Label(self.master_frame.command_grid, text=ACTION_TYPES[this_type][index]).grid(row=row, column=column + 6)
+        self.this_valuebox = tk.Entry(self.master_frame.command_grid)
+        self.this_valuebox.insert(tk.END,string=value)
+        self.this_valuebox.grid(row=row,column=column + 7)
+        self.this_valuebox.bind('<FocusOut>',lambda x: self.UpdateParameter(self.master_frame, row, index))
         
-        tk.Label(self.master_frame.command_grid, text=parameter).grid(row=row_index, column=parameter_index*2+self.static_columns)
-        self.parameter_entry = tk.Entry(self.master_frame.command_grid, textvariable=self.parameter_var)
-        self.parameter_entry.insert(tk.END,string=value)
-        self.parameter_entry.grid(row=row_index, column=parameter_index*2+self.static_columns+1)
-        self.parameter_entry.bind('<FocusOut>', lambda x: self.UpdateParameter())
-
-    def UpdateParameter(self):
-        print("\nitems in commands list: ", len(self.master_frame.commands_list))
-        print("row index: ", self.row_index)
-        print("parameters in command: ", self.master_frame.commands_list[self.row_index]["parameters"])
-        print("parameter index: ", self.parameter_index,"\n")
-        print(self.master_frame.commands_list[self.row_index]["parameters"][self.parameter_index])
-        self.master_frame.commands_list[self.row_index]["parameters"][self.parameter_index] = self.parameter_entry.get()
-        print(self.master_frame.commands_list[self.row_index]["parameters"][self.parameter_index])
+    def UpdateParameter(self, frame, row, index):
+        self.master_frame.commands_list[row]["parameters"][index] = self.this_valuebox.get()
 
 
-class Method_Command_Row(tk.Frame,):
-    def __init__(self, frame, row_index, command):
-        self.row = row_index
+class Protocol_Row(tk.Frame,):
+    def __init__(self, frame, row, command):
         self.master_frame: Method_Creator = frame
-        tk.Button(self.master_frame.command_grid, text="Insert", command= self.InsertRow).grid(row=self.row, column=0)
-        tk.Button(self.master_frame.command_grid, text="Delete", command=self.DeleteRow).grid(row=self.row, column=1)
-        tk.Button(self.master_frame.command_grid, text="Up", command=self.MoveUp).grid(row=self.row, column=2)
-        tk.Button(self.master_frame.command_grid, text="Down", command=self.MoveDown).grid(row=self.row, column=3)
+        self.row = row
+        self.protocol_parameters = command["parameters"]
+        tk.Button(self.master_frame.command_grid, text="Insert", command=lambda: self.InsertRow(self.master_frame)).grid(row=self.row, column=0)
+        tk.Button(self.master_frame.command_grid, text="Delete", command=lambda: self.DeleteRow(self.master_frame)).grid(row=self.row, column=1)
+        tk.Button(self.master_frame.command_grid, text="Up", command=lambda: self.MoveUp(self.master_frame)).grid(row=self.row, column=2)
+        tk.Button(self.master_frame.command_grid, text="Down", command=lambda: self.MoveDown(self.master_frame)).grid(row=self.row, column=3)
         tk.Label(self.master_frame.command_grid, text="Command Type: ").grid(row=self.row,column=4)
         self.type_box = ttk.Combobox(self.master_frame.command_grid, state='readonly')
         self.type_box.grid(row=self.row,column=5)
         self.type_box["values"] = [*ACTION_TYPES.keys()]
         self.type_box.set(command["type"])
-        self.type_box.bind("<<ComboboxSelected>>", lambda x: self.UpdateCommandGrid(self.row))
+        self.type_box.bind("<<ComboboxSelected>>", lambda x: self.UpdateCommandGrid(self.master_frame, self.row))
         #first two are type
-        if len(ACTION_TYPES[command["type"]]) == len(command["parameters"]):
-            parameter_index = 0
-            for parameter in ACTION_TYPES[command["type"]]:
-
-                Command_Parameter(self.master_frame, parameter, command["parameters"][parameter_index], self.row, parameter_index)
-                parameter_index += 1  # 2 columns are used for each command parameter
+        if len(ACTION_TYPES[command["type"]]) == len(self.protocol_parameters):
+            i = 0
+            for eachParameter in ACTION_TYPES[command["type"]]:
+                #print(command)
+                Protocol_Parameter_Instance(self.master_frame, eachParameter, command["parameters"][int(i/2)], self.row, i )
+                i = i + 2
         else:
-            print("Invalid Command! Command Parameters")
+            for eachParameter in list(ACTION_DEFAULTS.get(command["type"])[len(self.protocol_parameters):]):
+                command["parameters"].append(eachParameter)
+                self.protocol_parameters = command["parameters"]
+            i = 0
+            for eachParameter in self.protocol_parameters:
+                #print(command)
+                Protocol_Parameter_Instance(self.master_frame, eachParameter, command["parameters"][int(i/2)], self.row, i )
+                i = i + 2
 
-        
-        
 
-    def UpdateCommandGrid(self):
+
+
+    def UpdateCommandGrid(self, frame, row):
         new_type = self.type_box.get()
-        
-        if not self.master_frame.commands_list[self.row]["type"].__eq__(str(new_type)):
-            #print("different")
-            self.master_frame.commands_list[self.row]["type"] = new_type
-            self.master_frame.commands_list[self.row]["parameters"] = list(ACTION_DEFAULTS.get(new_type))
-        self.master_frame.UpdateCommandGrid()
+        frame: Method_Creator = frame
 
-    def InsertRow(self):
+        if not frame.commands_list[row]["type"].__eq__(str(new_type)):
+            #print("different")
+            frame.commands_list[row]["type"] = new_type
+            frame.commands_list[row].pop("parameters")
+            frame.commands_list[row]["parameters"] = list(ACTION_DEFAULTS.get(new_type))
+        frame.UpdateCommandGrid()
+
+    def InsertRow(self, frame):
         new_key = list(ACTION_TYPES.keys())[0]
         self.master_frame.commands_list.insert(self.row, {"type": new_key, "parameters": list(ACTION_DEFAULTS.get(new_key))})
         self.master_frame.UpdateCommandGrid()
 
-    def MoveUp(self):
+    def MoveUp(self, frame):
         row_to_move = self.master_frame.commands_list.pop(self.row)
         self.master_frame.commands_list.insert(abs(self.row - 1),row_to_move)
         self.master_frame.UpdateCommandGrid()
 
-    def MoveDown(self):
-        row_to_move = self.master_frame.commands_list.pop(self.row)
+    def MoveDown(self, frame):
+        row_to_move = frame.commands_list.pop(self.row)
         self.master_frame.commands_list.insert(abs(self.row + 1),row_to_move)
         self.master_frame.UpdateCommandGrid()
-    
-    def DeleteRow(self):
+
+    def DeleteRow(self, frame):
         self.master_frame.commands_list.pop(self.row)
         self.master_frame.UpdateCommandGrid()
 
@@ -149,7 +154,6 @@ class Method_Creator(tk.Toplevel,):
         tk.Toplevel.__init__(self)    
       
         self.title("Create a Method")
-
         # sets the geometry of toplevel
         self.geometry("1000x1800")
         self.state("zoomed")
@@ -158,7 +162,7 @@ class Method_Creator(tk.Toplevel,):
         self.header_bar.pack(side=tk.TOP)
         tk.Button(self.header_bar, text="Save Method", command=self.save_method).grid(row=0, column=0)
         tk.Button(self.header_bar, text="Load Method", command=self.load_method).grid(row=0, column=1)
-        tk.Button(self.header_bar, text="Append Commands", command=self.append_commands).grid(row=0, column=2)        
+        tk.Button(self.header_bar, text="Add to Method", command=self.append_commands).grid(row=0, column=2)        
 
         self.commands_list = []
 
@@ -167,11 +171,9 @@ class Method_Creator(tk.Toplevel,):
         
         self.xscrollbar = tk.Scrollbar(self, orient="horizontal")
         self.xscrollbar.pack(side = tk.BOTTOM, fill = tk.X)
-
         self.Canv = tk.Canvas(self, width=4000, height = 1800,
                          scrollregion=(0,0,4000,1800)) #width=1256, height = 1674)
         self.Canv.pack(fill="both", expand=True) #added sticky
-
         self.command_grid = tk.Frame(self.Canv)
         self.command_grid.bind(
             "<Configure>",
@@ -186,7 +188,6 @@ class Method_Creator(tk.Toplevel,):
         self.scrollbar.config(command=self.Canv.yview)
         self.rowconfigure(0, weight=1) 
         self.columnconfigure(0, weight=1)
-
         self.UpdateCommandGrid()
     
     def reset_scrollregion(self, event):
@@ -228,6 +229,8 @@ class Method_Creator(tk.Toplevel,):
         
         if new_file == None:  # in the event of a cancel 
             return
+        else:
+            print(new_file)
 
         my_dict = self.LoadFromFile(new_file)
         
@@ -283,15 +286,15 @@ class Method_Creator(tk.Toplevel,):
     def PopulateCommandGrid(self):        
         self.command_grid = tk.Frame(self.Canv)
         self.command_grid.pack(side=tk.TOP)
-        self.command_frames = []
-        row_index = 0
-        for command in self.commands_list:
-            self.command_frames.append(Method_Command_Row(self, row_index, command))
-            row_index += 1
+        self.cow = []
+        i = 0
+        for eachCommand in self.commands_list:
+            self.cow.append(Protocol_Row(self, i, eachCommand))
+            i = i + 1
 
-        tk.Button(self.command_grid, text="Add Row", command=lambda: self.add_row(row_index)).grid(row=row_index, column=1)
+        tk.Button(self.command_grid, text="Add Row", command=lambda: self.AddRow(i)).grid(row=i, column=1)
 
-    def add_row(self, row):
+    def AddRow(self, row):
         new_key = list(ACTION_TYPES.keys())[0]
         parameters = list(ACTION_DEFAULTS.get(new_key)) # if you don't make it changes the default dictionary when updated
         self.commands_list.append({"type": new_key, "parameters": parameters})

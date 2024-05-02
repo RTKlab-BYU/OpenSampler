@@ -308,8 +308,7 @@ class Calibration(tk.Toplevel,):
     # sets flag to false, then waits until position_thread has ended to proceed
     def stop_updating_positions(self):
         self.updating_positions = False
-        while self.position_thread.is_alive():
-            pass
+        
     
     def start_joystick(self):
         self.position_thread = threading.Thread(target=self.update_positions)

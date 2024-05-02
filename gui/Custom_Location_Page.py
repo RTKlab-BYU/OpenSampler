@@ -83,23 +83,17 @@ class Custom_Location(tk.Toplevel,):
             self.z_var.set(z)
 
             time.sleep(1)
-            print("I refuse to die!")
-            if not self.updating_positions:
-                print("Die!!!!")
-                break
+            
 
         print("done with position thread")
 
 
     # sets flag to false, then waits until position_thread has ended to proceed
     def stop_updating_positions(self):
-        print("Thread is live: ", self.updating_positions)
+
         self.updating_positions = False
-        print("Thread is live: ", self.updating_positions)
-        # while self.position_thread.is_alive():
-        #     print("Thread is live: ", self.updating_positions)
-        #     print("I'm not dead yet!")
-        #     time.sleep(1)
+
+        
     
     def start_joystick(self):
         print("checkpoint 1")
