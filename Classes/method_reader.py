@@ -26,7 +26,9 @@ class MethodReader:  # should call read from coordinator file
         self.running = False
         self.scheduled_queue = None
         self.queue_paused = False
-        self.queue_changed = True
+
+        self.current_run_changed = True
+        self.scheduled_queue_changed = True
 
         self.current_run = None
         self.stop_run = False
@@ -112,6 +114,7 @@ class MethodReader:  # should call read from coordinator file
         self.stop_run = False
         self.queue_paused = False
         self.current_run = None
+        self.current_run_changed = True
 
     def stop_current_run(self):
         print("\nStopping current run...\n")
@@ -176,6 +179,7 @@ class MethodReader:  # should call read from coordinator file
                 if not self.running:
                     # Add any end of run commands if not elsewhere
                     self.current_run = None
+                    self.current_run_changed = True
                     print("\nN!!!")
                     print("\n----------------------------------------------------------\n") #white space for output readibility
                     return
@@ -191,7 +195,9 @@ class MethodReader:  # should call read from coordinator file
                 
                 self.current_run = self.scheduled_queue.iloc[0] # set the location of 'current_run' to the first row of the scheduled queue
                 self.scheduled_queue = self.scheduled_queue.drop(self.scheduled_queue.index[0])
-                self.queue_changed = True
+                self.current_run_changed = True
+                self.scheduled_queue_changed = True
+
                 
                 now_date = datetime.now().strftime("%m/%d/%Y")
                 now_time = datetime.now().strftime("%H:%M %p")
@@ -225,6 +231,7 @@ class MethodReader:  # should call read from coordinator file
                 finally:
                     print("\n*****************************************************************\n")
                     self.current_run = None
+                    self.current_run_changed = True
             else:
                 break
 
@@ -232,7 +239,7 @@ class MethodReader:  # should call read from coordinator file
         # End of queue commands
         self.current_run = None
         self.running = False
-        self.queue_changed = True
+        self.current_run_changed = True
         # 
 
         print("\n     DONE!!!")

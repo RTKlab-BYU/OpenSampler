@@ -223,11 +223,13 @@ class Queue_Gui(tk.Toplevel,):
             empty_queue = True
         if empty_queue:
             self.my_reader.scheduled_queue = compiled_queue
+            self.scheduled_queue_changed = True
             print("Methods Queued")
         else:
             new_scheduled_queue = pd.concat([self.my_reader.scheduled_queue, compiled_queue])
             new_scheduled_queue = new_scheduled_queue.reset_index()
             self.my_reader.scheduled_queue = new_scheduled_queue
+            self.scheduled_queue_changed = True
             print("Methods added to current Queue")
 
         # if not already running, activate scheduled queue
@@ -631,7 +633,6 @@ class Scheduled_Queue(tk.Frame,):
         # finally
         self.update_active_queue_display()
 
-    
     def display_current_run(self):
         '''
         This method retrieves the values of the current active que run,
@@ -800,9 +801,13 @@ class Scheduled_Queue(tk.Frame,):
         
         while self.my_reader.running:
             time.sleep(1)
-            if self.my_reader.queue_changed:
-                self.update_active_queue_display()
-                self.my_reader.queue_changed = False
+            if self.my_reader.scheduled_queue_changed:
+                self.update_active_queue_display()  # change this
+                self.my_reader.scheduled_queue_changed = False
+
+            if self.my_reader.current_run_changed:
+                self.update_active_queue_display()  # change this
+                self.my_reader.scheduled_queue_changed = False
         
         self.update_active_queue_display()  
 
@@ -831,6 +836,8 @@ class Scheduled_Queue(tk.Frame,):
         '''
         print("clear selected - currently just prints this statement.")
 
+        # self.scheduled_queue_changed = True
+
     def clear_all_runs(self):
         '''
         Remove all future runs from scheduled queue. Does not affect current run.
@@ -838,6 +845,7 @@ class Scheduled_Queue(tk.Frame,):
 
         
         self.my_reader.scheduled_queue = None  # overwrite any scheduled runs
+        self.scheduled_queue_changed = True
         self.my_reader.resume_scheduled_queue()  # if paused, resume
         print("Clear all - This should be working now.")
 
