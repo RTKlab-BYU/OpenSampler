@@ -200,9 +200,9 @@ class Queue_Gui(tk.Toplevel,):
         # check for conflict between current and new queue
         if not self.my_reader.running:
             compiled_queue = self.compile_queue_to_schedule()
-            self.scheduled_queue_frame.queue_type = new_queue_type
-            self.scheduled_queue_frame.update_scheduled_queue_display()
-        elif (new_queue_type == self.scheduled_queue_frame.queue_type):
+            self.scheduled_queue_frame.active_queue_type = new_queue_type
+            self.scheduled_queue_frame.update_active_queue_display()
+        elif (new_queue_type == self.scheduled_queue_frame.active_queue_type):
             compiled_queue = self.compile_queue_to_schedule()
         else:
             print("\n\nYou Shall Not Queue!!!\n(Wait until current active que is finished to schedule new queue type)\n\n")
@@ -541,7 +541,7 @@ class Scheduled_Queue(tk.Frame,):
         self.queue_type_string = tk.StringVar(value="Nothing in the Active Queue")
         self.coordinator: Coordinator = coordinator
         self.my_reader = self.coordinator.myReader
-        self.queue_type = None
+        self.active_queue_type = None
 
         # main frames of active queue page
         self.type_frame = tk.Frame(self, highlightbackground="black", highlightthickness=2)
@@ -552,13 +552,9 @@ class Scheduled_Queue(tk.Frame,):
         self.current_run_frame.pack(fill="x")
         self.scheduled_runs_frame.pack(fill="both", expand=True)
 
-
-
         # inside type frame
         self.type_label = tk.Label(self.type_frame, textvariable=self.queue_type_string, font=(40))
         self.type_label.pack(side="left", fill="x")
-
-
 
         # inside current run frame
         self.stop_button_frame = tk.Frame(self.current_run_frame, padx=5) #, highlightbackground="purple", highlightthickness=2)
@@ -575,12 +571,6 @@ class Scheduled_Queue(tk.Frame,):
 
         self.stop_button_spacer.pack()
         self.stop_button.pack()
-
-        # inside current run inner frame
-        self.space_label_1 = tk.Label(self.current_run_inner, text="")
-        self.space_label_2 = tk.Label(self.current_run_inner, text="")
-
-
 
         # inside scheduled runs frame
         self.scheduled_runs_buttons = tk.Frame(self.scheduled_runs_frame, padx=5) 
@@ -634,20 +624,56 @@ class Scheduled_Queue(tk.Frame,):
         self.frac_scheduled_headers.elution_wells.set(FRAC_HEADERS[3])
         self.frac_scheduled_headers.method.set(FRAC_HEADERS[4])
 
+        # spacers
+        self.space_label_1 = tk.Label(self.current_run_inner, text="")
+        self.space_label_2 = tk.Label(self.scheduled_runs_inner, text="")
 
-        self.update_scheduled_queue_display()
+        # finally
+        self.update_active_queue_display()
 
-    def add_entry_headers(self):
-        '''
-        This method uses the pandas objects found
-        '''
-        pass
     
     def display_current_run(self):
         '''
-        This method populates the current run frame when a method is running 
+        This method retrieves the values of the current active que run,
+        stores them in an appropriate frame class,
+        and displays the frame inside the current run frame 
         '''
-        pass
+        
+
+        queue_type = self.active_queue_type
+        # queue_type = "Sample Prep"  #override for testing purposes
+        queue_type = "Mass Spec"  #override for testing purposes
+        # queue_type = "Fractionation"  #override for testing purposes
+
+        self.my_reader.current_run[MS_HEADERS[0]]
+
+        if queue_type == "Sample Prep":
+            pass
+            # add sample prep display
+
+        elif queue_type == "Mass Spec":
+            self.active_que_current_run = MS_Queue_Row_Inputs(self.current_run_inner)
+            self.active_que_current_run.stage.set(self.my_reader.current_run[MS_HEADERS[0]])
+            self.active_que_current_run.plate.set(self.my_reader.current_run[MS_HEADERS[1]])
+            self.active_que_current_run.well.set(self.my_reader.current_run[MS_HEADERS[2]])
+            self.active_que_current_run.method.set(self.my_reader.current_run[MS_HEADERS[3]])
+
+            self.space_label_1.pack_forget()
+            self.active_que_current_run.pack()
+
+        elif queue_type == "Mass Spec":
+            self.active_que_current_run = Frac_Queue_Row_Inputs(self.current_run_inner)
+            self.active_que_current_run.stage.set(self.my_reader.current_run[MS_HEADERS[0]])
+            self.active_que_current_run.plate.set(self.my_reader.current_run[MS_HEADERS[1]])
+            self.active_que_current_run.sample_wells.set(self.my_reader.current_run[MS_HEADERS[2]])
+            self.active_que_current_run.elution_wells.set(self.my_reader.current_run[MS_HEADERS[3]])
+            self.active_que_current_run.method.set(self.my_reader.current_run[MS_HEADERS[4]])
+
+            self.space_label_1.pack_forget()
+            self.active_que_current_run.pack()
+
+        else:
+            pass
 
     def clear_current_run_display(self):
         '''
@@ -659,7 +685,35 @@ class Scheduled_Queue(tk.Frame,):
         '''
         This method populates the scheduled runs frame when there are runs in the scheduled queue
         '''
-        pass
+        queue_type = self.active_queue_type
+        # queue_type = "Sample Prep"  #override for testing purposes
+        queue_type = "Mass Spec"  #override for testing purposes
+        # queue_type = "Fractionation"  #override for testing purposes
+
+    def compile_queue_from_dataframe(self, dataframe):
+        '''
+        This method populates the scheduled runs frame when there are runs in the scheduled queue
+        '''
+        queue_type = self.active_queue_type
+        # queue_type = "Sample Prep"  #override for testing purposes
+        queue_type = "Mass Spec"  #override for testing purposes
+        # queue_type = "Fractionation"  #override for testing purposes
+
+        dataframe_as_list = []
+        dataframe: pd.DataFrame = dataframe
+
+        if queue_type == "Sample Prep":
+            pass
+        elif queue_type == "Mass Spec":
+            for row_index in range(dataframe.shape[0]):
+                dataframe[MS_HEADERS[0]].loc[dataframe.index[row_index]]
+                scheduled_run = MS_Queue_Row_Inputs(self.scheduled_runs_inner)
+                scheduled_run.stage.set(dataframe[MS_HEADERS[0]].loc[dataframe.index[row_index]])
+                scheduled_run.plate.set(dataframe[MS_HEADERS[1]].loc[dataframe.index[row_index]])
+                scheduled_run.well.set(dataframe[MS_HEADERS[2]].loc[dataframe.index[row_index]])
+                scheduled_run.method.set(dataframe[MS_HEADERS[3]].loc[dataframe.index[row_index]])
+
+                dataframe_as_list.append()
 
     def clear_scheduled_runs_display(self):
         '''
@@ -667,41 +721,68 @@ class Scheduled_Queue(tk.Frame,):
         '''
         pass
         
-    def update_scheduled_queue_display(self):
+    def update_active_queue_display(self):
 
-        queue_type = self.queue_type
+        queue_type = self.active_queue_type
+        # queue_type = "Sample Prep"  #override for testing purposes
         queue_type = "Mass Spec"  #override for testing purposes
+        # queue_type = "Fractionation"  #override for testing purposes
+
 
         if queue_type == "Sample Prep":
             self.queue_type_string.set("Sample Preparation")
             self.ms_current_headers.pack_forget()
             self.ms_scheduled_headers.pack_forget()
             self.frac_current_headers.pack_forget()
-            self.frac_scheduled_headers.pack_forget() 
+            self.frac_scheduled_headers.pack_forget()
+            self.scheduled_runs_frame.pack_forget()
+
             # pack sample prep display
+
+            if self.my_reader.current_run:
+                self.space_label_1.pack_forget()
+            else:
+                self.space_label_1.pack()
             
         elif queue_type == "Mass Spec":
             self.queue_type_string.set("Mass Spectrometry")
             # forget other displays
             self.frac_current_headers.pack_forget()
             self.frac_scheduled_headers.pack_forget()
-            self.space_label_1.pack_forget()
             self.space_label_2.pack_forget()
 
-            self.ms_current_headers.pack()
-            self.ms_scheduled_headers.pack()
-            
+            self.scheduled_runs_frame.pack(fill="both", expand=True)
+            self.ms_current_headers.pack(fill="both", expand=True)
+            self.ms_scheduled_headers.pack(side="top", fill="x")
+
+            # fill in scheduled runs
+
+            if self.my_reader.current_run:
+                self.space_label_1.pack_forget()
+            else:
+                self.space_label_1.pack()
+
+            self.space_label_2.pack(fill="both", expand=True)  # this gets added back in after everything else         
  
         elif queue_type == "Fractionation":
             self.queue_type_string.set("Fractionation")
             # forget other displays
             self.ms_current_headers.pack_forget()
             self.ms_scheduled_headers.pack_forget()
-            self.space_label_1.pack_forget()
             self.space_label_2.pack_forget()
 
-            self.frac_current_headers.pack()
-            self.frac_scheduled_headers.pack()
+            self.scheduled_runs_frame.pack(fill="both", expand=True)
+            self.frac_current_headers.pack(fill="both", expand=True)
+            self.frac_scheduled_headers.pack(side="top", fill="x")
+
+            # fill in scheduled runs
+
+            if self.my_reader.current_run:
+                self.space_label_1.pack_forget()
+            else:
+                self.space_label_1.pack()
+
+            self.space_label_2.pack(fill="both", expand=True)  # this gets added back in after everything else   
 
         else:
             self.queue_type_string.set("Nothing in the Active Queue")
@@ -711,7 +792,6 @@ class Scheduled_Queue(tk.Frame,):
             self.frac_scheduled_headers.pack_forget()
 
             self.space_label_1.pack()
-            self.space_label_2.pack()
             
 
     # functions for active queue handling
@@ -721,10 +801,10 @@ class Scheduled_Queue(tk.Frame,):
         while self.my_reader.running:
             time.sleep(1)
             if self.my_reader.queue_changed:
-                self.update_scheduled_queue_display()
+                self.update_active_queue_display()
                 self.my_reader.queue_changed = False
         
-        self.update_scheduled_queue_display()  
+        self.update_active_queue_display()  
 
     def stop_immediately(self):
         '''
@@ -737,10 +817,10 @@ class Scheduled_Queue(tk.Frame,):
         Pauses queue after finishing current run. 
 
         '''
-        if self.my_reader.paused:
+        if self.my_reader.queue_paused:
             self.my_reader.resume_scheduled_queue()
             # Change button color?
-        elif not self.my_reader.paused:
+        elif not self.my_reader.queue_paused:
             self.my_reader.pause_scheduled_queue()
             # Change button color?
 

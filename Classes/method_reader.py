@@ -6,16 +6,6 @@ import json
 import pandas as pd
 
 
-'''
-This file handles the active que. 
-It verifies some aspects of proposed methods before adding them to the scheduled queue.
-It removes and executes the first entry in the scheduled queue until there are none.
-It monitors the current run for errors, and will end the run and pause the queue if one occurs.
-The current run can be interupted by the user, which automatically pauses the remaining queue.
-The scheduled que can be paused (and resumed) without interupting the current run.
-The scheduled que can be cleared (this will also not interupt the current run).
-These controls are operated from the Queue_Gui.
-'''
 
 class MethodReader:  # should call read from coordinator file
     '''
@@ -33,13 +23,15 @@ class MethodReader:  # should call read from coordinator file
 
         self.myCoordinator = myCoordinator # this has the functions that move the motors
         
-        self.current_run = None
-        self.stop_run = False
-        self.paused = False
-
         self.running = False
         self.scheduled_queue = None
+        self.queue_paused = False
         self.queue_changed = True
+
+        self.current_run = None
+        self.stop_run = False
+        
+        
         
     def verify_wells(self, proposed_queue):  # checks all the wells in CSV to make sure they all exist
         print("Verifying Wells...")
@@ -118,7 +110,7 @@ class MethodReader:  # should call read from coordinator file
 
     def reset(self):
         self.stop_run = False
-        self.paused = False
+        self.queue_paused = False
         self.current_run = None
 
     def stop_current_run(self):
@@ -126,11 +118,11 @@ class MethodReader:  # should call read from coordinator file
         self.stop_run = True
 
     def pause_scheduled_queue(self):
-        self.paused = True
+        self.queue_paused = True
         print("\nScheduled queue has been paused.")
 
     def resume_scheduled_queue(self):
-        self.paused = False
+        self.queue_paused = False
         print("\nScheduled queue has been resumed.")
 
     def run_next_sample(self):  # reads and calls commands from method to load next sample
@@ -180,7 +172,7 @@ class MethodReader:  # should call read from coordinator file
 
             
         
-            while self.paused:
+            while self.queue_paused:
                 if not self.running:
                     # Add any end of run commands if not elsewhere
                     self.current_run = None
@@ -199,6 +191,7 @@ class MethodReader:  # should call read from coordinator file
                 
                 self.current_run = self.scheduled_queue.iloc[0] # set the location of 'current_run' to the first row of the scheduled queue
                 self.scheduled_queue = self.scheduled_queue.drop(self.scheduled_queue.index[0])
+                self.queue_changed = True
                 
                 now_date = datetime.now().strftime("%m/%d/%Y")
                 now_time = datetime.now().strftime("%H:%M %p")
@@ -236,7 +229,7 @@ class MethodReader:  # should call read from coordinator file
                 break
 
             
-        # End of run commands
+        # End of queue commands
         self.current_run = None
         self.running = False
         self.queue_changed = True

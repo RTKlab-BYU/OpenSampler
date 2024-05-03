@@ -135,6 +135,7 @@ class Connect(tk.Toplevel,):
         tk.Toplevel.__init__(self)    
       
         self.title("Settings and Configuration")
+        self.coordinator = coordinator
 
         self.available_ports = list_ports.comports()
         self.available_port_dict = {}
@@ -176,7 +177,10 @@ class Connect(tk.Toplevel,):
         tk.Button(settingsBar,text="Clear Settings",command=lambda: self.LoadDefaults(coordinator),justify=tk.LEFT).grid(row=0,column=2)
         tk.Button(settingsBar, text='Import from a Settings File', command=lambda: self.LoadSettings(coordinator),justify=tk.LEFT).grid(row=0,column=3)
         tk.Button(settingsBar,text="Save Settings to File",command=lambda: self.SaveSettings(),justify=tk.LEFT).grid(row=0,column=4)
-        tk.Button(settingsBar,text="Advanced Configuration",command=lambda: Configuration(coordinator),justify=tk.LEFT).grid(row=0,column=4)
+        
+        self.advanced_config = None
+        self.advanced_config_button = tk.Button(settingsBar, text="Advanced Configuration", command=self.open_advanced_config_page)
+        self.advanced_config_button.grid(row=0,column=4)
         
 
 
@@ -194,6 +198,12 @@ class Connect(tk.Toplevel,):
         self.initialize_frames(coordinator)
 
         self.protocol("WM_DELETE_WINDOW", lambda: self.on_closing(coordinator))
+
+    def open_advanced_config_page(self):
+        if not self.advanced_config or not self.advanced_config.winfo_exists():
+            self.advanced_config = Configuration(self.coordinator)
+        else:
+            self.advanced_config.deiconify()
 
     def on_closing(self, coordinator):
         self.destroy()
