@@ -102,7 +102,7 @@ class Method_Command_Row(tk.Frame,):
         self.type_box.grid(row=self.row,column=5)
         self.type_box["values"] = [*ACTION_TYPES.keys()]
         self.type_box.set(command["type"])
-        self.type_box.bind("<<ComboboxSelected>>", lambda x: self.UpdateCommandGrid(self.row))
+        self.type_box.bind("<<ComboboxSelected>>", lambda x: self.UpdateCommandGrid())
         #first two are type
         if len(ACTION_TYPES[command["type"]]) == len(command["parameters"]):
             parameter_index = 0
