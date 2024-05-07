@@ -315,7 +315,7 @@ class Connect(tk.Toplevel,):
 
         file_path = filedialog.askopenfilename(parent=self, title='Open a file', initialdir='settings', filetypes=filetypes)
 
-        if file_path == None:  # in the event of a cancel 
+        if file_path == "":  # in the event of a cancel 
             return
         
         self.settings_filename_to_open = file_path

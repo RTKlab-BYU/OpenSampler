@@ -1377,7 +1377,7 @@ class Configuration(tk.Toplevel,):
 
         new_file = filedialog.askopenfilename(parent=self, title='Open a file', initialdir='settings', filetypes=filetypes)
 
-        if new_file == None:  # in the event of a cancel 
+        if new_file == "":  # in the event of a cancel 
             return
         
         self.settings_filename_to_open = new_file

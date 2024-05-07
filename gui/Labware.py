@@ -128,7 +128,7 @@ class Labware(tk.Toplevel,):
 
         file_path = filedialog.askopenfilename(parent=self, title='Open a file', initialdir='Calibrations', filetypes=filetypes)
 
-        if file_path == None:  # in the event of a cancel 
+        if file_path == "":  # in the event of a cancel 
             return
         
         coordinator.load_labware_setup(file_path, self.selected_stage)

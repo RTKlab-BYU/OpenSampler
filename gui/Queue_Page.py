@@ -251,9 +251,12 @@ class Queue_Gui(tk.Toplevel,):
         #     ('All files', '*')
         # )
 
-        # new_file = fd.askopenfilename(parent=self, title='Add to Queue', initialdir='queues', filetypes=filetypes)
+        # file_path = fd.askopenfilename(parent=self, title='Add to Queue', initialdir='queues', filetypes=filetypes)
+
+        # if file_path == "":  # in the event of a cancel 
+        #     return
         
-        # self.queue_to_run = new_file
+        # self.queue_to_run = file_path
         # self.RunButton["state"] =  "normal"
         
         # pathToQueue = self.queue_to_run
@@ -867,6 +870,9 @@ class Sample_Prep_Inputs(tk.Frame,):
     def sp_headers(self):
 
         self.method_var.set(SP_HEADERS[0])
+        self.method_box.config(state="readonly")
+
+        self.method_box.unbind('<Double-Button-1>')
 
     def select_method(self, event):
         filetypes = (
@@ -876,7 +882,7 @@ class Sample_Prep_Inputs(tk.Frame,):
 
         file_path = fd.askopenfilename(parent=self, title='Open a file', initialdir='methods', filetypes=filetypes)
         
-        if file_path == None:  # in the event of a cancel 
+        if file_path == "":  # in the event of a cancel 
             return
         
         self.method_var.set(file_path)
@@ -912,8 +918,15 @@ class MS_Queue_Row_Inputs(tk.Frame,):
     def ms_headers(self):
         self.stage_var.set(MS_HEADERS[0])
         self.wellplate_var.set(MS_HEADERS[1])
-        self.wellplate_var.set(MS_HEADERS[2])
+        self.well_var.set(MS_HEADERS[2])
         self.method_var.set(MS_HEADERS[3])
+
+        self.stage_box.config(state="readonly")
+        self.wellplate_box.config(state="readonly")
+        self.well_box.config(state="readonly")
+        self.method_box.config(state="readonly")
+
+        self.method_box.unbind('<Double-Button-1>')
 
 
     def select_method(self, event):
@@ -924,7 +937,7 @@ class MS_Queue_Row_Inputs(tk.Frame,):
 
         file_path = fd.askopenfilename(parent=self, title='Open a file', initialdir='methods', filetypes=filetypes)
         
-        if file_path == None:  # in the event of a cancel 
+        if file_path == "":  # in the event of a cancel 
             return
         
         self.method_var.set(file_path)
@@ -946,17 +959,16 @@ class Frac_Queue_Row_Inputs(tk.Frame,):
         self.method_var = tk.StringVar()
         
         self.stage_box = tk.Entry(self, textvariable=self.stage_var)
-        self.plate_box = tk.Entry(self, textvariable=self.wellplate_var)
+        self.wellplate_box = tk.Entry(self, textvariable=self.wellplate_var)
         self.sample_wells_box = tk.Entry(self, textvariable=self.sample_wells_var)
         self.elution_wells_box = tk.Entry(self, textvariable=self.elution_wells_var)
         self.method_box = tk.Entry(self, textvariable=self.method_var)
 
         self.stage_box.pack(side="left")
-        self.plate_box.pack(side="left")
+        self.wellplate_box.pack(side="left")
         self.sample_wells_box.pack(side="left")
         self.elution_wells_box.pack(side="left")
-        self.method_box.pack(expand=True, fill="x", side="left")
-        
+        self.method_box.pack(expand=True, fill="x", side="left")        
 
         self.method_box.bind('<Double-Button-1>', lambda x: self.select_method(x))
 
@@ -970,6 +982,13 @@ class Frac_Queue_Row_Inputs(tk.Frame,):
         self.elution_wells_var.set(FRAC_HEADERS[3])
         self.method_var.set(FRAC_HEADERS[4])
 
+        self.stage_box.config(state="readonly")
+        self.wellplate_box.config(state="readonly")
+        self.sample_wells_box.config(state="readonly")
+        self.elution_wells_box.config(state="readonly")
+        self.method_box.config(state="readonly")
+
+        self.method_box.unbind('<Double-Button-1>')
 
     def select_method(self, event):  # still needs work
         filetypes = (
@@ -979,7 +998,7 @@ class Frac_Queue_Row_Inputs(tk.Frame,):
 
         file_path = fd.askopenfilename(parent=self, title='Open a file', initialdir='methods', filetypes=filetypes)
         
-        if file_path == None:  # in the event of a cancel 
+        if file_path == "":  # in the event of a cancel 
             return
         
         self.method_var.set(file_path)
