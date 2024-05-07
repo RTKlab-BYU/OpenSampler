@@ -313,12 +313,12 @@ class Connect(tk.Toplevel,):
             ('All files', '*')
         )
 
-        new_file = filedialog.askopenfilename(
-            title='Open a file',
-            initialdir='settings',
-            filetypes=filetypes)
+        file_path = filedialog.askopenfilename(parent=self, title='Open a file', initialdir='settings', filetypes=filetypes)
+
+        if file_path == None:  # in the event of a cancel 
+            return
         
-        self.settings_filename_to_open = new_file
+        self.settings_filename_to_open = file_path
 
         new_dict = coordinator.myModules.read_dictionary_from_file(self.settings_filename_to_open)
         self.AddConfigurations(coordinator, new_dict)
@@ -329,10 +329,7 @@ class Connect(tk.Toplevel,):
             ( 'All files', '*')
         )
 
-        new_file =  filedialog.asksaveasfile(
-            title='Save Settings',
-            initialdir='settings',
-            filetypes=filetypes)
+        new_file =  filedialog.asksaveasfile(parent=self, title='Save Settings', initialdir='settings', filetypes=filetypes)
         
         if new_file.name.endswith(".json"):
             new_file = new_file.name.replace(".json","") + ".json"

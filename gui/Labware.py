@@ -3,7 +3,7 @@ from gui.Syringe_Selection import Syringe_Selection
 from gui.Create_Labware import Create_Labware
 
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, filedialog
 
 class WellPlate_Row(tk.Frame,):
     def __init__(self, frame, coordinator, stage, labware_name, row):
@@ -126,12 +126,12 @@ class Labware(tk.Toplevel,):
             ('All files', '*')
         )
 
-        new_file =tk.filedialog.askopenfilename(
-            title='Open a file',
-            initialdir='Calibrations',
-            filetypes=filetypes)
+        file_path = filedialog.askopenfilename(parent=self, title='Open a file', initialdir='Calibrations', filetypes=filetypes)
+
+        if file_path == None:  # in the event of a cancel 
+            return
         
-        coordinator.load_labware_setup(new_file, self.selected_stage)
+        coordinator.load_labware_setup(file_path, self.selected_stage)
 
         self.UpdateLabware(coordinator)
         
@@ -166,10 +166,7 @@ class Labware(tk.Toplevel,):
             ( 'All files', '*')
         )
 
-        new_file =tk.filedialog.asksaveasfile(
-            title='Save a file',
-            initialdir='Calibrations',
-            filetypes=filetypes)
+        new_file = filedialog.asksaveasfile(parent=self, title='Save a file', initialdir='Calibrations', filetypes=filetypes)
         
         if new_file.name.endswith(".json"):
             new_file = new_file.name.replace(".json","") + ".json"

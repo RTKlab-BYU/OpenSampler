@@ -124,13 +124,13 @@ class Queue_Gui(tk.Toplevel,):
             self.upper_frame.pack_forget()
             self.queue_frame.pack_forget()
             self.scheduled_queue_frame.pack_forget()
-            self.sample_prep_frame.pack(pady=50, padx=10, expand=True, fill="x", side="top", anchor="n")
+            self.sample_prep_frame.pack(pady=50, padx=50, expand=True, fill="x", side="top", anchor="n")
 
         elif page_type == "Mass Spec":
             self.sample_prep_frame.pack_forget()
             self.scheduled_queue_frame.pack_forget()
             self.upper_frame.pack(fill="x")
-            self.queue_frame.pack(fill="both", expand=True)
+            self.queue_frame.pack(fill="both", expand=True, padx=50)
             self.update()
             canvas_width = self.canvas.winfo_width()
             self.canvas.itemconfig(self.queue_grid_window, width = canvas_width-4)         
@@ -140,7 +140,7 @@ class Queue_Gui(tk.Toplevel,):
             self.sample_prep_frame.pack_forget()
             self.scheduled_queue_frame.pack_forget()
             self.upper_frame.pack(fill="x")
-            self.queue_frame.pack(fill="both", expand=True)
+            self.queue_frame.pack(fill="both", expand=True, padx=50)
             self.update()
             canvas_width = self.canvas.winfo_width()
             self.canvas.itemconfig(self.queue_grid_window, width = canvas_width-4)
@@ -251,10 +251,7 @@ class Queue_Gui(tk.Toplevel,):
         #     ('All files', '*')
         # )
 
-        # new_file = fd.askopenfilename(
-        #     title='Add to Queue',
-        #     initialdir='queues',
-        #     filetypes=filetypes)
+        # new_file = fd.askopenfilename(parent=self, title='Add to Queue', initialdir='queues', filetypes=filetypes)
         
         # self.queue_to_run = new_file
         # self.RunButton["state"] =  "normal"
@@ -289,10 +286,7 @@ class Queue_Gui(tk.Toplevel,):
         #     ( 'All files', '*')
         # )
 
-        # new_file = fd.asksaveasfile(
-        #     title='Save a file',
-        #     initialdir='queues',
-        #     filetypes=filetypes)
+        # new_file = fd.asksaveasfile(parent=self, title='Save a file', initialdir='queues', filetypes=filetypes)
         
         # if new_file.name.endswith(".csv"):
         #     new_file = new_file.name.replace(".csv","") + ".csv"
@@ -349,10 +343,12 @@ class Queue_Handler:
             while len(self.ms_queue) > 1:
                 remove_item: MS_Queue_Row_Inputs = self.ms_queue.pop(-1)
                 remove_item.destroy()
+            self.ms_queue.insert(1, MS_Queue_Row_Inputs(self.ms_queue_frame))
         elif self.active_page == 'Fractionation':
             while len(self.frac_queue) > 1:
                 remove_item: Frac_Queue_Row_Inputs = self.frac_queue.pop(-1)
                 remove_item.destroy()
+            self.frac_queue.insert(1, Frac_Queue_Row_Inputs(self.frac_queue_frame))
 
         self.update_grid()
 
@@ -878,7 +874,11 @@ class Sample_Prep_Inputs(tk.Frame,):
             ('All files', '*')
         )
 
-        file_path = fd.askopenfilename(self, title='Choose a Method', initialdir='methods', filetypes=filetypes)
+        file_path = fd.askopenfilename(parent=self, title='Open a file', initialdir='methods', filetypes=filetypes)
+        
+        if file_path == None:  # in the event of a cancel 
+            return
+        
         self.method_var.set(file_path)
         
 
@@ -922,10 +922,12 @@ class MS_Queue_Row_Inputs(tk.Frame,):
             ('All files', '*')
         )
 
-        file_path = fd.askopenfilename(title='Choose a Method', initialdir='methods', filetypes=filetypes)
+        file_path = fd.askopenfilename(parent=self, title='Open a file', initialdir='methods', filetypes=filetypes)
+        
+        if file_path == None:  # in the event of a cancel 
+            return
+        
         self.method_var.set(file_path)
-        # self.handler.ms_default_file_path = file_path #README: Make it so method is default populated
-
 
 class Frac_Queue_Row_Inputs(tk.Frame,):
     '''
@@ -975,7 +977,11 @@ class Frac_Queue_Row_Inputs(tk.Frame,):
             ('All files', '*')
         )
 
-        file_path = fd.askopenfilename(title='Choose a Method', initialdir='methods', filetypes=filetypes)
+        file_path = fd.askopenfilename(parent=self, title='Open a file', initialdir='methods', filetypes=filetypes)
+        
+        if file_path == None:  # in the event of a cancel 
+            return
+        
         self.method_var.set(file_path)
         
 

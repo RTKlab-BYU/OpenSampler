@@ -193,14 +193,7 @@ class Method_Creator(tk.Toplevel,):
         self.Canv.configure(scrollregion=self.Canv.bbox("all"))
         #print("Resized")
 
-    def LoadFromFile(self, file):
-
-        # Create a dictionary out of the data in the specified json file
-        labware_dictionary = json.load(file)
-
-        return labware_dictionary
-
-    def load_method(self):
+    def LoadFromFile(self):
 
         filetypes = (
             ('json files', '*.json'),
@@ -212,24 +205,20 @@ class Method_Creator(tk.Toplevel,):
         if new_file == None:  # in the event of a cancel 
             return
 
-        my_dict = self.LoadFromFile(new_file)
+        my_dict = json.load(new_file)
+        return my_dict
+
+    def load_method(self):
+
+        my_dict = self.LoadFromFile()
 
         self.commands_list = my_dict["commands"]
 
         self.UpdateCommandGrid()
 
     def append_commands(self):
-        filetypes = (
-            ('json files', '*.json'),
-            ('All files', '*')
-        )
-
-        new_file = fd.askopenfile(parent=self, title='Open a file', initialdir='methods', filetypes=filetypes)
         
-        if new_file == None:  # in the event of a cancel 
-            return
-
-        my_dict = self.LoadFromFile(new_file)
+        my_dict = self.LoadFromFile()
         
         self.commands_list = self.commands_list + my_dict["commands"]
         
