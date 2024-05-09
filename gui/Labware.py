@@ -195,6 +195,8 @@ class Labware(tk.Toplevel,):
             tk.Label(self.wellplateBox,font="Helvetica 20", text="Loaded Wellplates").grid(row = 0, column = 1)
             
             self.addButton.config(text="Add Labware", command=self.open_labware_selection_page)
+            self.nicknameBox = tk.Frame(self)
+            self.nicknameBox.pack(side=tk.TOP)
 
             tk.Label(self.nicknameBox,font="Helvetica 24",text="Custom Locations").grid(row = 0, column = 1)
             i = 1 #0 is the label
