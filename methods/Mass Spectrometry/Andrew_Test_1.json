@@ -1,0 +1,1 @@
+{"commands": [{"type": "move_to_custom_location", "parameters": ["OT_Left", "Wash_2"]}, {"type": "wait", "parameters": ["5"]}, {"type": "move_to_well", "parameters": ["OT_Left", "0", "A2"]}, {"type": "wait", "parameters": ["10"]}]}
