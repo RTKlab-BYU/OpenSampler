@@ -40,9 +40,11 @@ class MethodReader:  # should call read from coordinator file
         
         
     def verify_wells(self, proposed_queue):  # checks all the wells in CSV to make sure they all exist
-        # print("Verifying Wells...")
         if "Well" in proposed_queue:
             for index, row in proposed_queue.iterrows():
+                if row["Well"] == '':
+                    print(F"Well not specified in row {index}")
+                    return False
 
                 row["Well"] = row["Well"].replace(" ", "")
                 for well in row["Well"].split(","):
@@ -53,7 +55,6 @@ class MethodReader:  # should call read from coordinator file
                         print(f"ERROR: {well} does not exist. Verify that the queue file contains only existing wells", "\n")
                         return False
 
-        # print("All Wells Verified!\n")
         return True
     
     def verify_method(self, path_to_method):
@@ -82,16 +83,18 @@ class MethodReader:  # should call read from coordinator file
                         return False
             return True
                     
-    def verify_methods(self, proposed_queue): # checks all the json files in CSV to make sure they all exist
-        # print("Verifying Method files...")
+    def verify_methods(self, proposed_queue: pd.DataFrame): # checks all the json files in CSV to make sure they all exist
 
-        for method in proposed_queue["Method"]: # open and close each json file, if one is missing it will throw error
-            if self.verify_method(method):
+        for index, row in proposed_queue.iterrows(): # open and close each json file, if one is missing it will throw error
+
+            if row['Method'] == '':
+                    print(F"Method not specified in row {index} of proposed que.")
+                    return False
+            if self.verify_method(row["Method"]):
                 pass
             else:
                 return False
-        
-        # print("SUCCESS!", "\n")
+
         return True
 
     def verify(self, proposed_queue):  # check compiled runs to make sure its format is valid, sets first gradient, estimate end time
@@ -111,8 +114,6 @@ class MethodReader:  # should call read from coordinator file
             return False  # stops code from running
         
         else:
-            # print out estimated completion time ask for approval
-            #self.estimate_end_time()
             
             return True #allows code to continue
 
@@ -168,7 +169,6 @@ class MethodReader:  # should call read from coordinator file
         """
         This method operates the     
         """
-        print("") #Add line to make output easier to read
         
         self.methodIndex = 0 # used to track the index of the wellList to get corresponding method. reset for every queue
         self.reset() # reset the stop indicators back to false for every queue
@@ -196,7 +196,6 @@ class MethodReader:  # should call read from coordinator file
             if type(self.scheduled_queue) == (DATAFRAME_TYPE or SERIES_TYPE):
                 pass
             else:
-                print("\ntype: ", type(self.scheduled_queue))
                 print("Cannot run an empty queue!\n")
                 break
 
@@ -205,7 +204,6 @@ class MethodReader:  # should call read from coordinator file
                 
                 self.current_run = self.scheduled_queue.iloc[0] # set the location of 'current_run' to the first row of the scheduled queue
                 self.scheduled_queue = self.scheduled_queue.drop(self.scheduled_queue.index[0])
-                print("sch que after dropping: ", self.scheduled_queue)
                 self.current_run_changed = True
                 self.scheduled_queue_changed = True
 
@@ -219,7 +217,7 @@ class MethodReader:  # should call read from coordinator file
 
                 logging.info(f"Running sample {sample_count} with {self.current_run['Method']} \nStarted at {now_time} on {now_date}.")
                 print("\n*****************************************************************\n")
-                print(f"Run for sample {sample_count} started at {now_time} on {now_date}.")  
+                print(f"Sample {sample_count} started at {now_time} on {now_date}.")  
 
                 print(f"\nSamples remaining in scheduled queue: {int(self.scheduled_queue.shape[0])}")
                 print("\n*****************************************************************\n")
