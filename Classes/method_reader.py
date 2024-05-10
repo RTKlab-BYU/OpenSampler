@@ -43,7 +43,7 @@ class MethodReader:  # should call read from coordinator file
         if "Well" in proposed_queue:
             for index, row in proposed_queue.iterrows():
                 if row["Well"] == '':
-                    print(F"Well not specified in row {index}")
+                    print(F"\n----- Well not specified in row {index} of proposed queue. -----")
                     return False
 
                 row["Well"] = row["Well"].replace(" ", "")
@@ -79,7 +79,6 @@ class MethodReader:  # should call read from coordinator file
                         else:
                             return False
                     else:
-                        print("bad nickname")
                         return False
             return True
                     
@@ -88,7 +87,7 @@ class MethodReader:  # should call read from coordinator file
         for index, row in proposed_queue.iterrows(): # open and close each json file, if one is missing it will throw error
 
             if row['Method'] == '':
-                    print(F"Method not specified in row {index} of proposed que.")
+                    print(F"\n----- Method not specified in row {index} of proposed que. -----")
                     return False
             if self.verify_method(row["Method"]):
                 pass
