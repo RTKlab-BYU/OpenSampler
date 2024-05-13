@@ -78,7 +78,7 @@ class Queue_Gui(tk.Toplevel,):
         self.file_bar.pack()
 
         self.clear_button = tk.Button(self.file_bar, text='Clear Queue', command= lambda:self.clear_queue())
-        self.load_button = tk.Button(self.file_bar,text='Load Queue', command= lambda:self.load_from_file())
+        self.load_button = tk.Button(self.file_bar,text='Load Queue', command= lambda:self.load_queue_from_csv())
         self.save_button = tk.Button(self.file_bar,text="Save Queue", command= lambda:self.save_queue())
 
         self.clear_button.grid(row=0, column=1)
@@ -254,62 +254,47 @@ class Queue_Gui(tk.Toplevel,):
     def clear_queue(self):  # removes all entries from the proposed MS or Frac queue pages
         self.handler.delete_grid()
     
-    def load_from_file(self):  # rework
+    def save_queue(self): 
+        filetypes = (
+            ('CSV files', '*.csv'),
+            ( 'All files', '*')
+        )
 
-        pass
-        # filetypes = (
-        #     ('csv files', '*.csv'),
-        #     ('All files', '*')
-        # )
-
-        # file_path = fd.askopenfilename(parent=self, title='Add to Queue', initialdir='queues', filetypes=filetypes)
-
-        # if file_path == "":  # in the event of a cancel 
-        #     return
+        new_file = fd.asksaveasfilename(parent=self, title='Save a file', initialdir='queues', filetypes=filetypes)
         
-        # self.queue_to_run = file_path
-        # self.run_button["state"] =  "normal"
+        if new_file.endswith(".csv"):
+            pass
+        else:
+            new_file = new_file + ".csv"
         
-        # pathToQueue = self.queue_to_run
-        # queueFile = pathlib.Path(pathToQueue)
-        # if queueFile.exists ():
-        #     queueFail = True
-        # else:
-        #     queueFail = False
- 
-        # while queueFail == False:
-        #     self.queue_to_run = input("Invalid queue. Try again: ")
-        #     pathToQueue = self.queue_to_run
-        #     queueFile = pathlib.Path(pathToQueue)
-        #     if queueFile.exists ():
-        #         queueFail = True
-        #     else:
-        #         queueFail = False
+        df = self.compile_queue_to_schedule()
+        df.to_csv(new_file, index=False)  
 
-        # # -----Get list from CSV queue.csv with pd. This is used for the RPi because the RPi doesn't have excel-----
-        
-        # col_list = ['Locations', 'Methods']
-        # df = pd.read_csv(pathToQueue, usecols=col_list)
-        # [self.wellList.append(well) for well in df["Locations"].tolist()]
-        # [self.methodList.append(method) for method in df["Methods"].tolist()]
-     
-    def save_queue(self):  # rework 
-        pass
-        # filetypes = (
-        #     ('CSV files', '*.csv'),
-        #     ( 'All files', '*')
-        # )
+    def load_queue_from_csv(self):
+        filetypes = (
+            ('csv files', '*.csv'),
+            ('All files', '*')
+        )
 
-        # new_file = fd.asksaveasfile(parent=self, title='Save a file', initialdir='queues', filetypes=filetypes)
+        queue_file = fd.askopenfilename(parent=self, title='Open a file', initialdir='queues', filetypes=filetypes)
         
-        # if new_file.name.endswith(".csv"):
-        #     new_file = new_file.name.replace(".csv","") + ".csv"
-        # else:
-        #     new_file = new_file.name + ".csv"
+        if queue_file == "":  # in the event of a cancel 
+            return
         
-        # df = pd.DataFrame(data={'Locations':self.wellList,'Methods':self.methodList})
-        # df.to_csv(new_file,index=False)      
+        if queue_file.endswith(".csv"):
+            pass
+        else:
+            queue_file = queue_file + ".csv"
+        
+        df_of_queue = pd.read_csv(queue_file)
+        temp_queue_list = self.scheduled_queue_frame.compile_list_from_dataframe(df_of_queue)
+        self.handler.delete_grid()
 
+        if self.handler.active_page == 'Mass Spec':
+            self.handler.ms_queue += temp_queue_list
+        elif self.handler.active_page == 'Fractionation':
+            self.handler.frac_queue += temp_queue_list
+        
 
 class Queue_Compiler:
     def __init__(self, queue_page, coordinator):
@@ -841,8 +826,6 @@ class Active_Queue(tk.Frame,):
                 self.update_current_run_display()  # change this
                 self.my_reader.current_run_changed = False
         
- 
-
     def stop_immediately(self):
         '''
         Pauses queue and interupts current run.
@@ -866,7 +849,7 @@ class Active_Queue(tk.Frame,):
         Removes selected runs from scheduled queue (selected using row oriented checkboxes). 
         Does not affect current run. 
         '''
-        print("clear selected - currently just prints this statement.")
+        print("\nclear selected - currently just prints this statement.\n")
 
         # self.scheduled_queue_changed = True
 
@@ -975,6 +958,7 @@ class MS_Queue_Row_Inputs(tk.Frame,):
             return
         
         self.method_var.set(file_path)
+
 
 class Frac_Queue_Row_Inputs(tk.Frame,):
     '''
