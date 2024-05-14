@@ -80,10 +80,6 @@ class Command_Parameter(tk.Frame,):
         self.parameter_entry.bind('<FocusOut>', lambda x: self.UpdateParameter())
 
     def UpdateParameter(self):
-        print("\nitems in commands list: ", len(self.master_frame.commands_list))
-        print("row index: ", self.row_index)
-        print("parameters in command: ", self.master_frame.commands_list[self.row_index]["parameters"])
-        print("parameter index: ", self.parameter_index,"\n")
         print(self.master_frame.commands_list[self.row_index]["parameters"][self.parameter_index])
         self.master_frame.commands_list[self.row_index]["parameters"][self.parameter_index] = self.parameter_entry.get()
         print(self.master_frame.commands_list[self.row_index]["parameters"][self.parameter_index])
