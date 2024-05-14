@@ -75,7 +75,6 @@ class Custom_Location(tk.Toplevel,):
     def update_positions(self):
         self.updating_positions = True
 
-
         while self.updating_positions:
             x,y,z = self.coordinator.myModules.myStages[self.selected_stage].get_motor_coordinates()
             self.x_var.set(x)
@@ -83,13 +82,10 @@ class Custom_Location(tk.Toplevel,):
             self.z_var.set(z)
 
             time.sleep(1)
-            print("I refuse to die!")
+            
             if not self.updating_positions:
-                print("Die!!!!")
+                
                 break
-
-        print("done with position thread")
-
 
     # sets flag to false, then waits until position_thread has ended to proceed
     def stop_updating_positions(self):
