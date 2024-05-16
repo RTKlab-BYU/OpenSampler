@@ -262,6 +262,9 @@ class Queue_Gui(tk.Toplevel,):
 
         new_file = fd.asksaveasfilename(parent=self, title='Save a file', initialdir='queues', filetypes=filetypes)
         
+        if queue_file == "":  # in the event of a cancel 
+            return
+
         if new_file.endswith(".csv"):
             pass
         else:

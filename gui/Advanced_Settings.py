@@ -1393,6 +1393,9 @@ class Configuration(tk.Toplevel,):
 
         new_file =  filedialog.asksaveasfile(parent=self, title='Save Settings', initialdir='settings', filetypes=filetypes)
         
+        if new_file == None:  # in the event of a cancel 
+            return
+        
         if new_file.name.endswith(".json"):
             new_file = new_file.name.replace(".json","") + ".json"
         else:

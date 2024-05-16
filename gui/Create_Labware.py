@@ -118,6 +118,9 @@ class Create_Labware(tk.Toplevel,):
         if all_numeric:
             new_file = filedialog.asksaveasfile(parent=self, title='Save a file', initialdir='models/plates', filetypes=filetypes)
         
+            if new_file == None:  # in the event of a cancel 
+                return
+        
             if new_file.name.endswith(".json"):
                 new_file = new_file.name.replace(".json","") + ".json"
             else:
