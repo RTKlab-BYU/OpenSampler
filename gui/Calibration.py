@@ -274,9 +274,13 @@ class Calibration(tk.Toplevel,):
         return plate_properties 
 
     def add_plate_to_labware(self):
+        print("chk 1")
         parameters = self.compile_plate_properties()
+        print("chk 2")
         self.coordinator.myModules.myStages[self.selected_stage].myLabware.create_new_plate(parameters)
+        print("chk 3")
         self.on_closing()
+        print("chk 4")
 
     # this is run inside a thread to keep the position labels and calibration states updated
     def update_positions(self):
@@ -308,8 +312,9 @@ class Calibration(tk.Toplevel,):
     # sets flag to false, then waits until position_thread has ended to proceed
     def stop_updating_positions(self):
         self.updating_positions = False
-        while self.position_thread.is_alive():
-            pass
+        # while self.position_thread.is_alive():
+        #     time.sleep(3)
+        #     pass
     
     def start_joystick(self):
         self.position_thread = threading.Thread(target=self.update_positions)
@@ -320,11 +325,14 @@ class Calibration(tk.Toplevel,):
 
     def kill_joystick(self):
         self.coordinator.stop_joystick()
+        print("chk 6")
         self.stop_updating_positions()
+        print("chk 7")
         self.killButton["state"] = "disabled"
         self.joyButton["state"] = "normal"
 
     def on_closing(self):
         self.kill_joystick()
+        print("chk 5")
         self.destroy()
 

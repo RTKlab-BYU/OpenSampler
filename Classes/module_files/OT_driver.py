@@ -35,11 +35,11 @@ X_MIN = 25
 Y_MAX = 350
 Y_MIN = 5
 Z_MAX = 218
-Z_MIN_NO_SYRINGE = 78
-Z_MIN_WITH_SYRINGE = 25 
+Z_MIN_NO_SYRINGE = 0
+Z_MIN_WITH_SYRINGE = 30 
 A_MAX = 218
-A_MIN_NO_SYRINGE = 78
-A_MIN_WITH_SYRINGE = 25
+A_MIN_NO_SYRINGE = 0
+A_MIN_WITH_SYRINGE = 30
 
 # These should be moved to syringe model files
 SYRINGE_MAX = 18
@@ -305,12 +305,22 @@ class OT2_nanotrons_driver(SM):
     def home_all(self, *args, **kwargs): # all non-syringe motors
         try:
             self.home('X Y Z A')
-            self.update_position()
+            positions = self.update_position()
+            print(positions)
+            
             x = self._position['X']
             y = self._position['Y']
             z = self._position['Z']
             a = self._position['A']
-            print(f"\ncoordinates: x - {x}, y - {y}, z - {z}, a - {a}")
+            self.x_max = x
+            self.y_max = y
+            self.z_max = z
+            self.a_max = a
+
+            self.safe_z = z
+            self.safe_a = a
+
+            print(f"\nHomed Coordinates: X - {x}, Y - {y}, Z - {z}, A - {a}")
         except SmoothieError:
             print("cannot Home motors at this time")
 
