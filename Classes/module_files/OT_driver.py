@@ -320,13 +320,14 @@ class OT2_nanotrons_driver(SM):
         self.safe_z = z
         self.safe_a = a
 
+        print(f"\nHomed Coordinates: X - {x}, Y - {y}, Z - {z}, A - {a}")
+
     def home_all(self, *args, **kwargs): # all non-syringe motors
         try:
             self.home('X Y Z A')
             positions = self.update_position()
             self.update_home_positions()
 
-            print(f"\nHomed Coordinates: X - {x}, Y - {y}, Z - {z}, A - {a}")
         except SmoothieError:
             print("cannot Home motors at this time")
 
