@@ -333,6 +333,7 @@ class Calibration(tk.Toplevel,):
 
     def on_closing(self):
         self.kill_joystick()
+        self.position_thread.join()
         print("chk 5")
         self.destroy()
 
