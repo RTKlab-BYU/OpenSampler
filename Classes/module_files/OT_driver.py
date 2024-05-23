@@ -255,31 +255,36 @@ class OT2_nanotrons_driver(SM):
         else:
             print("'self.side' not recognized")
 
-    def move_safe_az(self, target_z):
+    def move_safe_az(self, target):
+        """
+        make sure the unused axis is up and out of the way
+        then compare the current and target positions
+        move to 30 mm above the higher option if possible
+        or move to the safe height if necessary
+
+        currently safe heights default to max
+        """
         if self.side == LEFT:
+            self.move({'A': self.safe_a}, speed= MEDIUM_SPEED)
+
             current_z = self._position['Z']
-            if target_z == current_z and current_z + 10 < self.safe_z:
-                self.move({'A': self.safe_a}, speed= MEDIUM_SPEED)
-                self.move({'Z': current_z + 10}, speed= MEDIUM_SPEED)
-            elif target_z + 10 < self.safe_z and current_z + 10  < self.safe_z:
-                self.move({'A': self.safe_a}, speed= MEDIUM_SPEED)
-                self.move({'Z': self.safe_z}, speed= MEDIUM_SPEED)
-            elif current_z + 10 >= self.safe_z:
-                pass
+            if target < current_z and current_z + 30 < self.safe_z:
+                self.move({'Z': current_z + 30}, speed= MEDIUM_SPEED)
+            elif target > current_z and target + 30  < self.safe_z:
+                self.move({'Z': target  + 30}, speed= MEDIUM_SPEED)
             else:
-                self.move({'A': self.a_max}, speed= MEDIUM_SPEED)
-                self.move({'Z': self.z_max}, speed= MEDIUM_SPEED)
+                self.move({'Z': self.safe_z}, speed= MEDIUM_SPEED)
+
         elif self.side == RIGHT:
+            self.move({'Z': self.safe_z}, speed= MEDIUM_SPEED)
+
             current_a = self._position['A']
-            if target_z == current_a and current_a + 10 < self.safe_a:
-                self.move({'Z': self.safe_z}, speed= MEDIUM_SPEED)
-                self.move({'A': current_a + 10}, speed= MEDIUM_SPEED)
-            elif target_z + 10 < self.safe_a and current_a + 10  < self.safe_a:
+            if target < current_a and current_a + 30 < self.safe_a:
+                self.move({'A': current_a + 30}, speed= MEDIUM_SPEED)
+            elif target > current_a and target + 30  < self.safe_a:
                 self.move({'A': self.safe_a}, speed= MEDIUM_SPEED)
-                self.move({'Z': self.safe_z}, speed= MEDIUM_SPEED)
             else:
-                self.move({'A': self.a_max}, speed= MEDIUM_SPEED)
-                self.move({'Z': self.z_max}, speed= MEDIUM_SPEED)
+                self.move({'A': self.safe_a}, speed= MEDIUM_SPEED)
 
     def get_motor_coordinates(self):  
         self.update_position()
@@ -301,24 +306,25 @@ class OT2_nanotrons_driver(SM):
             self.update_position()
             s = self._position["C"]
         return s
+    
+    def update_home_positions(self):
+        x = self._position['X']
+        y = self._position['Y']
+        z = self._position['Z']
+        a = self._position['A']
+        self.x_max = x
+        self.y_max = y
+        self.z_max = z
+        self.a_max = a
+
+        self.safe_z = z
+        self.safe_a = a
 
     def home_all(self, *args, **kwargs): # all non-syringe motors
         try:
             self.home('X Y Z A')
             positions = self.update_position()
-            print(positions)
-            
-            x = self._position['X']
-            y = self._position['Y']
-            z = self._position['Z']
-            a = self._position['A']
-            self.x_max = x
-            self.y_max = y
-            self.z_max = z
-            self.a_max = a
-
-            self.safe_z = z
-            self.safe_a = a
+            self.update_home_positions()
 
             print(f"\nHomed Coordinates: X - {x}, Y - {y}, Z - {z}, A - {a}")
         except SmoothieError:
@@ -573,6 +579,7 @@ class OT2_nanotrons_driver(SM):
             self.myModules.used_stages[self._port].append(self.side)
             self.simulating = False
             self._setup()
+            self.update_home_positions()
 def test():
     robot = OT2_nanotrons_driver()
     robot.find_port()

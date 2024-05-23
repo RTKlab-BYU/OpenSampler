@@ -75,7 +75,7 @@ class MethodReader:  # should call read from coordinator file
                     if stage_exists:
                         nickname_exists = self.myCoordinator.myModules.myStages[stage].myLabware.check_custom_location_exists(location_name)
                         if nickname_exists:
-                            print("*", end=" ")
+                            pass
                         else:
                             return False
                     else:
@@ -211,7 +211,7 @@ class MethodReader:  # should call read from coordinator file
 
                 
                 now_date = datetime.now().strftime("%m/%d/%Y")
-                now_time = datetime.now().strftime("%H:%M %p")
+                now_time = datetime.now().strftime("%I:%M %p")  # uses AM/PM time format
                 sample_count += 1
 
                 logging.info(f"Running sample {sample_count} with {self.current_run['Method']} \nStarted at {now_time} on {now_date}.")
@@ -225,7 +225,7 @@ class MethodReader:  # should call read from coordinator file
                     run_completed = self.run_next_sample() # run self.current_run, return True if completed without stopping
                 except:
                     now_date = datetime.now().strftime("%m/%d/%Y")
-                    now_time = datetime.now().strftime("%I:%M %p")
+                    now_time = datetime.now().strftime("%I:%M %p")  # uses AM/PM time format
                     logging.info(f"Run for sample {sample_count} !EXPERIENCED AN ERROR! at {now_time} on {now_date}.")
                     print(f"\nRun for sample {sample_count} !EXPERIENCED AN ERROR! at {now_time} on {now_date}.")
                     self.pause_scheduled_queue()
