@@ -216,6 +216,8 @@ class Queue_Gui(tk.Toplevel,):
         elif (new_queue_type == self.scheduled_queue_frame.active_queue_type):
             compiled_queue = self.compile_queue_to_schedule()
         else:
+            print(f"\nCurrent running queue type: {self.scheduled_queue_frame.active_queue_type}")
+            print(f"Attempting to schecdule queue type: {new_queue_type}")
             print("\n\nYou Shall Not Queue!!!\n(Wait until current active que is finished to schedule new queue type)\n\n")
             return
         
@@ -262,7 +264,7 @@ class Queue_Gui(tk.Toplevel,):
 
         new_file = fd.asksaveasfilename(parent=self, title='Save a file', initialdir='queues', filetypes=filetypes)
         
-        if queue_file == "":  # in the event of a cancel 
+        if new_file == "":  # in the event of a cancel 
             return
 
         if new_file.endswith(".csv"):
@@ -828,6 +830,12 @@ class Active_Queue(tk.Frame,):
             if self.my_reader.current_run_changed:
                 self.update_current_run_display()  # change this
                 self.my_reader.current_run_changed = False
+
+            if self.my_reader.update_pause_button:
+                if self.my_reader.queue_paused:
+                    self.pause_button.config(text="Resume")
+                elif not self.my_reader.queue_paused:
+                    self.pause_button.config(text="Pause")
         
     def stop_immediately(self):
         '''
@@ -863,7 +871,7 @@ class Active_Queue(tk.Frame,):
 
         
         self.my_reader.scheduled_queue = None  # overwrite any scheduled runs
-        self.scheduled_queue_changed = True
+        self.my_reader.scheduled_queue_changed = True
         self.my_reader.resume_scheduled_queue()  # if paused, resume
         print("Clear all - This should be working now.")
 

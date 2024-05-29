@@ -33,6 +33,7 @@ class MethodReader:  # should call read from coordinator file
 
         self.current_run_changed = True
         self.scheduled_queue_changed = True
+        self.update_pause_button = True
 
         self.current_run = None
         self.stop_run = False
@@ -73,12 +74,14 @@ class MethodReader:  # should call read from coordinator file
                     location_name = command["parameters"][1]
                     stage_exists = stage in self.myCoordinator.myModules.myStages.keys()
                     if stage_exists:
-                        nickname_exists = self.myCoordinator.myModules.myStages[stage].myLabware.check_custom_location_exists(location_name)
-                        if nickname_exists:
+                        location_exists = self.myCoordinator.myModules.myStages[stage].myLabware.check_custom_location_exists(location_name)
+                        if location_exists:
                             pass
                         else:
+                            print(f"Cannot find location named: {location_name}")
                             return False
                     else:
+                        print(f"Cannot find stage named: {stage}")
                         return False
             return True
                     
@@ -92,6 +95,8 @@ class MethodReader:  # should call read from coordinator file
             if self.verify_method(row["Method"]):
                 pass
             else:
+                print(f"Cannot verify method for row {index}")
+                print(f"Method: {row['Method']}")
                 return False
 
         return True
@@ -105,11 +110,11 @@ class MethodReader:  # should call read from coordinator file
         # check all cells make sure none are empty & make sure size of each array is same
         
         if not self.verify_wells(proposed_queue): 
-            print ("\n------- VERIFICATION FAILED. CANNOT RUN THE PROVIDED QUEUE. -------\n")
+            print ("\n------- WELL VERIFICATION FAILED. CANNOT RUN THE PROVIDED QUEUE. -------\n")
             return False  # stops code from running
         
         if not self.verify_methods(proposed_queue):
-            print ("\n------- VERIFICATION FAILED. CANNOT RUN THE PROVIDED QUEUE. -------\n")
+            print ("\n------- METHOD VERIFICATION FAILED. CANNOT RUN THE PROVIDED QUEUE. -------\n")
             return False  # stops code from running
         
         else:
@@ -128,10 +133,12 @@ class MethodReader:  # should call read from coordinator file
 
     def pause_scheduled_queue(self):
         self.queue_paused = True
+        self.update_pause_button = True
         print("\n------- Scheduled queue has been paused. -------\n")
 
     def resume_scheduled_queue(self):
         self.queue_paused = False
+        self.update_pause_button = True
         print("\n------- Scheduled queue has been resumed. -------\n")
 
     def run_next_sample(self):  # reads and calls commands from method to load next sample
@@ -146,11 +153,11 @@ class MethodReader:  # should call read from coordinator file
         
         # read file
         with open(path_to_method, 'r') as myfile:
-            data = myfile.read()
-        obj = json.loads(data) # parse file
+            json_file = myfile.read()
+        method_dict = json.loads(json_file) # parse file
 
         #loop for all commands in json method
-        for command in obj['commands']:
+        for command in method_dict['commands']:
 
             # check to see if method should be interupted
             if self.stop_run == True: 
