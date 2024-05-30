@@ -1,10 +1,10 @@
 {
     "ports": [
         {
-            "pattern": "COM5"
+            "pattern": "COM9"
         },
         {
-            "pattern": "COM6"
+            "pattern": "COM5"
         }
     ],
     "motors_configurations": {
@@ -97,22 +97,22 @@
                 "Y": "unassigned",
                 "LSTICK": "unassigned",
                 "RSTICK": "unassigned",
-                "RB": "step_z_motor_up",
-                "LB": "step_z_motor_down",
+                "RB": "unassigned",
+                "LB": "unassigned",
                 "BACK": "home_all",
                 "START": "stop_listening",
-                "HAT_UP": "step_y_motor_back",
-                "HAT_DOWN": "step_y_motor_forward",
-                "HAT_RIGHT": "step_x_motor_right",
-                "HAT_LEFT": "step_x_motor_left",
+                "HAT_UP": "unassigned",
+                "HAT_DOWN": "unassigned",
+                "HAT_RIGHT": "unassigned",
+                "HAT_LEFT": "unassigned",
                 "L_STICK_LEFT": "move_syringe_motor_down",
                 "L_STICK_RIGHT": "move_syringe_motor_up",
-                "L_STICK_DOWN": "move_z_motor_down",
-                "L_STICK_UP": "move_z_motor_up",
-                "R_STICK_LEFT": "move_x_motor_left",
-                "R_STICK_RIGHT": "move_x_motor_right",
-                "R_STICK_DOWN": "move_y_motor_forward",
-                "R_STICK_UP": "move_y_motor_back",
+                "L_STICK_DOWN": "unassigned",
+                "L_STICK_UP": "unassigned",
+                "R_STICK_LEFT": "unassigned",
+                "R_STICK_RIGHT": "unassigned",
+                "R_STICK_DOWN": "unassigned",
+                "R_STICK_UP": "unassigned",
                 "R_TRIGGER": "step_syringe_motor_up",
                 "L_TRIGGER": "step_syringe_motor_down"
             }
@@ -167,7 +167,7 @@
         },
         {
             "port": 0,
-            "pin": "D18"
+            "pin": "D26"
         }
     ],
     "switches": [],
@@ -175,7 +175,7 @@
     "feedbacks": [
         {
             "port": 0,
-            "pin": "D26"
+            "pin": "D18"
         }
     ]
 }
