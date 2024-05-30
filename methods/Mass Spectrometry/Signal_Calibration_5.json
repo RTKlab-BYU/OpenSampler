@@ -1,1 +1,59 @@
-{"commands": [{"type": "valve_to_run", "parameters": ["3"]}, {"type": "syringe_to_rest", "parameters": ["gradient_syringe", "3000"]}, {"type": "move_selector", "parameters": ["0", "6"]}, {"type": "dispense_in_place", "parameters": ["gradient_syringe", "2000", "3000"]}, {"type": "move_selector", "parameters": ["0", "5"]}, {"type": "aspirate_in_place", "parameters": ["gradient_syringe", "2000", "3000"]}, {"type": "valve_to_load", "parameters": ["3"]}, {"type": "wait", "parameters": ["240"]}]}
+{
+    "commands": [
+        {
+            "type": "valve_to_run",
+            "parameters": [
+                "3"
+            ]
+        },
+        {
+            "type": "syringe_to_rest",
+            "parameters": [
+                "gradient_syringe",
+                "2000"
+            ]
+        },
+        {
+            "type": "move_selector",
+            "parameters": [
+                "0",
+                "6"
+            ]
+        },
+        {
+            "type": "dispense_in_place",
+            "parameters": [
+                "gradient_syringe",
+                "2000",
+                "2000"
+            ]
+        },
+        {
+            "type": "move_selector",
+            "parameters": [
+                "0",
+                "5"
+            ]
+        },
+        {
+            "type": "aspirate_in_place",
+            "parameters": [
+                "gradient_syringe",
+                "2000",
+                "2000"
+            ]
+        },
+        {
+            "type": "valve_to_load",
+            "parameters": [
+                "3"
+            ]
+        },
+        {
+            "type": "wait",
+            "parameters": [
+                "1200"
+            ]
+        }
+    ]
+}
