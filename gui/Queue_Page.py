@@ -238,6 +238,7 @@ class Queue_Gui(tk.Toplevel,):
             self.my_reader.scheduled_queue = compiled_queue
             self.scheduled_queue_changed = True
 
+
         else:
             new_scheduled_queue = pd.concat([self.my_reader.scheduled_queue, compiled_queue])
             new_scheduled_queue = new_scheduled_queue.reset_index()

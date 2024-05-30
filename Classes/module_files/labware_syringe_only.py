@@ -27,7 +27,8 @@ class Labware:
         self.syringe_model = model_name
     
     def reset_syringe_settings(self):
-        self.syringe_model = self.default_rest_location
+        self.syringe_model = DEFAULT_SYRINGE_MODEL
+        self.syringe_rest_position = self.default_rest_location
         self.syringe_min = self.syringe_default_min
         self.syringe_max = self.syringe_default_max
     

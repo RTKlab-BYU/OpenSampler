@@ -194,7 +194,7 @@ class ZaberMotorSeries:
                             self.syringesDefinitions[f"{syringe_axis}"] = syringe_index
                             syringe_index = syringe_index + 1
                     else:
-                        print(f"ERROR: motor {index} not configured!")
+                        print(f"WARNING: motor {index} not configured!")
                     i = i + 1
                 self.logger.info("{} motor(s) initialized".format(len(self.device_list)))
         else:
@@ -263,7 +263,7 @@ class ZaberMotorSeries:
                         self.syringesDefinitions[f"{syringe_axis}"] = syringe_index
                         syringe_index = syringe_index + 1
                 else:
-                    print("ERROR: motor {index} not configured!")
+                    print(f"WARNING: motor {index} not configured!")
                 i = i + 1
             self.logger.info("{} motor(s) initialized".format(len(self.device_list)))
             #just add them as devices
