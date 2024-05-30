@@ -252,6 +252,8 @@ class Queue_Gui(tk.Toplevel,):
             # start thread to watch status
             watchThread = threading.Thread(target = self.scheduled_queue_frame.watch_status, args=[]) #finishes the run
             watchThread.start()
+
+        self.my_reader.scheduled_queue_changed = True
     
     def clear_queue(self):  # removes all entries from the proposed MS or Frac queue pages
         self.handler.delete_grid()
@@ -772,10 +774,19 @@ class Active_Queue(tk.Frame,):
 
         dataframe_as_list = []
 
-        if self.active_queue_type == "Sample Prep":
+        if type(dataframe) == None:
+            pass
+
+        elif dataframe.empty == True:
+            pass    
+        
+        elif self.active_queue_type == "Sample Prep":
             for row_index in range(dataframe.shape[0]):
                 scheduled_run = Sample_Prep_Inputs(self.scheduled_runs_inner)
                 scheduled_run.method_var.set(dataframe[SP_HEADERS[0]].loc[dataframe.index[row_index]])
+
+                dataframe_as_list.append(scheduled_run)
+
         elif self.active_queue_type == "Mass Spec":
             for row_index in range(dataframe.shape[0]):
                 scheduled_run = MS_Queue_Row_Inputs(self.scheduled_runs_inner)
@@ -834,8 +845,10 @@ class Active_Queue(tk.Frame,):
             if self.my_reader.update_pause_button:
                 if self.my_reader.queue_paused:
                     self.pause_button.config(text="Resume")
+                    self.my_reader.update_pause_button = False
                 elif not self.my_reader.queue_paused:
                     self.pause_button.config(text="Pause")
+                    self.my_reader.update_pause_button = False
         
     def stop_immediately(self):
         '''

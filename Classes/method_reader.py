@@ -31,14 +31,13 @@ class MethodReader:  # should call read from coordinator file
         self.scheduled_queue = None
         self.queue_paused = False
 
+        self.current_run = None
+        self.stop_run = False
+
         self.current_run_changed = True
         self.scheduled_queue_changed = True
         self.update_pause_button = True
-
-        self.current_run = None
-        self.stop_run = False
-        
-        
+        self.error_during_run = False    
         
     def verify_wells(self, proposed_queue):  # checks all the wells in CSV to make sure they all exist
         if "Well" in proposed_queue:
@@ -157,16 +156,22 @@ class MethodReader:  # should call read from coordinator file
         method_dict = json.loads(json_file) # parse file
 
         #loop for all commands in json method
+        command_count = 0
         for command in method_dict['commands']:
+            command_count += 1
 
             # check to see if method should be interupted
             if self.stop_run == True: 
                 self.pause_scheduled_queue()
+                print(f"Did not execute command {command_count} of current run.")
                 run_completed = False
                 return run_completed 
             else:
                 # calls correct function in coordinator & unpacks the parameters list with (*params): logs each parameter
+                # try:
                 getattr(self.myCoordinator.actionOptions, command['type'])(*command['parameters'])
+                # except:
+                #     print(f"Error occured trying to execute command row {command_count}: {command['type']}, using parameters: {command['parameters']} ")
 
         run_completed = True
         return run_completed
@@ -228,41 +233,41 @@ class MethodReader:  # should call read from coordinator file
                 print(f"\nSamples remaining in scheduled queue: {int(self.scheduled_queue.shape[0])}")
                 print("\n*****************************************************************\n")
 
-                try:
-                    run_completed = self.run_next_sample() # run self.current_run, return True if completed without stopping
-                except:
+                run_completed = self.run_next_sample() # run self.current_run, return True if completed without stopping
+
+                if self.error_during_run:
                     now_date = datetime.now().strftime("%m/%d/%Y")
                     now_time = datetime.now().strftime("%I:%M %p")  # uses AM/PM time format
                     logging.info(f"Run for sample {sample_count} !EXPERIENCED AN ERROR! at {now_time} on {now_date}.")
                     print(f"\nRun for sample {sample_count} !EXPERIENCED AN ERROR! at {now_time} on {now_date}.")
                     self.pause_scheduled_queue()
-                else:
-                    now_date = datetime.now().strftime("%m/%d/%Y")
-                    now_time = datetime.now().strftime("%I:%M %p")
+                
+                now_date = datetime.now().strftime("%m/%d/%Y")
+                now_time = datetime.now().strftime("%I:%M %p")
                     
-                    if run_completed:
-                        print("\n*****************************************************************\n")
-                        logging.info(f"Run for sample {sample_count} completed at {now_time} on {now_date}.")
-                        print(f"Run for sample {sample_count} completed at {now_time} on {now_date}.")
-                        print("\n*****************************************************************\n")
-                    else:
-                        print("\n*************************** Warning ******************************\n")
-                        logging.info(f"Run for sample {sample_count} was interupted by user at {now_time} on {now_date}.")
-                        print(f"Run for sample {sample_count} was interupted by user at {now_time} on {now_date}.")
-                        print("\n*****************************************************************\n")
-                        
-                finally:
+                if run_completed:
                     print("\n*****************************************************************\n")
-                    self.current_run = None
-                    self.current_run_changed = True
+                    logging.info(f"Run for sample {sample_count} completed at {now_time} on {now_date}.")
+                    print(f"Run for sample {sample_count} completed at {now_time} on {now_date}.")
+                    print("\n*****************************************************************\n")
+                else:
+                    print("\n*************************** Warning ******************************\n")
+                    logging.info(f"Run for sample {sample_count} was interupted by user at {now_time} on {now_date}.")
+                    print(f"Run for sample {sample_count} was interupted by user at {now_time} on {now_date}.")
+                    print("\n*****************************************************************\n")
+                        
+                
+                print("\n*****************************************************************\n")
+                self.current_run = None
+                self.current_run_changed = True
             else:
                 break
 
             
         # End of queue commands
-        self.current_run = None
+        self.reset()
+        time.sleep(3)
         self.running = False
-        self.current_run_changed = True
 
         print("\n------------------------- DONE RUNNING ----------------------------\n")  # white space for output readibility
             

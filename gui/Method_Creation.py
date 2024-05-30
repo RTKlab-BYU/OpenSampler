@@ -67,22 +67,39 @@ ACTION_DEFAULTS = {
 
 class Command_Parameter(tk.Frame,):
     def __init__(self, frame, parameter, value, row_index, parameter_index):
+        super().__init__(frame)
+
         self.master_frame: Method_Creator = frame
         self.parameter_index = parameter_index
         self.row_index = row_index
         self.static_columns = 6
         self.parameter_var = tk.StringVar()
         
-        tk.Label(self.master_frame.command_grid, text=parameter).grid(row=row_index, column=parameter_index*2+self.static_columns)
+        self.param_label = tk.Label(self.master_frame.command_grid, text=parameter)
+        self.param_label.grid(row=row_index, column=parameter_index*2+self.static_columns)
         self.parameter_entry = tk.Entry(self.master_frame.command_grid, textvariable=self.parameter_var)
         self.parameter_entry.insert(tk.END,string=value)
         self.parameter_entry.grid(row=row_index, column=parameter_index*2+self.static_columns+1)
         self.parameter_entry.bind('<FocusOut>', lambda x: self.UpdateParameter())
 
+        if parameter == ACTION_TYPES["run_sub_method"][0]:
+            self.parameter_entry.bind('<Double-Button-1>', lambda x: self.select_method(x))
+
     def UpdateParameter(self):
-        print(self.master_frame.commands_list[self.row_index]["parameters"][self.parameter_index])
         self.master_frame.commands_list[self.row_index]["parameters"][self.parameter_index] = self.parameter_entry.get()
-        print(self.master_frame.commands_list[self.row_index]["parameters"][self.parameter_index])
+
+    def select_method(self, event):
+        filetypes = (
+            ('JSON files', '*.json'),
+            ('All files', '*')
+        )
+
+        file_path = fd.askopenfilename(parent=self, title='Open a file', initialdir='methods', filetypes=filetypes)
+        
+        if file_path == "":  # in the event of a cancel 
+            return
+        
+        self.parameter_var.set(file_path)
 
 
 class Method_Command_Row(tk.Frame,):

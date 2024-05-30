@@ -149,23 +149,29 @@ class OT2_nanotrons_driver(SM):
         will not be executed. Returns false if the move is outside the allowed limits
         """
 
-        if axis == 'X' and (pos > X_MAX or pos < self.x_min):
+        if axis == 'X' and (pos > self.x_max or pos < self.x_min):
             print("Not a valid move for X axis!")
+            print(f"Requested move to: {pos}, axis max: {self.x_max}, axis min: {self.x_min}")
             return False
-        elif axis == 'Y' and (pos > Y_MAX or pos < self.y_min):
+        elif axis == 'Y' and (pos > self.y_max or pos < self.y_min):
             print("Not a valid move for Y axis!")
+            print(f"Requested move to: {pos}, axis max: {self.y_max}, axis min: {self.y_min}")
             return False
         elif axis == 'Z' and (pos > self.z_max or pos < self.z_min):
             print("Not a valid move for Z axis!")
+            print(f"Requested move to: {pos}, axis max: {self.z_max}, axis min: {self.z_min}")
             return False
         elif axis == 'A' and (pos > self.a_max or pos < self.a_min):
             print("Not a valid move for A axis!")
+            print(f"Requested move to: {pos}, axis max: {self.a_max}, axis min: {self.a_min}")
             return False
         elif axis == 'B' and (pos > self.myLabware.get_syringe_max() or pos < self.myLabware.get_syringe_min()):
             print("Not a valid move for B axis!")
+            print(f"Requested move to: {pos}, axis max: {self.myLabware.get_syringe_max()}, axis min: {self.myLabware.get_syringe_min()}")
             return False
         elif axis == 'C' and (pos > self.myLabware.get_syringe_max() or pos <= self.myLabware.get_syringe_min()):
             print("Not a valid move for C axis!")
+            print(f"Requested move to: {pos}, axis max: {self.myLabware.get_syringe_max()}, axis min: {self.myLabware.get_syringe_min()}")
             return False
         else:
             return True
