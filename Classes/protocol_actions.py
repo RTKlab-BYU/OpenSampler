@@ -89,7 +89,6 @@ class ProtocolActions:
             self.aspirate_in_place(stage, volume, speed)
             self.wait(wait_seconds)
     
-
     def move_to_custom_location(self, stage, location_name):
 
         #find location in
@@ -111,24 +110,18 @@ class ProtocolActions:
 
         # get well xyz coordinates
         location = self.myCoordinator.myModules.myStages[stage].myLabware.get_well_location(int(well_plate_index), well) 
-        # x,y,z = location.split(" ")
-        # location = tuple([float(x),float(y),float(z)])
 
         self.myCoordinator.myLogger.info(f"Moving to wellplate '{well_plate_index}' at {location}")
         self.myCoordinator.myModules.myStages[stage].move_to(location)
 
         self.myCoordinator.myLogger.info(f"Aspirating {float(volume)} nL at speed {float(speed)} nL/min")
-
         self.myCoordinator.myModules.myStages[stage].step_syringe_motor_up(volume=volume, speed=speed)
-
         
     def dispense_to_well(self, stage, well_plate_index, well, volume, speed):
         
         # get well xyz coordinates
         location = self.myCoordinator.myModules.myStages[stage].myLabware.get_well_location(int(well_plate_index), well) # Tuple (x,y,z) 
         self.myCoordinator.myLogger.info(f"Moving to wellplate '{well_plate_index}' at {location}")
-        # x,y,z = location.split(" ")
-        # location = tuple([float(x),float(y),float(z)])
 
         self.myCoordinator.myModules.myStages[stage].move_to(location)
 
@@ -146,8 +139,6 @@ class ProtocolActions:
             # get well xyz coordinates
             location = self.myCoordinator.myModules.myStages[stage].myLabware.get_well_location(int(well_plate_index), well) # Tuple (x,y,z) 
             self.myCoordinator.myLogger.info(f"Moving to wellplate '{well_plate_index}' at {location}")
-            # x,y,z = location.split(" ").split(", ")
-            # location = tuple([float(x),float(y),float(z)])
             
             self.myCoordinator.myModules.myStages[stage].move_to(location)
 
@@ -162,7 +153,6 @@ class ProtocolActions:
     def dispense_in_place(self, stage, volume, speed): 
         self.myCoordinator.myLogger.info(f"Aspirating {float(volume)} nL at speed {float(speed)} nL/min")
         self.myCoordinator.myModules.myStages[stage].step_syringe_motor_down(volume=volume, speed=speed)
-
 
     def syringe_to_max(self, stage, nL_min_speed):
         speed = float(nL_min_speed) # pre min to per sec
@@ -207,17 +197,14 @@ class ProtocolActions:
             data = myfile.read()
         obj = json.loads(data) # parse file
 
-        
         #loop for all commands in json script
         for command in obj['commands']:
             if self.myCoordinator.myReader.stop_run == True: # check to see if we should stop loading
                 break # if stop_run then we break to loop and stop loading
-
             
             params = command['parameters'] # save command parameters in a list
 
-                
-                #calls correct function in coordinator & unpacks the parameters list with (*params): logs each parameter
+            # calls correct function in coordinator & unpacks the parameters list with (*params): logs each parameter
             getattr(self.myCoordinator.actionOptions, command['type'])(*params)
 
     def run_sub_method_simultaneously(self, scriptName): #Untracked works better if not necessary
