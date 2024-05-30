@@ -1,21 +1,26 @@
 import tkinter as tk
 import threading
+import time
+
+from Classes.coordinator import Coordinator
+from Classes.module_files.labware import Labware
 
 class Custom_Location(tk.Toplevel,):
-    def __init__(self, coordinator, selectedStage):
+    def __init__(self, coordinator, selected_stage):
         tk.Toplevel.__init__(self)    
       
         self.title("Calibrate New Location")
         self.geometry("500x500")
 
-        self.coordinator = coordinator
-        self.thread = threading.Thread(target=self.do_nothing,args=(30,))
+        self.coordinator: Coordinator = coordinator
+        self.selected_stage = selected_stage
+        self.my_labware: Labware = self.coordinator.myModules.myStages[selected_stage].myLabware
 
         self.joyBar = tk.Frame(self)
         self.joyBar.pack(side=tk.TOP)
-        self.joyButton = tk.Button(self.joyBar,text="Start Joystick",command=lambda: self.StartJoystick(coordinator, selectedStage),justify=tk.LEFT)
+        self.joyButton = tk.Button(self.joyBar,text="Start Joystick",command=self.start_joystick,justify=tk.LEFT)
         self.joyButton.grid(row=0,column=1)
-        self.killButton = tk.Button(self.joyBar,text="Kill Joystick",command=lambda: self.KillJoystick(coordinator),justify=tk.LEFT)
+        self.killButton = tk.Button(self.joyBar,text="Kill Joystick",command=self.kill_joystick,justify=tk.LEFT)
         self.killButton.grid(row=0,column=2)
         self.killButton["state"] = "disabled"
 
@@ -23,72 +28,91 @@ class Custom_Location(tk.Toplevel,):
         self.newNickname = tk.Entry(self)
         self.newNickname.pack(side=tk.TOP)
         
+        # current location of stage motors
         tk.Label(self, text="Current Location",justify=tk.LEFT).pack(side=tk.TOP)
         self.LocationFrame = tk.Frame(self)
         self.LocationFrame.pack(side=tk.TOP)
-        tk.Label(self.LocationFrame, text="x",justify=tk.LEFT).grid(row=0,column=0)
-        tk.Label(self.LocationFrame, text="y",justify=tk.LEFT).grid(row=0,column=1)
-        tk.Label(self.LocationFrame, text="z",justify=tk.LEFT).grid(row=0,column=2)
-        x,y,z = coordinator.myModules.myStages[selectedStage].get_motor_coordinates()
-        self.xLoc = tk.DoubleVar(self,value=x)
-        self.xLab = tk.Label(self.LocationFrame, textvariable=self.xLoc, justify=tk.LEFT)
-        self.xLab.grid(row=1,column=0)
-        self.yLoc = tk.DoubleVar(self,value=y)
-        self.yLab =tk.Label(self.LocationFrame, textvariable=self.yLoc, justify=tk.LEFT)
-        self.yLab.grid(row=1,column=1)
-        self.zLoc = tk.DoubleVar(self,value=z)
-        self.zLab =tk.Label(self.LocationFrame, textvariable=self.zLoc, justify=tk.LEFT)
-        self.zLab.grid(row=1,column=2)   
+
+        x,y,z = self.coordinator.myModules.myStages[self.selected_stage].get_motor_coordinates()
+
+        self.x_var = tk.DoubleVar(self,value=x)
+        self.y_var = tk.DoubleVar(self,value=y)
+        self.z_var = tk.DoubleVar(self,value=z)
+
+        x_lab = tk.Label(self.LocationFrame, text="x",justify=tk.LEFT)
+        y_lab = tk.Label(self.LocationFrame, text="y",justify=tk.LEFT)
+        z_lab = tk.Label(self.LocationFrame, text="z",justify=tk.LEFT)
+        x_lab.grid(row=0,column=0)
+        y_lab.grid(row=0,column=1)
+        z_lab.grid(row=0,column=2)
+
+        self.x_loc = tk.Label(self.LocationFrame, textvariable=self.x_var, justify=tk.LEFT)
+        self.y_loc =tk.Label(self.LocationFrame, textvariable=self.y_var, justify=tk.LEFT)
+        self.z_loc =tk.Label(self.LocationFrame, textvariable=self.z_var, justify=tk.LEFT)
+        self.x_loc.grid(row=1,column=0)
+        self.y_loc.grid(row=1,column=1)
+        self.z_loc.grid(row=1,column=2)  
     
-        x,y,z = coordinator.myModules.myStages[selectedStage].get_motor_coordinates()
-        self.xLoc.set(x)
-        self.yLoc.set(y)
-        self.zLoc.set(z)
-        tk.Button(self,text="Save Named Location",command=lambda: self.CreateNickname(coordinator, selectedStage),justify=tk.LEFT).pack(side=tk.TOP)
+        self.x_var.set(x)
+        self.y_var.set(y)
+        self.z_var.set(z)
+
+        self.save_button = tk.Button(self,text="Save Named Location",command=lambda: self.CreateNickname(),justify=tk.LEFT)
+        self.save_button.pack(side=tk.TOP)
+
+        self.position_thread = threading.Thread(target=self.update_positions)
 
         self.protocol('WM_DELETE_WINDOW', self.on_closing)
+        self.updating_positions = False
 
-    def CreateNickname(self, coordinator, selectedStage: int):
+    def CreateNickname(self):
         location_name = self.newNickname.get()
-        location: tuple = coordinator.myModules.myStages[selectedStage].get_motor_coordinates()
-        coordinator.myModules.myStages[selectedStage].myLabware.add_custom_location(location_name, location)
-        if self.thread.is_alive():
-            self.KillJoystick(coordinator)
-        while self.thread.is_alive():
-            # print("*")
-            pass
-        self.destroy()
+        location: tuple = self.coordinator.myModules.myStages[self.selected_stage].get_motor_coordinates()
+        self.my_labware.add_custom_location(location_name, location)
+        self.on_closing()
 
-    def on_closing(self):
-        if self.thread.is_alive():
-            self.KillJoystick(self.coordinator)
-        self.destroy()
+    # this method is run inside a thread
+    def update_positions(self):
+        self.updating_positions = True
 
-    def do_nothing(self, *args):
-        pass
-        #do nothing
+        while self.updating_positions:
+            x,y,z = self.coordinator.myModules.myStages[self.selected_stage].get_motor_coordinates()
+            self.x_var.set(x)
+            self.y_var.set(y)
+            self.z_var.set(z)
 
-    def GetPositions(self, coordinator, selectedStage):
-        i = 0
-        while (self.thread.is_alive() or i < 1):
-            x,y,z = coordinator.myModules.myStages[selectedStage].get_motor_coordinates()
-            self.xLoc.set(x)
-            self.yLoc.set(y)
-            self.zLoc.set(z)
-            i = i + 1
+            time.sleep(1)
+            
+            if not self.updating_positions:
+                
+                break
+
+    # sets flag to false, then waits until position_thread has ended to proceed
+    def stop_updating_positions(self):
+        # print("Thread is live: ", self.updating_positions)
+        self.updating_positions = False
+        # print("Thread is live: ", self.updating_positions)
+        # while self.position_thread.is_alive():
+        #     print("Thread is live: ", self.updating_positions)
+        #     print("I'm not dead yet!")
+        #     time.sleep(1)
     
-    def StartJoystick(self, coordinator, selectedStage):
-        self.thread = threading.Thread(target=coordinator.start_joystick,args=(selectedStage,))
-        self.thread.start()
+    def start_joystick(self):
+        print("checkpoint 1")
+        self.position_thread = threading.Thread(target=self.update_positions)
+        self.position_thread.start()
+        self.coordinator.start_joystick(self.selected_stage)
         self.killButton["state"] = "normal"
         self.joyButton["state"] = "disabled"
         
-        threading.Thread(target=self.GetPositions, args=[coordinator,selectedStage]).start()
-
-
-    def KillJoystick(self, coordinator):
-        coordinator.stop_joystick()
+    def kill_joystick(self):
+        self.coordinator.stop_joystick()
+        self.stop_updating_positions()
         self.killButton["state"] = "disabled"
         self.joyButton["state"] = "normal"
+
+    def on_closing(self):
+        self.kill_joystick()
+        self.destroy()
 
             

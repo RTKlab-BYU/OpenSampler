@@ -34,15 +34,15 @@ X_MAX = 418
 X_MIN = 25
 Y_MAX = 350
 Y_MIN = 5
-Z_MAX = 170
-Z_MIN_NO_SYRINGE = 78
-Z_MIN_WITH_SYRINGE = 35 
-A_MAX = 170
-A_MIN_NO_SYRINGE = 78
-A_MIN_WITH_SYRINGE = 35
+Z_MAX = 218
+Z_MIN_NO_SYRINGE = 0
+Z_MIN_WITH_SYRINGE = 30 
+A_MAX = 218
+A_MIN_NO_SYRINGE = 0
+A_MIN_WITH_SYRINGE = 30
 
 # These should be moved to syringe model files
-SYRINGE_MAX = 17
+SYRINGE_MAX = 18
 SYRINGE_REST = -80
 SYRINGE_MIN = -170
 
@@ -57,16 +57,15 @@ SHORT_MEDIUM_STEP_LIMIT = 10 # used for determining appropriate motor speeds
 MEDIUM_LONG_STEP_LIMIT = 50 # used for determining appropriate motor speeds
 APPROACH_DISTANCE = 30 # Distance from target where robot slows down if needed
 
-DEFAULT_STEP_SPEED = 10  # default speed for protocols (only used if user forgets to specify speeds) 
-SLOW_SPEED = 10 
-MEDIUM_SPEED = 40
-HIGH_SPEED = 160
+DEFAULT_STEP_SPEED = 10  # default speed for protocols (only used if user forgets to specify speeds)
+SLOW_SPEED = 10  # mm/s?
+MEDIUM_SPEED = 40  # mm/s?
+HIGH_SPEED = 160  # mm/s?
 STEP_CHANGE = 50  # how much to decrease step size for continuous movement
 
-SYRINGE_MM_FACTOR  = 4 #3.8896 4.16
-SYRINGE_SLOW_SPEED = 100 * SYRINGE_MM_FACTOR  # mm/s (The syringe motor distances are off by a factor of SYRINGE_MM_FACTOR) 
-SYRINGE_DEFAULT_VOL = 50 * SYRINGE_MM_FACTOR  # mm (The syringe motor distances are off by a factor of SYRINGE_MM_FACTOR)
-
+SYRINGE_MM_FACTOR = 4  # 3.8896 4.16
+DEFAULT_SYRINGE_STEP = 1 * SYRINGE_MM_FACTOR # mm/s 
+DEFAULT_SYRINGE_SPEED = 1 * SYRINGE_MM_FACTOR # mm/s 
 
 
 DEFAULT_VOL_STEP_SIZE = 400
@@ -256,31 +255,36 @@ class OT2_nanotrons_driver(SM):
         else:
             print("'self.side' not recognized")
 
-    def move_safe_az(self, target_z):
+    def move_safe_az(self, target):
+        """
+        make sure the unused axis is up and out of the way
+        then compare the current and target positions
+        move to 30 mm above the higher option if possible
+        or move to the safe height if necessary
+
+        currently safe heights default to max
+        """
         if self.side == LEFT:
+            self.move({'A': self.safe_a}, speed= MEDIUM_SPEED)
+
             current_z = self._position['Z']
-            if target_z == current_z and current_z + 10 < self.safe_z:
-                self.move({'A': self.safe_a}, speed= MEDIUM_SPEED)
-                self.move({'Z': current_z + 10}, speed= MEDIUM_SPEED)
-            elif target_z + 10 < self.safe_z and current_z + 10  < self.safe_z:
-                self.move({'A': self.safe_a}, speed= MEDIUM_SPEED)
-                self.move({'Z': self.safe_z}, speed= MEDIUM_SPEED)
-            elif current_z + 10 >= self.safe_z:
-                pass
+            if target < current_z and current_z + 30 < self.safe_z:
+                self.move({'Z': current_z + 30}, speed= MEDIUM_SPEED)
+            elif target > current_z and target + 30  < self.safe_z:
+                self.move({'Z': target  + 30}, speed= MEDIUM_SPEED)
             else:
-                self.move({'A': self.a_max}, speed= MEDIUM_SPEED)
-                self.move({'Z': self.z_max}, speed= MEDIUM_SPEED)
+                self.move({'Z': self.safe_z}, speed= MEDIUM_SPEED)
+
         elif self.side == RIGHT:
+            self.move({'Z': self.safe_z}, speed= MEDIUM_SPEED)
+
             current_a = self._position['A']
-            if target_z == current_a and current_a + 10 < self.safe_a:
-                self.move({'Z': self.safe_z}, speed= MEDIUM_SPEED)
-                self.move({'A': current_a + 10}, speed= MEDIUM_SPEED)
-            elif target_z + 10 < self.safe_a and current_a + 10  < self.safe_a:
+            if target < current_a and current_a + 30 < self.safe_a:
+                self.move({'A': current_a + 30}, speed= MEDIUM_SPEED)
+            elif target > current_a and target + 30  < self.safe_a:
                 self.move({'A': self.safe_a}, speed= MEDIUM_SPEED)
-                self.move({'Z': self.safe_z}, speed= MEDIUM_SPEED)
             else:
-                self.move({'A': self.a_max}, speed= MEDIUM_SPEED)
-                self.move({'Z': self.z_max}, speed= MEDIUM_SPEED)
+                self.move({'A': self.safe_a}, speed= MEDIUM_SPEED)
 
     def get_motor_coordinates(self):  
         self.update_position()
@@ -302,16 +306,28 @@ class OT2_nanotrons_driver(SM):
             self.update_position()
             s = self._position["C"]
         return s
+    
+    def update_home_positions(self):
+        x = self._position['X']
+        y = self._position['Y']
+        z = self._position['Z']
+        a = self._position['A']
+        self.x_max = x
+        self.y_max = y
+        self.z_max = z
+        self.a_max = a
+
+        self.safe_z = z
+        self.safe_a = a
+
+        print(f"\nHomed Coordinates: X - {x}, Y - {y}, Z - {z}, A - {a}")
 
     def home_all(self, *args, **kwargs): # all non-syringe motors
         try:
             self.home('X Y Z A')
-            self.update_position()
-            x = self._position['X']
-            y = self._position['Y']
-            z = self._position['Z']
-            a = self._position['A']
-            print(f"\ncoordinates: x - {x}, y - {y}, z - {z}, a - {a}")
+            positions = self.update_position()
+            self.update_home_positions()
+
         except SmoothieError:
             print("cannot Home motors at this time")
 
@@ -431,15 +447,26 @@ class OT2_nanotrons_driver(SM):
         else:
             mm_per_s = self.s_step_speed
 
+        if "speed" in kwargs:
+            mm_per_s = self.uL_to_mm(float(kwargs["speed"])/60000) # nL/min ---> uL/s ---> mm/s 
+        else:
+            mm_per_s = DEFAULT_SYRINGE_SPEED # mm/s
+
+        if "volume" in kwargs:
+            mm = self.uL_to_mm(float(kwargs["volume"])/1000)  
+        else:
+            mm = DEFAULT_SYRINGE_STEP # mm 
+
         now_pos = self.get_syringe_location()
-        move_pos = now_pos + step_size
+
+        move_pos = now_pos + mm
         
         if self.side == LEFT:
             if(self.check_for_valid_move(move_pos, 'B')): # if the future position is a valid move 
-                self.move({'B': move_pos}, speed=self.check_speed(mm_per_s)) # move to the indicated position
+                self.move({'B': move_pos}, speed=mm_per_s) # move to the indicated position
         elif self.side == RIGHT:
             if(self.check_for_valid_move(move_pos, 'C')): # if the future position is a valid move 
-                self.move({'C': move_pos}, speed=self.check_speed(mm_per_s)) # move to the indicated position
+                self.move({'C': move_pos}, speed=mm_per_s) # move to the indicated position
         else:
             print("Side not recognized.")
 
@@ -449,26 +476,27 @@ class OT2_nanotrons_driver(SM):
         Converts these into mm and mm/s
         '''
 
-        if "step_size" in kwargs:
-            vol_size = float(kwargs["step_size"]) / 1000
-            step_size = self.uL_to_mm(vol_size)
-        else:
-            step_size = self.s_step_size
-        if "speed" in kwargs:
-            vol_speed = float(kwargs["speed"]) / 1000 # nL to uL
-            mm_per_s = self.uL_to_mm(vol_speed) / 60 # per min to per s
-        else:
-            mm_per_s = self.s_step_speed
 
+        if "speed" in kwargs:
+            mm_per_s = self.uL_to_mm(float(kwargs["speed"])/60000) # nL/min ---> uL/s ---> mm/s 
+        else:
+            mm_per_s = DEFAULT_SYRINGE_SPEED # mm/s 
+
+        if "volume" in kwargs:
+            mm = self.uL_to_mm(float(kwargs["volume"])/1000)  
+        else:
+            mm = DEFAULT_SYRINGE_STEP # mm
+            
         now_pos = self.get_syringe_location()
-        move_pos = now_pos - step_size
+        move_pos = now_pos - mm
+
 
         if self.side == LEFT:
             if(self.check_for_valid_move(move_pos, 'B')): # if the future position is a valid move 
-                self.move({'B': move_pos}, speed=self.check_speed(mm_per_s)) # move to the indicated position
+                self.move({'B': move_pos}, speed=mm_per_s) # move to the indicated position
         elif self.side == RIGHT:
             if(self.check_for_valid_move(move_pos, 'C')): # if the future position is a valid move 
-                self.move({'C': move_pos}, speed=self.check_speed(mm_per_s)) # move to the indicated position
+                self.move({'C': move_pos}, speed=mm_per_s) # move to the indicated position
         else:
             print("Side not recognized.")
 
@@ -565,6 +593,7 @@ class OT2_nanotrons_driver(SM):
             self.myModules.used_stages[self._port].append(self.side)
             self.simulating = False
             self._setup()
+            self.update_home_positions()
 def test():
     robot = OT2_nanotrons_driver()
     robot.find_port()

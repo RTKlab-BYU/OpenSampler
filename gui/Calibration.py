@@ -4,6 +4,8 @@ import threading
 import numpy as np
 import time
 
+from Classes.coordinator import Coordinator
+
 
 class Calibrator:
 
@@ -15,7 +17,7 @@ class Calibrator:
         self.well_locations = []
         self.well_nicknames = []
 
-        self.updating_positions = False
+        
         self.tested = False 
         
     # This method receives three calibration (fiducial) points and compiles the 4th
@@ -86,9 +88,10 @@ class Calibration(tk.Toplevel,):
         self.title("Calibrate New Location")
         tk.Label(self, text=model_name, font="Helvetica 18",justify=tk.LEFT).pack(side=tk.TOP)
         self.component_type = "W"
-        self.selected_stage = selected_stage 
-        self.model_parameters = coordinator.myModules.myStages[self.selected_stage].myModelsManager.get_model_parameters(self.component_type, model_name)
-        self.coordinator = coordinator
+        self.selected_stage = selected_stage
+        self.coordinator: Coordinator = coordinator 
+        self.model_parameters = self.coordinator.myModules.myStages[self.selected_stage].myModelsManager.get_model_parameters(self.component_type, model_name)
+        
         self.calibrator = Calibrator()
         self.model_name = model_name
         self.geometry("700x450")
@@ -215,11 +218,7 @@ class Calibration(tk.Toplevel,):
         self.save_button.pack(side=tk.TOP)
         self.save_button["state"] = "disabled"
 
-        # this thread keeps the onscreen positions updated, the thread is killed as part of the on_closing function 
-        self.position_thread = threading.Thread(target=self.update_positions)
-        self.calibrator.updating_positions = True
-        self.position_thread.start()
-
+        # modifies the close button protocol
         self.protocol('WM_DELETE_WINDOW', self.on_closing)    
 
     def set_cal_point(self, cal_point):
@@ -275,20 +274,24 @@ class Calibration(tk.Toplevel,):
         return plate_properties 
 
     def add_plate_to_labware(self):
+        print("chk 1")
         parameters = self.compile_plate_properties()
+        print("chk 2")
         self.coordinator.myModules.myStages[self.selected_stage].myLabware.create_new_plate(parameters)
+        print("chk 3")
         self.on_closing()
+        print("chk 4")
 
     # this is run inside a thread to keep the position labels and calibration states updated
     def update_positions(self):
-        while self.calibrator.updating_positions:
+        self.updating_positions = True
+        
+        while self.updating_positions:
             x,y,z = self.coordinator.myModules.myStages[self.selected_stage].get_motor_coordinates()
             self.current_x.set(x)
             self.current_y.set(y)
             self.current_z.set(z)
             time.sleep(1)
-        print("Done Updating Position")
- 
 
     def update_states(self):
         # if all calibration points have been saved, it uses them to calculate the fourth calibration point, and enables the test_button
@@ -305,20 +308,32 @@ class Calibration(tk.Toplevel,):
             self.save_button["state"] = "normal"
         else:
             self.save_button["state"] = "disabled"
+
+    # sets flag to false, then waits until position_thread has ended to proceed
+    def stop_updating_positions(self):
+        self.updating_positions = False
+        # while self.position_thread.is_alive():
+        #     time.sleep(3)
+        #     pass
     
     def start_joystick(self):
+        self.position_thread = threading.Thread(target=self.update_positions)
+        self.position_thread.start()
         self.coordinator.start_joystick(self.selected_stage)
         self.killButton["state"] = "normal"
         self.joyButton["state"] = "disabled"
 
     def kill_joystick(self):
         self.coordinator.stop_joystick()
+        print("chk 6")
+        self.stop_updating_positions()
+        print("chk 7")
         self.killButton["state"] = "disabled"
         self.joyButton["state"] = "normal"
 
     def on_closing(self):
         self.kill_joystick()
-        self.calibrator.updating_positions = False
-        time.sleep(3)
+        self.position_thread.join()
+        print("chk 5")
         self.destroy()
 

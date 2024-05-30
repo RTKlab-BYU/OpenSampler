@@ -1375,10 +1375,10 @@ class Configuration(tk.Toplevel,):
             ('All files', '*')
         )
 
-        new_file = filedialog.askopenfilename(
-            title='Open a file',
-            initialdir='settings',
-            filetypes=filetypes)
+        new_file = filedialog.askopenfilename(parent=self, title='Open a file', initialdir='settings', filetypes=filetypes)
+
+        if new_file == "":  # in the event of a cancel 
+            return
         
         self.settings_filename_to_open = new_file
 
@@ -1391,10 +1391,10 @@ class Configuration(tk.Toplevel,):
             ( 'All files', '*')
         )
 
-        new_file =  filedialog.asksaveasfile(
-            title='Save Settings',
-            initialdir='settings',
-            filetypes=filetypes)
+        new_file =  filedialog.asksaveasfile(parent=self, title='Save Settings', initialdir='settings', filetypes=filetypes)
+        
+        if new_file == None:  # in the event of a cancel 
+            return
         
         if new_file.name.endswith(".json"):
             new_file = new_file.name.replace(".json","") + ".json"

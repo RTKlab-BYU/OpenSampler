@@ -1,0 +1,1 @@
+{"commands": [{"type": "move_to_custom_location", "parameters": ["Left_OT", "Air"]}, {"type": "wait", "parameters": ["5"]}, {"type": "move_to_custom_location", "parameters": ["Left_OT", "Buffer_A"]}, {"type": "wait", "parameters": ["10"]}]}

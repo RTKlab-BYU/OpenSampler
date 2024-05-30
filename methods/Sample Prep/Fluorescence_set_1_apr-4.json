@@ -16,10 +16,25 @@
             "type": "aspirate_from_well",
             "parameters": [
                 "Left_OT",
-                "2",
+                "1",
                 "A1",
-                "600",
+                "650",
                 "3000"
+            ]
+        },
+        {
+            "type": "dispense_in_place",
+            "parameters": [
+                "Left_OT",
+                "100",
+                "3000"
+            ]
+        },
+        {
+            "type": "move_to_custom_location",
+            "parameters": [
+                "Left_OT",
+                "Dip"
             ]
         },
         {
@@ -27,7 +42,7 @@
             "parameters": [
                 "Left_OT",
                 "0",
-                "A1,A2,A3,A4,A5",
+                "A11,A12,A13,A14,A15",
                 "100",
                 "3000"
             ]
@@ -35,17 +50,32 @@
         {
             "type": "run_sub_method",
             "parameters": [
-                "C:\\Python Repositories\\OpenSampler\\methods\\Syringe_Wash.json"
+                "C:/Users/RTK/Desktop/Nathaniel/OpenSampler/methods/Submethods/Syringe_Wash.json"
             ]
         },
         {
             "type": "aspirate_from_well",
             "parameters": [
                 "Left_OT",
-                "2",
+                "1",
                 "B1",
-                "300",
+                "400",
                 "3000"
+            ]
+        },
+        {
+            "type": "dispense_in_place",
+            "parameters": [
+                "Left_OT",
+                "100",
+                "3000"
+            ]
+        },
+        {
+            "type": "move_to_custom_location",
+            "parameters": [
+                "Left_OT",
+                "Dip"
             ]
         },
         {
@@ -53,7 +83,7 @@
             "parameters": [
                 "Left_OT",
                 "0",
-                "B1,B2,B3,B4,B5",
+                "B11,B12,B13,B14,B15",
                 "50",
                 "3000"
             ]
@@ -61,17 +91,32 @@
         {
             "type": "run_sub_method",
             "parameters": [
-                "C:\\Python Repositories\\OpenSampler\\methods\\Syringe_Wash.json"
+                "C:/Users/RTK/Desktop/Nathaniel/OpenSampler/methods/Submethods/Syringe_Wash.json"
             ]
         },
         {
             "type": "aspirate_from_well",
             "parameters": [
                 "Left_OT",
-                "2",
+                "1",
                 "C1",
-                "150",
+                "250",
                 "3000"
+            ]
+        },
+        {
+            "type": "dispense_in_place",
+            "parameters": [
+                "Left_OT",
+                "100",
+                "3000"
+            ]
+        },
+        {
+            "type": "move_to_custom_location",
+            "parameters": [
+                "Left_OT",
+                "Dip"
             ]
         },
         {
@@ -79,7 +124,7 @@
             "parameters": [
                 "Left_OT",
                 "0",
-                "C1,C2,C3,C4,C5",
+                "C11,C12,C13,C14,C15",
                 "20",
                 "3000"
             ]
@@ -87,17 +132,32 @@
         {
             "type": "run_sub_method",
             "parameters": [
-                "C:\\Python Repositories\\OpenSampler\\methods\\Syringe_Wash.json"
+                "C:/Users/RTK/Desktop/Nathaniel/OpenSampler/methods/Submethods/Syringe_Wash.json"
             ]
         },
         {
             "type": "aspirate_from_well",
             "parameters": [
                 "Left_OT",
-                "2",
+                "1",
                 "D1",
+                "200",
+                "3000"
+            ]
+        },
+        {
+            "type": "dispense_in_place",
+            "parameters": [
+                "Left_OT",
                 "100",
                 "3000"
+            ]
+        },
+        {
+            "type": "move_to_custom_location",
+            "parameters": [
+                "Left_OT",
+                "Dip"
             ]
         },
         {
@@ -105,7 +165,7 @@
             "parameters": [
                 "Left_OT",
                 "0",
-                "D1,D2,D3,D4,D5",
+                "D11,D12,D13,D15",
                 "10",
                 "3000"
             ]
@@ -113,17 +173,32 @@
         {
             "type": "run_sub_method",
             "parameters": [
-                "C:\\Python Repositories\\OpenSampler\\methods\\Syringe_Wash.json"
+                "C:/Users/RTK/Desktop/Nathaniel/OpenSampler/methods/Submethods/Syringe_Wash.json"
             ]
         },
         {
             "type": "aspirate_from_well",
             "parameters": [
                 "Left_OT",
-                "2",
+                "1",
                 "E1",
-                "75",
+                "175",
                 "3000"
+            ]
+        },
+        {
+            "type": "dispense_in_place",
+            "parameters": [
+                "Left_OT",
+                "100",
+                "3000"
+            ]
+        },
+        {
+            "type": "move_to_custom_location",
+            "parameters": [
+                "Left_OT",
+                "Dip"
             ]
         },
         {
@@ -131,7 +206,7 @@
             "parameters": [
                 "Left_OT",
                 "0",
-                "E1,E2,E3,E4,E5",
+                "E11,E12,E13,E14,E15",
                 "5",
                 "3000"
             ]
