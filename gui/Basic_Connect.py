@@ -140,7 +140,7 @@ class Connect(tk.Toplevel,):
         self.available_ports = list_ports.comports()
         self.available_port_dict = {}
         self.com_desc_dict = {}
-        print("COM Ports:")
+        
         for eachPort in self.available_ports:
             self.available_port_dict[eachPort.description] = eachPort.name
             self.com_desc_dict[eachPort.name] = eachPort.description

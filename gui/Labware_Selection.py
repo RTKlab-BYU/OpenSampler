@@ -77,7 +77,7 @@ class Labware_Selection(tk.Toplevel,):
             self.selected_model["values"] = self.coordinator.myModules.myStages[self.selected_stage].myModelsManager.get_stored_models()["syringes"]
         else:
             print("Error, invalid labware type: " + str(self.option_selected.get()))
-        print(self.option_selected.get())
+        # print(self.option_selected.get())
 
     def enable_submit(self):
         self.start_calibration["state"] = "normal"
