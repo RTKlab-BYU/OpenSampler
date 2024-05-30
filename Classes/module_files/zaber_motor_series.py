@@ -1264,7 +1264,7 @@ class ZaberMotorSeries:
 
     def move_syringe_motor_down(self, joystick, input_type, input_index):
         direction = 1
-        motor = self.axesDefinitions["z"]
+        motor = self.syringesDefinitions["s"]
         t = threading.Thread(target=self.monitor_syringe_speed_from_joystick, args=(joystick, input_type, input_index, motor, direction))
         t.start() 
 
