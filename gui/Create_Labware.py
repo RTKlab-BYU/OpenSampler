@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import filedialog
 import json
 LABWARE_PARAMETERS = ["wellplate_wellDistance","well_depth","fiducialDisplacement"]
 LABWARE_PARAM_DEFAULTS = {"wellplate_wellDistance": "0","well_depth": "0","fiducialDisplacement": "0"}
@@ -115,10 +116,10 @@ class Create_Labware(tk.Toplevel,):
                 all_numeric = False
 
         if all_numeric:
-            new_file =tk.filedialog.asksaveasfile(
-                title='Save a file',
-                initialdir='models/plates',
-                filetypes=filetypes)
+            new_file = filedialog.asksaveasfile(parent=self, title='Save a file', initialdir='models/plates', filetypes=filetypes)
+        
+            if new_file == None:  # in the event of a cancel 
+                return
         
             if new_file.name.endswith(".json"):
                 new_file = new_file.name.replace(".json","") + ".json"

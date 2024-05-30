@@ -135,6 +135,7 @@ class Connect(tk.Toplevel,):
         tk.Toplevel.__init__(self)    
       
         self.title("Settings and Configuration")
+        self.coordinator = coordinator
 
         self.available_ports = list_ports.comports()
         self.available_port_dict = {}
@@ -176,7 +177,10 @@ class Connect(tk.Toplevel,):
         tk.Button(settingsBar,text="Clear Settings",command=lambda: self.LoadDefaults(coordinator),justify=tk.LEFT).grid(row=0,column=2)
         tk.Button(settingsBar, text='Import from a Settings File', command=lambda: self.LoadSettings(coordinator),justify=tk.LEFT).grid(row=0,column=3)
         tk.Button(settingsBar,text="Save Settings to File",command=lambda: self.SaveSettings(),justify=tk.LEFT).grid(row=0,column=4)
-        tk.Button(settingsBar,text="Advanced Configuration",command=lambda: Configuration(coordinator),justify=tk.LEFT).grid(row=0,column=4)
+        
+        self.advanced_config = None
+        self.advanced_config_button = tk.Button(settingsBar, text="Advanced Configuration", command=self.open_advanced_config_page)
+        self.advanced_config_button.grid(row=0,column=4)
         
 
 
@@ -194,6 +198,12 @@ class Connect(tk.Toplevel,):
         self.initialize_frames(coordinator)
 
         self.protocol("WM_DELETE_WINDOW", lambda: self.on_closing(coordinator))
+
+    def open_advanced_config_page(self):
+        if not self.advanced_config or not self.advanced_config.winfo_exists():
+            self.advanced_config = Configuration(self.coordinator)
+        else:
+            self.advanced_config.deiconify()
 
     def on_closing(self, coordinator):
         self.destroy()
@@ -303,12 +313,12 @@ class Connect(tk.Toplevel,):
             ('All files', '*')
         )
 
-        new_file = filedialog.askopenfilename(
-            title='Open a file',
-            initialdir='settings',
-            filetypes=filetypes)
+        file_path = filedialog.askopenfilename(parent=self, title='Open a file', initialdir='settings', filetypes=filetypes)
+
+        if file_path == "":  # in the event of a cancel 
+            return
         
-        self.settings_filename_to_open = new_file
+        self.settings_filename_to_open = file_path
 
         new_dict = coordinator.myModules.read_dictionary_from_file(self.settings_filename_to_open)
         self.AddConfigurations(coordinator, new_dict)
@@ -319,10 +329,10 @@ class Connect(tk.Toplevel,):
             ( 'All files', '*')
         )
 
-        new_file =  filedialog.asksaveasfile(
-            title='Save Settings',
-            initialdir='settings',
-            filetypes=filetypes)
+        new_file =  filedialog.asksaveasfile(parent=self, title='Save Settings', initialdir='settings', filetypes=filetypes)
+        
+        if new_file == None:  # in the event of a cancel 
+            return
         
         if new_file.name.endswith(".json"):
             new_file = new_file.name.replace(".json","") + ".json"

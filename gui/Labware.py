@@ -3,7 +3,7 @@ from gui.Syringe_Selection import Syringe_Selection
 from gui.Create_Labware import Create_Labware
 
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, filedialog
 
 class WellPlate_Row(tk.Frame,):
     def __init__(self, frame, coordinator, stage, labware_name, row):
@@ -48,21 +48,27 @@ class Labware(tk.Toplevel,):
       
         self.title("Labware Setup")
         self.geometry("750x750")
+
+        self.coordinator = coordinator
         
         # Options Bar
         self.optionsBar = tk.Frame(self)
         self.optionsBar.pack(side=tk.TOP)
-        self.addButton = tk.Button(self.optionsBar, text="Add Labware",command=lambda: Labware_Selection(coordinator,self.selected_stage),justify=tk.LEFT)#
+
+        self.labware_selection_page = None
+        self.create_labware_page = None
+        self.syringe_selection_page = None
+
+
+        self.addButton = tk.Button(self.optionsBar, text="Add Labware", command=self.open_labware_selection_page, state="disabled")
+        self.saveButton = tk.Button(self.optionsBar, text="Save Labware", command=lambda: self.SaveLabware(coordinator), state="disabled")
+        self.loadButton = tk.Button(self.optionsBar, text="Load Labware", command=lambda: self.LoadLabware(coordinator), state="disabled")
+        self.createButton = tk.Button(self.optionsBar, text="Create New Model", command=self.open_create_labware_page)
+
         self.addButton.grid(row=0,column=0)
-        self.addButton["state"] =  "disable"
-        self.saveButton = tk.Button(self.optionsBar, text="Save Labware",command=lambda: self.SaveLabware(coordinator),justify=tk.LEFT)
-        self.saveButton.grid(row=0,column=2)
-        self.saveButton["state"] =  "disable"
-        self.loadButton = tk.Button(self.optionsBar, text="Load Labware",command=lambda: self.LoadLabware(coordinator),justify=tk.LEFT)
-        self.loadButton.grid(row=0,column=3)
-        self.loadButton["state"] =  "disable"
-        self.createButton = tk.Button(self.optionsBar, text="Create New Model",command=Create_Labware,justify=tk.LEFT)
-        self.createButton.grid(row=0,column=4)
+        self.saveButton.grid(row=0,column=1)
+        self.loadButton.grid(row=0,column=2)
+        self.createButton.grid(row=0,column=3)
         
         # stage selection
         stageOptions = list(coordinator.myModules.myStages.keys())
@@ -96,6 +102,23 @@ class Labware(tk.Toplevel,):
                 self.loadedMotorSeries.current(0)
             self.loadedMotorSeries.bind("<<ComboboxSelected>>", lambda x: self.UpdateSelectedMotors(coordinator))
 
+    def open_labware_selection_page(self):
+        if not self.labware_selection_page or not self.labware_selection_page.winfo_exists():
+            self.labware_selection_page = Labware_Selection(self.coordinator, self.selected_stage)
+        else:
+            self.labware_selection_page.deiconify()
+
+    def open_create_labware_page(self):
+        if not self.create_labware_page or not self.create_labware_page.winfo_exists():
+            self.create_labware_page = Create_Labware()
+        else:
+            self.create_labware_page.deiconify()
+
+    def open_syringe_selection_page(self):
+        if not self.syringe_selection_page or not self.syringe_selection_page.winfo_exists():
+            self.syringe_selection_page = Syringe_Selection(self.coordinator, self.selected_stage)
+            self.syringe_selection_page.deiconify()
+
 
     def LoadLabware(self, coordinator):
         filetypes = (
@@ -103,12 +126,12 @@ class Labware(tk.Toplevel,):
             ('All files', '*')
         )
 
-        new_file =tk.filedialog.askopenfilename(
-            title='Open a file',
-            initialdir='Calibrations',
-            filetypes=filetypes)
+        file_path = filedialog.askopenfilename(parent=self, title='Open a file', initialdir='Calibrations', filetypes=filetypes)
+
+        if file_path == "":  # in the event of a cancel 
+            return
         
-        coordinator.load_labware_setup(new_file,self.selected_stage)
+        coordinator.load_labware_setup(file_path, self.selected_stage)
 
         self.UpdateLabware(coordinator)
         
@@ -119,12 +142,14 @@ class Labware(tk.Toplevel,):
         stage_type = coordinator.myModules.myStages[self.selected_stage].stage_type 
         if stage_type == "Zaber_XYZ" or stage_type == "Opentrons":
             self.stage_type = "XYZ_Stage"
+            self.addButton["state"] = "normal"
         elif stage_type == "Zaber_Syringe_Only":
             self.stage_type = "Zaber_Syringe_Only"
+            self.addButton["state"] = "normal"
         else:
             self.stage_type = "None"
 
-        self.addButton["state"] = "normal"
+        
         if self.stage_type == "XYZ_Stage":
             self.saveButton["state"] =  "normal"
             self.loadButton["state"] =  "normal"
@@ -134,7 +159,6 @@ class Labware(tk.Toplevel,):
 
         self.UpdateLabware(coordinator)
 
-
     def SaveLabware(self, coordinator):
         self.UpdateSelectedMotors(coordinator)
         filetypes = (
@@ -142,10 +166,10 @@ class Labware(tk.Toplevel,):
             ( 'All files', '*')
         )
 
-        new_file =tk.filedialog.asksaveasfile(
-            title='Save a file',
-            initialdir='Calibrations',
-            filetypes=filetypes)
+        new_file = filedialog.asksaveasfile(parent=self, title='Save a file', initialdir='Calibrations', filetypes=filetypes)
+        
+        if new_file == None:  # in the event of a cancel 
+            return
         
         if new_file.name.endswith(".json"):
             new_file = new_file.name.replace(".json","") + ".json"
@@ -160,8 +184,6 @@ class Labware(tk.Toplevel,):
     def UpdateLabware(self, coordinator):
         self.wellplateBox.destroy()
 
-        self.addButton.destroy()
-
         self.nicknameBox.destroy()
         self.cow = []
 
@@ -175,8 +197,7 @@ class Labware(tk.Toplevel,):
             self.wellplateBox.pack(side=tk.TOP)
             tk.Label(self.wellplateBox,font="Helvetica 20", text="Loaded Wellplates").grid(row = 0, column = 1)
             
-            self.addButton = tk.Button(self.optionsBar, text="Add Labware",command=lambda: Labware_Selection(coordinator,self.selected_stage),justify=tk.LEFT)#
-            self.addButton.grid(row=0,column=0)
+            self.addButton.config(text="Add Labware", command=self.open_labware_selection_page)
             self.nicknameBox = tk.Frame(self)
             self.nicknameBox.pack(side=tk.TOP)
 
@@ -193,8 +214,7 @@ class Labware(tk.Toplevel,):
                 self.cow.append(Nickname_Row(self, coordinator, self.selected_stage, eachLocation, i))
                 i = i + 1
         elif self.stage_type == "Zaber_Syringe_Only":
-            self.addButton = tk.Button(self.optionsBar, text="Calibrate Syringe",command=lambda: Syringe_Selection(coordinator,self.selected_stage),justify=tk.LEFT)#
-            self.addButton.grid(row=0,column=0)
+            self.addButton.config(text="Calibrate Syringe", command=self.open_syringe_selection_page)#
             mySyringe = coordinator.myModules.myStages[self.selected_stage].myLabware.syringe_model
         else:
             print(self.stage_type)
