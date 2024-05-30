@@ -442,6 +442,16 @@ class OT2_nanotrons_driver(SM):
         Takes arguments of volume in nL and speed in nL/min
         Converts these into mm and mm/s
         '''
+        if "step_size" in kwargs:
+            vol_size = float(kwargs["step_size"]) / 1000
+            step_size = self.uL_to_mm(vol_size)
+        else:
+            step_size = self.s_step_size
+        if "speed" in kwargs:
+            vol_speed = float(kwargs["speed"]) / 1000 # nL to uL
+            mm_per_s = self.uL_to_mm(vol_speed) / 60 # per min to per s
+        else:
+            mm_per_s = self.s_step_speed
 
         if "speed" in kwargs:
             mm_per_s = self.uL_to_mm(float(kwargs["speed"])/60000) # nL/min ---> uL/s ---> mm/s 
@@ -454,6 +464,7 @@ class OT2_nanotrons_driver(SM):
             mm = DEFAULT_SYRINGE_STEP # mm 
 
         now_pos = self.get_syringe_location()
+
         move_pos = now_pos + mm
         
         if self.side == LEFT:
@@ -471,6 +482,7 @@ class OT2_nanotrons_driver(SM):
         Converts these into mm and mm/s
         '''
 
+
         if "speed" in kwargs:
             mm_per_s = self.uL_to_mm(float(kwargs["speed"])/60000) # nL/min ---> uL/s ---> mm/s 
         else:
@@ -483,6 +495,7 @@ class OT2_nanotrons_driver(SM):
             
         now_pos = self.get_syringe_location()
         move_pos = now_pos - mm
+
 
         if self.side == LEFT:
             if(self.check_for_valid_move(move_pos, 'B')): # if the future position is a valid move 

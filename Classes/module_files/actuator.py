@@ -46,7 +46,7 @@ from Classes.module_files.IOpins import SerialPort
 import time
 
 #--------------------------------constants---------------------------------
-SIGNAL_HOLD = 0.2 #control signals must last at least 20ms
+SIGNAL_HOLD = 1.5 #control signals must last at least 20ms
                  #anything less than 70 and you start to pick up errors with mechanical change
                  #becuase it will think it is in position A and B at the same time. This delay gives it time to change.
 
@@ -83,8 +83,8 @@ class Actuator:
         self.check_B = pinCheckB #check position B
         self.modules.myPorts[self.port].addInputPin(self.check_A)
         self.modules.myPorts[self.port].addInputPin(self.check_B)
-       # self.to_runPosition()
-        #time.sleep(2)
+        self.to_runPosition()
+        time.sleep(2)
         #self.to_loadPosition()
         #time.sleep(2)
         #self.to_runPosition()
@@ -115,9 +115,12 @@ class Actuator:
     #-------------Move to position A-------------------------
     def to_runPosition(self):
         #print("move A") #should be a is run
+        
         self.modules.myPorts[self.port].activatePin(self.to_A_out) #16 is connected to the first actuator
         time.sleep(SIGNAL_HOLD)
         self.modules.myPorts[self.port].deactivatePin(self.to_A_out) #16 is connected to the first actuator
+        time.sleep(SIGNAL_HOLD)
+        self.modules.myPorts[self.port].activatePin(self.to_A_out) #16 is connected to the first actuator
         time.sleep(SIGNAL_HOLD)
        # self.modules.myPorts[self.port].activatePin(self.to_A_out) #16 is connected to the first actuator
       #  time.sleep(SIGNAL_HOLD)
@@ -133,6 +136,8 @@ class Actuator:
         self.modules.myPorts[self.port].activatePin(self.to_B_out) #21 is connected to the first actuator
         time.sleep(SIGNAL_HOLD)
         self.modules.myPorts[self.port].deactivatePin(self.to_B_out) #21 is connected to the first actuator
+        time.sleep(SIGNAL_HOLD)
+        self.modules.myPorts[self.port].activatePin(self.to_B_out) #21 is connected to the first actuator
         time.sleep(SIGNAL_HOLD)
         #self.modules.myPorts[self.port].activatePin(self.to_B_out) #21 is connected to the first actuator
        # time.sleep(SIGNAL_HOLD)

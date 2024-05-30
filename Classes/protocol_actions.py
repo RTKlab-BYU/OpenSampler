@@ -118,7 +118,9 @@ class ProtocolActions:
         self.myCoordinator.myModules.myStages[stage].move_to(location)
 
         self.myCoordinator.myLogger.info(f"Aspirating {float(volume)} nL at speed {float(speed)} nL/min")
+
         self.myCoordinator.myModules.myStages[stage].step_syringe_motor_up(volume=volume, speed=speed)
+
         
     def dispense_to_well(self, stage, well_plate_index, well, volume, speed):
         
@@ -131,7 +133,9 @@ class ProtocolActions:
         self.myCoordinator.myModules.myStages[stage].move_to(location)
 
         self.myCoordinator.myLogger.info(f"Aspirating {float(volume)} nL at speed {float(speed)} nL/min")
+
         self.myCoordinator.myModules.myStages[stage].step_syringe_motor_down(volume=volume, speed=speed)
+
 
     def dispense_to_wells(self, stage, well_plate_index, wells, volume, speed):
 
@@ -148,6 +152,7 @@ class ProtocolActions:
             self.myCoordinator.myModules.myStages[stage].move_to(location)
 
             self.myCoordinator.myLogger.info(f"Aspirating {float(volume)} nL at speed {float(speed)} nL/min")
+
             self.myCoordinator.myModules.myStages[stage].step_syringe_motor_down(volume=volume, speed=speed)
     
     def aspirate_in_place(self, stage, volume, speed): 
@@ -157,6 +162,7 @@ class ProtocolActions:
     def dispense_in_place(self, stage, volume, speed): 
         self.myCoordinator.myLogger.info(f"Aspirating {float(volume)} nL at speed {float(speed)} nL/min")
         self.myCoordinator.myModules.myStages[stage].step_syringe_motor_down(volume=volume, speed=speed)
+
 
     def syringe_to_max(self, stage, nL_min_speed):
         speed = float(nL_min_speed) # pre min to per sec
