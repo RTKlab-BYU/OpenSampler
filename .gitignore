@@ -1,4 +1,5 @@
 settings/last_settings.json
+!settings/default_settings.json
 Calibrations/*
 logs/*
 Classes/__pycache__/*
