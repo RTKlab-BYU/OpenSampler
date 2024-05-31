@@ -43,8 +43,8 @@ A_MIN_WITH_SYRINGE = 30
 
 # These should be moved to syringe model files
 SYRINGE_MAX = 18
-SYRINGE_REST = -80
-SYRINGE_MIN = -170
+SYRINGE_REST = -66
+SYRINGE_MIN = -150
 
 # these should be determined in system configuration
 LEFT_SYRINGE_MOUNT_ATTACHED = True

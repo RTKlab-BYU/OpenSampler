@@ -296,12 +296,15 @@ class Queue_Gui(tk.Toplevel,):
         
         df_of_queue = pd.read_csv(queue_file)
         temp_queue_list = self.scheduled_queue_frame.compile_list_from_dataframe(df_of_queue)
+        print(temp_queue_list)
         self.handler.delete_grid()
 
         if self.handler.active_page == 'Mass Spec':
             self.handler.ms_queue += temp_queue_list
         elif self.handler.active_page == 'Fractionation':
             self.handler.frac_queue += temp_queue_list
+
+        self.handler.update_grid()
         
 
 class Queue_Compiler:
@@ -319,8 +322,8 @@ class Queue_Compiler:
         self.row_buttons_frame.pack(side="left", fill="y")
         self.buttons_header = tk.Frame(self.row_buttons_frame)
         self.buttons_header.pack()
-        self.add_row = tk.Button(self.buttons_header, text="Add Row", command= lambda: self.insert_row())
-        self.add_row.pack(side=tk.LEFT)
+        self.add_row_button = tk.Button(self.buttons_header, text="Add Row", command= lambda: self.add_row())
+        self.add_row_button.pack(side=tk.LEFT)
 
         # headers (input labels) for respective queues
         self.sp_queue_header = Sample_Prep_Inputs(self.queue_page.sample_prep_frame)
@@ -336,10 +339,11 @@ class Queue_Compiler:
         self.queue_row_buttons = [self.buttons_header]
 
         # Add an initial row to queues
-        self.add_row_buttons(1)
+        # self.add_row_buttons(1)
         self.ms_queue.insert(1, MS_Queue_Row_Inputs(self.ms_queue_frame))
         self.frac_queue.insert(1, Frac_Queue_Row_Inputs(self.frac_queue_frame))
         self.sp_inputs = Sample_Prep_Inputs(self.queue_page.sample_prep_frame)
+        self.maintain_button_rows()
         
 
         
@@ -456,13 +460,31 @@ class Queue_Compiler:
 
     # Queue Maker Button functions
 
+    def  add_row(self, buttons_index=None):
+        '''
+        Creates a new row of buttons, then inserts a new set of inputs at the indicated index.
+        '''
+        if buttons_index == None:
+            buttons_index = len(self.queue_row_buttons)
+        # self.add_row_buttons(len(self.queue_row_buttons))
+
+        if self.active_page == 'Mass Spec':
+            new_row = MS_Queue_Row_Inputs(self.ms_queue_frame)
+            self.ms_queue.insert(buttons_index, new_row)
+        elif self.active_page == 'Fractionation':
+            new_row = Frac_Queue_Row_Inputs(self.frac_queue_frame)
+            self.frac_queue.insert(buttons_index, new_row)
+
+        new_row.pack(fill="both", expand=True)
+        self.maintain_button_rows()
+
     def  insert_row(self, buttons_index=None):
         '''
         Creates a new row of buttons, then inserts a new set of inputs at the indicated index.
         '''
         if buttons_index == None:
             buttons_index = len(self.queue_row_buttons)
-        self.add_row_buttons(len(self.queue_row_buttons))
+        # self.add_row_buttons(len(self.queue_row_buttons))
 
         if self.active_page == 'Mass Spec':
             self.ms_queue.insert(buttons_index, MS_Queue_Row_Inputs(self.ms_queue_frame))
@@ -776,9 +798,11 @@ class Active_Queue(tk.Frame,):
         dataframe_as_list = []
 
         if type(dataframe) == None:
+            print("No dataframe to process")
             pass
 
         elif dataframe.empty == True:
+            print("Dataframe is empty")
             pass    
         
         elif self.active_queue_type == "Sample Prep":

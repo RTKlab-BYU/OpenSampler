@@ -187,19 +187,20 @@ class Syringe_Calibration(tk.Toplevel,):
 
 # Action Commands
     def home_syringe(self):
-        print("Homing Syringe!")
+        print("\nHoming Syringe!")
         cnt = 0
         limit = 5
         while cnt < limit:
-            try:
-                self.myStage.home_syringe()
-            except:
                 cnt += 1
-                print(f"Attempts to Home syringe: {cnt}/{limit}")
-            else:
+                self.myStage.home_syringe()
                 current_position = self.myStage.get_syringe_location()
-                print(f"Syringe Position After Homing: {current_position}")
-                return
+                if current_position == 18.0:
+                    print("Syringe Homed")
+                    self.update_syringe_states()
+                    return
+                
+        print(f"Type: {type(current_position)}")
+        print(f"Current Syringe Position: {current_position}")
         print("Cannot Home Syringe at this time.")
 
     def Aspirate(self):
