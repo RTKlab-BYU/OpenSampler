@@ -247,7 +247,7 @@ class ProtocolActions:
             pin_state = self.myCoordinator.myModules.myPorts[int(Port)].getPinState(Input)
             while not(pin_state): #start connected to ground
              #   self.ms_indicator
-                time.sleep(1) 
+                time.sleep(1.5) 
                 pin_state = self.myCoordinator.myModules.myPorts[int(Port)].getPinState(Input)
 
                 analyze_to_wait_timer += 1
