@@ -5,8 +5,8 @@ import threading
 print(os.getcwd())
 from Classes.module_files.labware import Labware
 
-MS_WAIT_TIMEOUT = 15 # Time allowed before ignoring he triggering of the MS
-MS_ANALYZE_TIMEOUT = 45 # Time we allow for the MS to stop analyzing the previous cycle and going back to waiting so that it can start analyzing the current sample
+MS_WAIT_TIMEOUT = 20 # Time allowed before ignoring he triggering of the MS
+MS_ANALYZE_TIMEOUT = 40 # Time we allow for the MS to stop analyzing the previous cycle and going back to waiting so that it can start analyzing the current sample
 MS_RELAY = 1
 LC_RELAY = 0
 MS_INPUT = "D14"
@@ -264,12 +264,12 @@ class ProtocolActions:
                 self.myCoordinator.myLogger.info(f"MS IS READY TO BE TRIGGERED, ATTEMPTING CONTACT CLOSURE")
             while (pin_state or not MS_Ready):
                 pin_state = self.myCoordinator.myModules.myPorts[int(Port)].getPinState(Input)
-                wait_to_analyze_timer += 1
+                wait_to_analyze_timer += 4
                 self.myCoordinator.myModules.myRelays[int(Relay)].relay_on() # you need to pass in the number relay you want to switch
                                         # in this case the MS is connected to relay 2
-                time.sleep(0.5) # wait half second to make sure signal had time to start pump
+                # time.sleep(2) # wait half second to make sure signal had time to start pump
                 self.myCoordinator.myModules.myRelays[int(Relay)].relay_off() # turn off so it can be turned on again in the next loop
-                time.sleep(0.5) # wait half second to make sure signal had time to start pump
+                # time.sleep(2) # wait half second to make sure signal had time to start pump
                 # print(pin_state)
                 if (wait_to_analyze_timer >= MS_WAIT_TIMEOUT):
                     self.myCoordinator.myLogger.error(f"MS TIMEOUT: MS did not trigger after {MS_WAIT_TIMEOUT} seconds")
@@ -289,15 +289,17 @@ class ProtocolActions:
             self.myCoordinator.myLogger.info("THREAD: self.myCoordinator.LC_contact_closure()")  
             self.myCoordinator.myModules.myRelays[int(Relay)].relay_on() # you need to pass in the number relay you want to switch
                                             # in this case the LC is connected to relay 2
-            time.sleep(0.5) # wait half second to make sure signal had time to start pump
+            # time.sleep(2) # wait half second to make sure signal had time to start pump
             self.myCoordinator.myModules.myRelays[int(Relay)].relay_off() # turn off so it can be turned on again in the next loop
-            time.sleep(0.5) # wait half second to make sure signal had time to start pump
+            # time.sleep(2) # wait half second to make sure signal had time to start pump
             #try twice
             self.myCoordinator.myModules.myRelays[int(Relay)].relay_on() # you need to pass in the number relay you want to switch
                                             # in this case the LC is connected to relay 2
-            time.sleep(0.5) # wait half second to make sure signal had time to start pump
+            # time.sleep(2) # wait half second to make sure signal had time to start pump
             self.myCoordinator.myModules.myRelays[int(Relay)].relay_off() # turn off so it can be turned on again in the next loop
-            time.sleep(0.5) # wait half second to make sure signal had time to start pump
+            # time.sleep(2) # wait half second to make sure signal had time to start pump
+        else:
+            print("Stopping")
     
     def set_relay_side(self, Relay=LC_RELAY, value="Left"):
         if value == "Left" or value == "LEFT" or value == "left":
@@ -312,9 +314,9 @@ class ProtocolActions:
         pin_state = self.myCoordinator.myModules.myPorts[int(Port)].getPinState(Input)
         #print((Logic))
         while (pin_state != Logic):
-            pin_state = self.myCoordinator.myModules.myPorts[int(Port)].getPinState(Input)
-            time.sleep(1)
-         #   print(pin_state)
+            time.sleep(1.5)
+            pin_state = self.myCoordinator.myModules.myPorts[int(Port)].getPinState(Input)            
+            print(pin_state)
             if self.myCoordinator.myReader.stop_run == True:
                 break
         #print("Contact Closure")
