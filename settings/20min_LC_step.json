@@ -1,10 +1,10 @@
 {
     "ports": [
         {
-            "pattern": "COM5"
+            "pattern": "COM9"
         },
         {
-            "pattern": "COM6"
+            "pattern": "COM5"
         }
     ],
     "motors_configurations": {
@@ -90,7 +90,32 @@
             },
             "side": "",
             "type": "Zaber - Syringe Only",
-            "joystick": {}
+            "joystick": {
+                "A": "step_size_down",
+                "B": "step_size_up",
+                "X": "unassigned",
+                "Y": "unassigned",
+                "LSTICK": "unassigned",
+                "RSTICK": "unassigned",
+                "RB": "unassigned",
+                "LB": "unassigned",
+                "BACK": "home_all",
+                "START": "stop_listening",
+                "HAT_UP": "unassigned",
+                "HAT_DOWN": "unassigned",
+                "HAT_RIGHT": "unassigned",
+                "HAT_LEFT": "unassigned",
+                "L_STICK_LEFT": "move_syringe_motor_down",
+                "L_STICK_RIGHT": "move_syringe_motor_up",
+                "L_STICK_DOWN": "unassigned",
+                "L_STICK_UP": "unassigned",
+                "R_STICK_LEFT": "unassigned",
+                "R_STICK_RIGHT": "unassigned",
+                "R_STICK_DOWN": "unassigned",
+                "R_STICK_UP": "unassigned",
+                "R_TRIGGER": "step_syringe_motor_up",
+                "L_TRIGGER": "step_syringe_motor_down"
+            }
         }
     },
     "2_position_actuators": [
@@ -142,7 +167,7 @@
         },
         {
             "port": 0,
-            "pin": "D18"
+            "pin": "D26"
         }
     ],
     "switches": [],
@@ -150,7 +175,7 @@
     "feedbacks": [
         {
             "port": 0,
-            "pin": "D26"
+            "pin": "D18"
         }
     ]
 }

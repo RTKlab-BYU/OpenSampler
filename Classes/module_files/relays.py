@@ -89,9 +89,11 @@ class Relays:
 
 	def relay_off(self):
 		self.modules.myPorts[self.port].deactivatePin(self.pin) 
+		time.sleep(1.5)
 
 	def relay_on(self):
 		self.modules.myPorts[self.port].activatePin(self.pin) 
+		time.sleep(1.5)
 
 	def test_relays(self): # test function to see if the code works the way I think it should
 		inputVal = "off" 
