@@ -286,12 +286,15 @@ class Calibration(tk.Toplevel,):
     def update_positions(self):
         self.updating_positions = True
         
-        while self.updating_positions:
+        while self.updating_positions==True:
             x,y,z = self.coordinator.myModules.myStages[self.selected_stage].get_motor_coordinates()
             self.current_x.set(x)
             self.current_y.set(y)
             self.current_z.set(z)
             time.sleep(1)
+            
+            if not self.updating_positions:
+                break
 
     def update_states(self):
         # if all calibration points have been saved, it uses them to calculate the fourth calibration point, and enables the test_button
@@ -325,15 +328,16 @@ class Calibration(tk.Toplevel,):
 
     def kill_joystick(self):
         self.coordinator.stop_joystick()
-        print("chk 6")
+        print("chk 5")
         self.stop_updating_positions()
-        print("chk 7")
+        print("chk 6")
         self.killButton["state"] = "disabled"
         self.joyButton["state"] = "normal"
 
     def on_closing(self):
         self.kill_joystick()
+        print("chk 7")
         self.position_thread.join()
-        print("chk 5")
+        print("chk 8")
         self.destroy()
 
