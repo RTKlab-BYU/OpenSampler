@@ -797,41 +797,40 @@ class Active_Queue(tk.Frame,):
 
         dataframe_as_list = []
 
-        if type(dataframe) == None:
-            print("No dataframe to process")
-            pass
-
-        elif dataframe.empty == True:
-            print("Dataframe is empty")
-            pass    
+        try:
+            if dataframe.empty == True:
+                print("Dataframe is empty")
+                pass    
         
-        elif self.active_queue_type == "Sample Prep":
-            for row_index in range(dataframe.shape[0]):
-                scheduled_run = Sample_Prep_Inputs(self.scheduled_runs_inner)
-                scheduled_run.method_var.set(dataframe[SP_HEADERS[0]].loc[dataframe.index[row_index]])
+            elif self.active_queue_type == "Sample Prep":
+                for row_index in range(dataframe.shape[0]):
+                    scheduled_run = Sample_Prep_Inputs(self.scheduled_runs_inner)
+                    scheduled_run.method_var.set(dataframe[SP_HEADERS[0]].loc[dataframe.index[row_index]])
 
-                dataframe_as_list.append(scheduled_run)
+                    dataframe_as_list.append(scheduled_run)
 
-        elif self.active_queue_type == "Mass Spec":
-            for row_index in range(dataframe.shape[0]):
-                scheduled_run = MS_Queue_Row_Inputs(self.scheduled_runs_inner)
-                scheduled_run.stage_var.set(dataframe[MS_HEADERS[0]].loc[dataframe.index[row_index]])
-                scheduled_run.wellplate_var.set(dataframe[MS_HEADERS[1]].loc[dataframe.index[row_index]])
-                scheduled_run.well_var.set(dataframe[MS_HEADERS[2]].loc[dataframe.index[row_index]])
-                scheduled_run.method_var.set(dataframe[MS_HEADERS[3]].loc[dataframe.index[row_index]])
+            elif self.active_queue_type == "Mass Spec":
+                for row_index in range(dataframe.shape[0]):
+                    scheduled_run = MS_Queue_Row_Inputs(self.scheduled_runs_inner)
+                    scheduled_run.stage_var.set(dataframe[MS_HEADERS[0]].loc[dataframe.index[row_index]])
+                    scheduled_run.wellplate_var.set(dataframe[MS_HEADERS[1]].loc[dataframe.index[row_index]])
+                    scheduled_run.well_var.set(dataframe[MS_HEADERS[2]].loc[dataframe.index[row_index]])
+                    scheduled_run.method_var.set(dataframe[MS_HEADERS[3]].loc[dataframe.index[row_index]])
 
-                dataframe_as_list.append(scheduled_run)
-        
-        elif self.active_queue_type == "Fractionation":
-            for row_index in range(dataframe.shape[0]):
-                scheduled_run = Frac_Queue_Row_Inputs(self.scheduled_runs_inner)
-                scheduled_run.stage_var.set(dataframe[FRAC_HEADERS[0]].loc[dataframe.index[row_index]])
-                scheduled_run.wellplate_var.set(dataframe[FRAC_HEADERS[1]].loc[dataframe.index[row_index]])
-                scheduled_run.sample_wells_var.set(dataframe[FRAC_HEADERS[2]].loc[dataframe.index[row_index]])
-                scheduled_run.elution_wells_var.set(dataframe[FRAC_HEADERS[3]].loc[dataframe.index[row_index]])
-                scheduled_run.method_var.set(dataframe[FRAC_HEADERS[4]].loc[dataframe.index[row_index]])
+                    dataframe_as_list.append(scheduled_run)
+            
+            elif self.active_queue_type == "Fractionation":
+                for row_index in range(dataframe.shape[0]):
+                    scheduled_run = Frac_Queue_Row_Inputs(self.scheduled_runs_inner)
+                    scheduled_run.stage_var.set(dataframe[FRAC_HEADERS[0]].loc[dataframe.index[row_index]])
+                    scheduled_run.wellplate_var.set(dataframe[FRAC_HEADERS[1]].loc[dataframe.index[row_index]])
+                    scheduled_run.sample_wells_var.set(dataframe[FRAC_HEADERS[2]].loc[dataframe.index[row_index]])
+                    scheduled_run.elution_wells_var.set(dataframe[FRAC_HEADERS[3]].loc[dataframe.index[row_index]])
+                    scheduled_run.method_var.set(dataframe[FRAC_HEADERS[4]].loc[dataframe.index[row_index]])
 
-                dataframe_as_list.append(scheduled_run)
+                    dataframe_as_list.append(scheduled_run)
+        except:
+            dataframe_as_list = []
 
         return dataframe_as_list
 
