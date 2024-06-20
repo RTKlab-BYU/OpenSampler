@@ -1,7 +1,7 @@
 {
     "wellplate_wellDistance": 0.0,
     "well_depth": 10.0,
-    "fiducialDisplacement": 0,
+    "Calibration Point Offset": 0,
     "grid": [
         10,
         2

@@ -1,6 +1,6 @@
 {
     "grid":[3,5],
-    "fiducialDisplacement": 3,
+    "Calibration Point Offset": 3,
     "wellDistance": 1,
     "nicknames":
     [
