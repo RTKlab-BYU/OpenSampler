@@ -51,7 +51,7 @@ class Labware_Selection(tk.Toplevel,):
         if not self.custom_location_page or not self.custom_location_page.winfo_exists():
             self.custom_location_page = Custom_Location(self.coordinator, self.selected_stage)
         else:
-            self.syringe_calibration_page.deiconify()
+            self.custom_location_page.deiconify()
 
     def open_syringe_calibration_page(self):
         if not self.syringe_calibration_page or not self.syringe_calibration_page.winfo_exists():
