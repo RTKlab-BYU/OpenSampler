@@ -52,8 +52,8 @@ class Calibrator:
         # wellplate_well_distance = plate_parameters["wellplate_wellDistance"]
         welldepth = parameters["well_depth"]
         if stage_type == "Zaber_XYZ":
-            welldepth = -1*welldepth #flipped z axis, tip is stationary
-        offset = float(parameters["fiducialDisplacement"])
+            welldepth = -1*welldepth # flipped z axis, tip is stationary
+        offset = float(parameters["Calibration Point Offset"])
         
         # make points into np arrays
         blp = np.array(self.back_left_point)
@@ -64,7 +64,7 @@ class Calibrator:
         row_uv = (brp - blp) / (grid[1] + offset*2 - 1)  # accounts for offset spacing
         column_uv = (flp - blp) / (grid[0] - 1)
 
-        # location of well "A1"
+        # location of first well
         start_point = blp + row_uv * offset  # start at first well, not calibration point 
 
         # Go through each row and column, create locations, and append them to the locations list
@@ -218,8 +218,12 @@ class Calibration(tk.Toplevel,):
         self.save_button.pack(side=tk.TOP)
         self.save_button["state"] = "disabled"
 
+        self.position_thread = threading.Thread(target=self.update_positions)
+        self.updating_positions = False
+
         # modifies the close button protocol
-        self.protocol('WM_DELETE_WINDOW', self.on_closing)    
+        self.protocol('WM_DELETE_WINDOW', self.on_closing)
+        
 
     def set_cal_point(self, cal_point):
         x,y,z = self.coordinator.myModules.myStages[self.selected_stage].get_motor_coordinates()
@@ -274,26 +278,22 @@ class Calibration(tk.Toplevel,):
         return plate_properties 
 
     def add_plate_to_labware(self):
-        print("chk 1")
         parameters = self.compile_plate_properties()
-        print("chk 2")
         self.coordinator.myModules.myStages[self.selected_stage].myLabware.create_new_plate(parameters)
-        print("chk 3")
         self.on_closing()
-        print("chk 4")
 
     # this is run inside a thread to keep the position labels and calibration states updated
     def update_positions(self):
         self.updating_positions = True
         
-        while self.updating_positions==True:
+        while self.updating_positions == True:
             x,y,z = self.coordinator.myModules.myStages[self.selected_stage].get_motor_coordinates()
             self.current_x.set(x)
             self.current_y.set(y)
             self.current_z.set(z)
             time.sleep(1)
             
-            if not self.updating_positions:
+            if self.updating_positions == False:
                 break
 
     def update_states(self):
@@ -315,9 +315,6 @@ class Calibration(tk.Toplevel,):
     # sets flag to false, then waits until position_thread has ended to proceed
     def stop_updating_positions(self):
         self.updating_positions = False
-        # while self.position_thread.is_alive():
-        #     time.sleep(3)
-        #     pass
     
     def start_joystick(self):
         self.position_thread = threading.Thread(target=self.update_positions)
@@ -328,16 +325,13 @@ class Calibration(tk.Toplevel,):
 
     def kill_joystick(self):
         self.coordinator.stop_joystick()
-        print("chk 5")
         self.stop_updating_positions()
-        print("chk 6")
         self.killButton["state"] = "disabled"
         self.joyButton["state"] = "normal"
 
     def on_closing(self):
         self.kill_joystick()
-        print("chk 7")
-        self.position_thread.join()
-        print("chk 8")
+        time.sleep(3)
+        print("Thread Closed")
         self.destroy()
 

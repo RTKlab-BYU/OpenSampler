@@ -91,7 +91,7 @@ class ModelsManager:
     # def create_chip_model(self, new_model_name, grid, point_distance, well_distance, row_types, nicknames):
     #     properties = { 
     #         "grid": grid, # This is a list: [rows,columns]
-    #         "fiducialDisplacement": point_distance, # float number
+    #         "Calibration Point Offset": point_distance, # float number
     #         "wellDistance": well_distance, # float number
     #         "rowTypes": row_types, # list of strings: ["BS","B", "BS"]
     #         "nicknames": nicknames # List of lists with strings in them, each sublist holds the nicknames of a row

@@ -1046,8 +1046,8 @@ class ZaberMotorSeries:
 
     # This calls the step method on the motor that controls the syringe axis - direction is either 1 or -1
     def step_syringe_motor_up(self, *args, **kwargs):
-        if "step_size" in kwargs:
-            vol_size = float(kwargs["step_size"]) / 1000
+        if "volume" in kwargs:
+            vol_size = float(kwargs["volume"]) / 1000
             step_size = self.uL_to_mm(vol_size)
         else:
             step_size = self.s_step_size
@@ -1061,8 +1061,8 @@ class ZaberMotorSeries:
         self.step_syringe(motor, direction * step_size, step_speed)
 
     def step_syringe_motor_down(self, *args, **kwargs):
-        if "step_size" in kwargs:
-            vol_size = float(kwargs["step_size"]) / 1000
+        if "volume" in kwargs:
+            vol_size = float(kwargs["volume"]) / 1000
             step_size = self.uL_to_mm(vol_size)
         else:
             step_size = self.s_step_size

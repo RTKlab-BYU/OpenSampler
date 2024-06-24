@@ -61,9 +61,9 @@ class Custom_Location(tk.Toplevel,):
         self.save_button.pack(side=tk.TOP)
 
         self.position_thread = threading.Thread(target=self.update_positions)
+        self.updating_positions = False
 
         self.protocol('WM_DELETE_WINDOW', self.on_closing)
-        self.updating_positions = False
 
     def CreateNickname(self):
         location_name = self.newNickname.get()
@@ -75,7 +75,7 @@ class Custom_Location(tk.Toplevel,):
     def update_positions(self):
         self.updating_positions = True
 
-        while self.updating_positions:
+        while self.updating_positions == True:
             x,y,z = self.coordinator.myModules.myStages[self.selected_stage].get_motor_coordinates()
             self.x_var.set(x)
             self.y_var.set(y)
@@ -83,7 +83,7 @@ class Custom_Location(tk.Toplevel,):
 
             time.sleep(1)
             
-            if not self.updating_positions:
+            if self.updating_positions == False:
                 
                 break
 
@@ -98,7 +98,6 @@ class Custom_Location(tk.Toplevel,):
         #     time.sleep(1)
     
     def start_joystick(self):
-        print("checkpoint 1")
         self.position_thread = threading.Thread(target=self.update_positions)
         self.position_thread.start()
         self.coordinator.start_joystick(self.selected_stage)
