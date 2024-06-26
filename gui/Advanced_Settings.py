@@ -1155,7 +1155,7 @@ class TempDeckName(tk.Entry,):
         new_key = self.get()
         old_value = container.loaded_settings["temp_decks"].pop(old_key)
         container.loaded_settings["temp_decks"][new_key] = old_value
-        frame.UpdateGUI()
+        frame.UpdateGUI(container)
 class TempDeckSerial(tk.Entry,):
     def __init__(self, frame, container, string, eachTemp):
         super().__init__(frame.TempDeckGrid)
