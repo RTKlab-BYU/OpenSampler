@@ -13,9 +13,13 @@ class Labware_Selection(tk.Toplevel,):
         self.coordinator = coordinator 
       
         self.title("Add Labware Type")
-        self.type_select_label = tk.Label(self, text="Select Labware Type: ",justify=tk.LEFT)
+        self.type_select_label = tk.Label(self, text="Select Labware Type: ")
         self.type_select_label.pack(side=tk.TOP)
         self.geometry("750x750")
+
+        self.wellplate_calibration_page = None
+        self.custom_location_page = None
+        self.syringe_calibration_page = None
 
         self.type_bar = tk.Frame(self)
         self.type_bar.pack(side=tk.TOP)
@@ -36,7 +40,24 @@ class Labware_Selection(tk.Toplevel,):
         tk.Radiobutton(self.type_bar, text="Wellplate", padx = 20, variable=self.option_selected, value="wellplate", command=self.update_options).grid(row=0,column=0)
         tk.Radiobutton(self.type_bar, text="Custom", padx = 20, variable=self.option_selected, value="custom", command=self.update_options).grid(row=0,column=1)
         tk.Radiobutton(self.type_bar, text="Syringe", padx = 20, variable=self.option_selected, value="syringe", command=self.update_options).grid(row=0,column=2)
-        
+
+    def open_wellplate_calibration_page(self):
+        if not self.wellplate_calibration_page or not self.wellplate_calibration_page.winfo_exists():
+            self.wellplate_calibration_page = Calibration(self.coordinator, self.selected_stage, model_name=self.selected_model.get())
+        else:
+            self.syringe_calibration_page.deiconify()
+
+    def open_custom_location_page(self):
+        if not self.custom_location_page or not self.custom_location_page.winfo_exists():
+            self.custom_location_page = Custom_Location(self.coordinator, self.selected_stage)
+        else:
+            self.syringe_calibration_page.deiconify()
+
+    def open_syringe_calibration_page(self):
+        if not self.syringe_calibration_page or not self.syringe_calibration_page.winfo_exists():
+            self.syringe_calibration_page = Syringe_Calibration(self.coordinator, self.selected_stage, self.selected_model.get())
+        else:
+            self.syringe_calibration_page.deiconify()
         
     def update_options(self):
         
@@ -56,7 +77,7 @@ class Labware_Selection(tk.Toplevel,):
             self.selected_model["values"] = self.coordinator.myModules.myStages[self.selected_stage].myModelsManager.get_stored_models()["syringes"]
         else:
             print("Error, invalid labware type: " + str(self.option_selected.get()))
-        print(self.option_selected.get())
+        # print(self.option_selected.get())
 
     def enable_submit(self):
         self.start_calibration["state"] = "normal"
@@ -66,8 +87,8 @@ class Labware_Selection(tk.Toplevel,):
 
     def open_sub_window(self):
         if self.option_selected.get() == "wellplate":
-            Calibration(self.coordinator, self.selected_stage, model_name=self.selected_model.get())
+            self.open_wellplate_calibration_page()
         elif self.option_selected.get() == "custom":
-            Custom_Location(self.coordinator, self.selected_stage)
+            self.open_custom_location_page()
         elif self.option_selected.get() == "syringe":
-            Syringe_Calibration(self.coordinator, self.selected_stage, self.selected_model.get())
+            self.open_syringe_calibration_page()

@@ -4,6 +4,8 @@ import threading
 import numpy as np
 import time
 
+from Classes.coordinator import Coordinator
+
 
 class Calibrator:
 
@@ -50,8 +52,8 @@ class Calibrator:
         # wellplate_well_distance = plate_parameters["wellplate_wellDistance"]
         welldepth = parameters["well_depth"]
         if stage_type == "Zaber_XYZ":
-            welldepth = -1*welldepth #flipped z axis, tip is stationary
-        offset = float(parameters["fiducialDisplacement"])
+            welldepth = -1*welldepth # flipped z axis, tip is stationary
+        offset = float(parameters["Calibration Point Offset"])
         
         # make points into np arrays
         blp = np.array(self.back_left_point)
@@ -62,7 +64,7 @@ class Calibrator:
         row_uv = (brp - blp) / (grid[1] + offset*2 - 1)  # accounts for offset spacing
         column_uv = (flp - blp) / (grid[0] - 1)
 
-        # location of well "A1"
+        # location of first well
         start_point = blp + row_uv * offset  # start at first well, not calibration point 
 
         # Go through each row and column, create locations, and append them to the locations list
@@ -86,9 +88,10 @@ class Calibration(tk.Toplevel,):
         self.title("Calibrate New Location")
         tk.Label(self, text=model_name, font="Helvetica 18",justify=tk.LEFT).pack(side=tk.TOP)
         self.component_type = "W"
-        self.selected_stage = selected_stage 
-        self.model_parameters = coordinator.myModules.myStages[self.selected_stage].myModelsManager.get_model_parameters(self.component_type, model_name)
-        self.coordinator = coordinator
+        self.selected_stage = selected_stage
+        self.coordinator: Coordinator = coordinator 
+        self.model_parameters = self.coordinator.myModules.myStages[self.selected_stage].myModelsManager.get_model_parameters(self.component_type, model_name)
+        
         self.calibrator = Calibrator()
         self.model_name = model_name
         self.geometry("700x450")
@@ -215,8 +218,12 @@ class Calibration(tk.Toplevel,):
         self.save_button.pack(side=tk.TOP)
         self.save_button["state"] = "disabled"
 
+        self.position_thread = threading.Thread(target=self.update_positions)
+        self.updating_positions = False
+
         # modifies the close button protocol
-        self.protocol('WM_DELETE_WINDOW', self.on_closing)    
+        self.protocol('WM_DELETE_WINDOW', self.on_closing)
+        
 
     def set_cal_point(self, cal_point):
         x,y,z = self.coordinator.myModules.myStages[self.selected_stage].get_motor_coordinates()
@@ -278,18 +285,16 @@ class Calibration(tk.Toplevel,):
     # this is run inside a thread to keep the position labels and calibration states updated
     def update_positions(self):
         self.updating_positions = True
-        while self.updating_positions:
+        
+        while self.updating_positions == True:
             x,y,z = self.coordinator.myModules.myStages[self.selected_stage].get_motor_coordinates()
             self.current_x.set(x)
             self.current_y.set(y)
             self.current_z.set(z)
             time.sleep(1)
-
-    def stop_updating_positions(self):
-        self.updating_positions = False
-        while self.position_thread.is_alive():
-            pass
-
+            
+            if self.updating_positions == False:
+                break
 
     def update_states(self):
         # if all calibration points have been saved, it uses them to calculate the fourth calibration point, and enables the test_button
@@ -306,6 +311,10 @@ class Calibration(tk.Toplevel,):
             self.save_button["state"] = "normal"
         else:
             self.save_button["state"] = "disabled"
+
+    # sets flag to false, then waits until position_thread has ended to proceed
+    def stop_updating_positions(self):
+        self.updating_positions = False
     
     def start_joystick(self):
         self.position_thread = threading.Thread(target=self.update_positions)
@@ -322,6 +331,7 @@ class Calibration(tk.Toplevel,):
 
     def on_closing(self):
         self.kill_joystick()
-        # time.sleep(3)
+        time.sleep(3)
+        print("Thread Closed")
         self.destroy()
 

@@ -1,6 +1,6 @@
 {
     "grid":[3,9],
-    "fiducialDisplacement": 13.5,
+    "Calibration Point Offset": 3,
     "wellplate_wellDistance": 4.5,
     "well_depth":0,
     "nicknames":

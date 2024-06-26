@@ -26,9 +26,9 @@ class Syringe_Calibration(tk.Toplevel,):
         # buttons to start and stop joystick
         self.joyBar = tk.Frame(self)
         self.joyBar.pack(side=tk.TOP)
-        self.joyButton = tk.Button(self.joyBar,text="Start Joystick",command=lambda: self.start_joystick(),justify=tk.LEFT)
+        self.joyButton = tk.Button(self.joyBar, text="Start Joystick", command=lambda: self.start_joystick(), justify=tk.LEFT)
         self.joyButton.grid(row=0,column=1)
-        self.killButton = tk.Button(self.joyBar,text="Kill Joystick",command=lambda: self.kill_joystick(),justify=tk.LEFT)
+        self.killButton = tk.Button(self.joyBar, text="Kill Joystick", command=lambda: self.kill_joystick(), justify=tk.LEFT)
         self.killButton.grid(row=0,column=2)
         self.killButton["state"] = "disabled"
 
@@ -36,15 +36,15 @@ class Syringe_Calibration(tk.Toplevel,):
         self.setterBar = tk.Frame(self)
         self.setterBar.pack(side=tk.TOP)
 
-        self.home_button = tk.Button(self.setterBar,text="Home Syringe",command=lambda: self.home_syringe())
-        self.max_button = tk.Button(self.setterBar,text="Set Max",command=lambda: self.SetMax())
-        self.rest_button = tk.Button(self.setterBar,text="Set Rest",command=lambda: self.SetRest())
-        self.min_button = tk.Button(self.setterBar,text="Set Min",command=lambda: self.SetMin())
+        self.home_button = tk.Button(self.setterBar, text="Home Syringe", command=lambda: self.home_syringe())
+        self.max_button = tk.Button(self.setterBar, text="Set Max", command=lambda: self.SetMax())
+        self.rest_button = tk.Button(self.setterBar, text="Set Rest", command=lambda: self.SetRest())
+        self.min_button = tk.Button(self.setterBar, text="Set Min", command=lambda: self.SetMin())
 
-        self.home_button.grid(row=0,column=0)
-        self.max_button.grid(row=0,column=1)
-        self.rest_button.grid(row=0,column=2)
-        self.min_button.grid(row=0,column=3)
+        self.home_button.grid(row=0, column=0)
+        self.max_button.grid(row=0, column=1)
+        self.rest_button.grid(row=0, column=2)
+        self.min_button.grid(row=0, column=3)
 
         # specify speed and volume then click buttons for aspirate and dispense
         self.syringe_control = tk.Frame(self)
@@ -53,20 +53,20 @@ class Syringe_Calibration(tk.Toplevel,):
         self.volume_var = tk.StringVar(self)  # nL
         self.volume_var.set("3500")
         self.volume_label = tk.Label(self.syringe_control, text="Volume (nL):")
-        self.volume = tk.Entry(self.syringe_control, textvariable=self.target_volume)
+        self.volume = tk.Entry(self.syringe_control, textvariable=self.volume_var)
 
         self.speed_var = tk.StringVar(self)  # nL per min
         self.speed_var.set("3000")
         self.speed_label = tk.Label(self.syringe_control, text="Speed (nL/min)")
-        self.speed = tk.Entry(self.syringe_control, textvariable=self.syringe_speed)
+        self.speed = tk.Entry(self.syringe_control, textvariable=self.speed_var)
 
         self.volume_label.grid(row=0, column=0)
         self.speed_label.grid(row=0, column=1)
         self.volume.grid(row=1, column=0)
         self.speed.grid(row=1, column=1)
 
-        self.aspirate_button = tk.Button(self.syringe_control,text="Aspirate",command=lambda: self.Aspirate())
-        self.dispense_button = tk.Button(self.syringe_control,text="Dispense",command=lambda: self.Dispense())
+        self.aspirate_button = tk.Button(self.syringe_control, text="Aspirate",command=lambda: self.Aspirate())
+        self.dispense_button = tk.Button(self.syringe_control, text="Dispense",command=lambda: self.Dispense())
         self.aspirate_button.grid(row=0,column=2)
         self.dispense_button.grid(row=1,column=2)
 
@@ -151,10 +151,10 @@ class Syringe_Calibration(tk.Toplevel,):
         self.update_syringe_states()
 
     def set_syringe_speed(self, speed):
-        self.syringe_speed = speed
+        self.speed_var = speed
 
     def set_target_volume(self, volume):
-        self.target_volume = volume
+        self.volume_var = volume
 
     def update_syringe_states(self):
         if self.min_set and self.max_set and self.rest_set:
@@ -187,33 +187,34 @@ class Syringe_Calibration(tk.Toplevel,):
 
 # Action Commands
     def home_syringe(self):
-        print("Homing Syringe!")
+        print("\nHoming Syringe!")
         cnt = 0
         limit = 5
         while cnt < limit:
-            try:
-                self.myStage.home_syringe()
-            except:
                 cnt += 1
-                print(f"Attempts to Home syringe: {cnt}/{limit}")
-            else:
+                self.myStage.home_syringe()
                 current_position = self.myStage.get_syringe_location()
-                print(f"Syringe Position After Homing: {current_position}")
-                return
+                if current_position == 18.0:
+                    print("Syringe Homed")
+                    self.update_syringe_states()
+                    return
+                
+        print(f"Type: {type(current_position)}")
+        print(f"Current Syringe Position: {current_position}")
         print("Cannot Home Syringe at this time.")
 
     def Aspirate(self):
-        print(f"stage index: {self.selected_stage}")
-        print(f"stage side: {self.coordinator.myModules.myStages[self.selected_stage].side}")
-        self.coordinator.myLogger.info(f"Aspirating {self.target_volume.get()} nL at speed {self.syringe_speed.get()} nL/min")
-        self.coordinator.myModules.myStages[self.selected_stage].step_syringe_motor_up(volume = float(self.target_volume.get()), speed = float(self.syringe_speed.get()))
+        # print(f"stage index: {self.selected_stage}")
+        # print(f"stage side: {self.coordinator.myModules.myStages[self.selected_stage].side}")
+        self.coordinator.myLogger.info(f"Aspirating {self.volume_var.get()} nL at speed {self.speed_var.get()} nL/min")
+        self.coordinator.myModules.myStages[self.selected_stage].step_syringe_motor_up(volume = float(self.volume_var.get()), speed = float(self.speed_var.get()))
         self.update_syringe_states()
 
     def Dispense(self):
-        print(f"stage index: {self.selected_stage}")
-        print(f"stage side: {self.coordinator.myModules.myStages[self.selected_stage].side}")
-        self.coordinator.myLogger.info(f"Aspirating {self.target_volume.get()} nL at speed {self.syringe_speed.get()} nL/min")
-        self.coordinator.myModules.myStages[self.selected_stage].step_syringe_motor_down(volume = float(self.target_volume.get()), speed = float(self.syringe_speed.get()))
+        # print(f"stage index: {self.selected_stage}")
+        # print(f"stage side: {self.coordinator.myModules.myStages[self.selected_stage].side}")
+        self.coordinator.myLogger.info(f"Aspirating {self.volume_var.get()} nL at speed {self.speed_var.get()} nL/min")
+        self.coordinator.myModules.myStages[self.selected_stage].step_syringe_motor_down(volume = float(self.volume_var.get()), speed = float(self.speed_var.get()))
         self.update_syringe_states()
 
     

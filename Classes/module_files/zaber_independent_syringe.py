@@ -150,7 +150,7 @@ class ZaberIndependentSyringe:
                             self.syringesDefinitions[f"{syringe_axis}"] = syringe_index
                             syringe_index = syringe_index + 1
                     else:
-                        print("ERROR: motor {index} not configured!")
+                        print(f"WARNING: motor {index} not configured!")
                     i = i + 1
                 self.logger.info("{} motor(s) initialized".format(len(self.device_list)))
         else:
@@ -189,7 +189,7 @@ class ZaberIndependentSyringe:
                         self.syringesDefinitions[f"{syringe_axis}"] = syringe_index
                         syringe_index = syringe_index + 1
                 else:
-                    print("ERROR: motor {index} not configured!")
+                    print(f"WARNING: motor {index} not configured!")
                 i = i + 1
             self.logger.info("{} motor(s) initialized".format(len(self.device_list)))
             #just add them as devices
@@ -519,8 +519,8 @@ class ZaberIndependentSyringe:
         return mm_distance
 
     def step_syringe_motor_up(self, *args, **kwargs):
-        if "step_size" in kwargs:
-            vol_size = float(kwargs["step_size"]) / 1000
+        if "volume" in kwargs:
+            vol_size = float(kwargs["volume"]) / 1000
             step_size = self.uL_to_mm(vol_size)
         else:
             step_size = self.s_step_size
@@ -534,8 +534,8 @@ class ZaberIndependentSyringe:
         self.step(motor, direction * step_size, step_speed)
 
     def step_syringe_motor_down(self, *args, **kwargs):
-        if "step_size" in kwargs:
-            vol_size = float(kwargs["step_size"]) / 1000
+        if "volume" in kwargs:
+            vol_size = float(kwargs["volume"]) / 1000
             step_size = self.uL_to_mm(vol_size)
         else:
             step_size = self.s_step_size

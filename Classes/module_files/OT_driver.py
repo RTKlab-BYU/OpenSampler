@@ -34,17 +34,17 @@ X_MAX = 418
 X_MIN = 25
 Y_MAX = 350
 Y_MIN = 5
-Z_MAX = 170
-Z_MIN_NO_SYRINGE = 78
-Z_MIN_WITH_SYRINGE = 25 
-A_MAX = 170
-A_MIN_NO_SYRINGE = 78
-A_MIN_WITH_SYRINGE = 25
+Z_MAX = 218
+Z_MIN_NO_SYRINGE = 0
+Z_MIN_WITH_SYRINGE = 30 
+A_MAX = 218
+A_MIN_NO_SYRINGE = 0
+A_MIN_WITH_SYRINGE = 30
 
 # These should be moved to syringe model files
 SYRINGE_MAX = 18
-SYRINGE_REST = -80
-SYRINGE_MIN = -170
+SYRINGE_REST = -66
+SYRINGE_MIN = -150
 
 # these should be determined in system configuration
 LEFT_SYRINGE_MOUNT_ATTACHED = True
@@ -149,23 +149,29 @@ class OT2_nanotrons_driver(SM):
         will not be executed. Returns false if the move is outside the allowed limits
         """
 
-        if axis == 'X' and (pos > X_MAX or pos < self.x_min):
+        if axis == 'X' and (pos > self.x_max or pos < self.x_min):
             print("Not a valid move for X axis!")
+            print(f"Requested move to: {pos}, axis max: {self.x_max}, axis min: {self.x_min}")
             return False
-        elif axis == 'Y' and (pos > Y_MAX or pos < self.y_min):
+        elif axis == 'Y' and (pos > self.y_max or pos < self.y_min):
             print("Not a valid move for Y axis!")
+            print(f"Requested move to: {pos}, axis max: {self.y_max}, axis min: {self.y_min}")
             return False
         elif axis == 'Z' and (pos > self.z_max or pos < self.z_min):
             print("Not a valid move for Z axis!")
+            print(f"Requested move to: {pos}, axis max: {self.z_max}, axis min: {self.z_min}")
             return False
         elif axis == 'A' and (pos > self.a_max or pos < self.a_min):
             print("Not a valid move for A axis!")
+            print(f"Requested move to: {pos}, axis max: {self.a_max}, axis min: {self.a_min}")
             return False
         elif axis == 'B' and (pos > self.myLabware.get_syringe_max() or pos < self.myLabware.get_syringe_min()):
             print("Not a valid move for B axis!")
+            print(f"Requested move to: {pos}, axis max: {self.myLabware.get_syringe_max()}, axis min: {self.myLabware.get_syringe_min()}")
             return False
         elif axis == 'C' and (pos > self.myLabware.get_syringe_max() or pos <= self.myLabware.get_syringe_min()):
             print("Not a valid move for C axis!")
+            print(f"Requested move to: {pos}, axis max: {self.myLabware.get_syringe_max()}, axis min: {self.myLabware.get_syringe_min()}")
             return False
         else:
             return True
@@ -255,31 +261,36 @@ class OT2_nanotrons_driver(SM):
         else:
             print("'self.side' not recognized")
 
-    def move_safe_az(self, target_z):
+    def move_safe_az(self, target):
+        """
+        make sure the unused axis is up and out of the way
+        then compare the current and target positions
+        move to 30 mm above the higher option if possible
+        or move to the safe height if necessary
+
+        currently safe heights default to max
+        """
         if self.side == LEFT:
+            self.move({'A': self.safe_a}, speed= MEDIUM_SPEED)
+
             current_z = self._position['Z']
-            if target_z == current_z and current_z + 10 < self.safe_z:
-                self.move({'A': self.safe_a}, speed= MEDIUM_SPEED)
-                self.move({'Z': current_z + 10}, speed= MEDIUM_SPEED)
-            elif target_z + 10 < self.safe_z and current_z + 10  < self.safe_z:
-                self.move({'A': self.safe_a}, speed= MEDIUM_SPEED)
-                self.move({'Z': self.safe_z}, speed= MEDIUM_SPEED)
-            elif current_z + 10 >= self.safe_z:
-                pass
+            if target < current_z and current_z + 30 < self.safe_z:
+                self.move({'Z': current_z + 30}, speed= MEDIUM_SPEED)
+            elif target > current_z and target + 30  < self.safe_z:
+                self.move({'Z': target  + 30}, speed= MEDIUM_SPEED)
             else:
-                self.move({'A': self.a_max}, speed= MEDIUM_SPEED)
-                self.move({'Z': self.z_max}, speed= MEDIUM_SPEED)
+                self.move({'Z': self.safe_z}, speed= MEDIUM_SPEED)
+
         elif self.side == RIGHT:
+            self.move({'Z': self.safe_z}, speed= MEDIUM_SPEED)
+
             current_a = self._position['A']
-            if target_z == current_a and current_a + 10 < self.safe_a:
-                self.move({'Z': self.safe_z}, speed= MEDIUM_SPEED)
-                self.move({'A': current_a + 10}, speed= MEDIUM_SPEED)
-            elif target_z + 10 < self.safe_a and current_a + 10  < self.safe_a:
+            if target < current_a and current_a + 30 < self.safe_a:
+                self.move({'A': current_a + 30}, speed= MEDIUM_SPEED)
+            elif target > current_a and target + 30  < self.safe_a:
                 self.move({'A': self.safe_a}, speed= MEDIUM_SPEED)
-                self.move({'Z': self.safe_z}, speed= MEDIUM_SPEED)
             else:
-                self.move({'A': self.a_max}, speed= MEDIUM_SPEED)
-                self.move({'Z': self.z_max}, speed= MEDIUM_SPEED)
+                self.move({'A': self.safe_a}, speed= MEDIUM_SPEED)
 
     def get_motor_coordinates(self):  
         self.update_position()
@@ -301,16 +312,28 @@ class OT2_nanotrons_driver(SM):
             self.update_position()
             s = self._position["C"]
         return s
+    
+    def update_home_positions(self):
+        x = self._position['X']
+        y = self._position['Y']
+        z = self._position['Z']
+        a = self._position['A']
+        self.x_max = x
+        self.y_max = y
+        self.z_max = z
+        self.a_max = a
+
+        self.safe_z = z
+        self.safe_a = a
+
+        print(f"\nHomed Coordinates: X - {x}, Y - {y}, Z - {z}, A - {a}")
 
     def home_all(self, *args, **kwargs): # all non-syringe motors
         try:
             self.home('X Y Z A')
-            self.update_position()
-            x = self._position['X']
-            y = self._position['Y']
-            z = self._position['Z']
-            a = self._position['A']
-            print(f"\ncoordinates: x - {x}, y - {y}, z - {z}, a - {a}")
+            positions = self.update_position()
+            self.update_home_positions()
+
         except SmoothieError:
             print("cannot Home motors at this time")
 
@@ -463,10 +486,10 @@ class OT2_nanotrons_driver(SM):
 
         if self.side == LEFT:
             if(self.check_for_valid_move(move_pos, 'B')): # if the future position is a valid move 
-                self.move({'B': move_pos}, speed=self.check_speed(mm_per_s)) # move to the indicated position
+                self.move({'B': move_pos}, speed=mm_per_s) # move to the indicated position
         elif self.side == RIGHT:
             if(self.check_for_valid_move(move_pos, 'C')): # if the future position is a valid move 
-                self.move({'C': move_pos}, speed=self.check_speed(mm_per_s)) # move to the indicated position
+                self.move({'C': move_pos}, speed=mm_per_s) # move to the indicated position
         else:
             print("Side not recognized.")
 
@@ -563,6 +586,7 @@ class OT2_nanotrons_driver(SM):
             self.myModules.used_stages[self._port].append(self.side)
             self.simulating = False
             self._setup()
+            self.update_home_positions()
 def test():
     robot = OT2_nanotrons_driver()
     robot.find_port()

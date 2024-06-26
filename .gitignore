@@ -1,6 +1,9 @@
-settings/*
+settings/last_settings.json
+!settings/default_settings.json
 Calibrations/*
 logs/*
 Classes/__pycache__/*
 Classes/module_files/__pycache__/*
 gui/__pycache__/*
+queues/*
+methods/*

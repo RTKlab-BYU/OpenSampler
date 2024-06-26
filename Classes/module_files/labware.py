@@ -142,7 +142,7 @@ class Labware:
         return labware_dictionary
 
     def dictionary_to_labware(self, labware_dictionary):
-        print(f"Current Labware before additions: {self.get_current_labware()}")
+        # print(f"Current Labware before additions: {self.get_current_labware()}")
         
         plates_list = labware_dictionary["plates"] # This is a list of dictionaries, each of which containes prooperties for a given plate
         locations_list = labware_dictionary["custom_locations"]
@@ -156,7 +156,7 @@ class Labware:
         for custom_location in locations_list.keys():
             self.custom_locations[custom_location] = locations_list[custom_location]
             
-        print(f"Current Labware after additions: {self.get_current_labware()}")
+        # print(f"Current Labware after additions: {self.get_current_labware()}")
 
     def get_path_to_saved_labware_folder(self):
         current_path = os.getcwd() # Returns a string representing the location of this file

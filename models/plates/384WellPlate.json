@@ -5,7 +5,7 @@
     ],
     "wellplate_wellDistance": 4.35,
     "well_depth": 9.25,
-    "fiducialDisplacement": 0,
+    "Calibration Point Offset": 0,
     "nicknames": [
         [
             "A1",

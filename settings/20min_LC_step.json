@@ -1,0 +1,181 @@
+{
+    "ports": [
+        {
+            "pattern": "COM9"
+        },
+        {
+            "pattern": "COM5"
+        }
+    ],
+    "motors_configurations": {
+        "my_stages": {
+            "type": "Zaber",
+            "motors": {
+                "z": [
+                    "30",
+                    "0",
+                    39.978
+                ],
+                "y": [
+                    "60",
+                    "1",
+                    "200"
+                ],
+                "x": [
+                    "60",
+                    "2",
+                    200
+                ]
+            },
+            "syringes": {
+                "s": [
+                    "30",
+                    "3",
+                    100
+                ]
+            },
+            "port": "COM4",
+            "joystick": {
+                "A": "step_size_down",
+                "B": "step_size_up",
+                "X": "unassigned",
+                "Y": "unassigned",
+                "LSTICK": "unassigned",
+                "RSTICK": "unassigned",
+                "RB": "step_z_motor_up",
+                "LB": "step_z_motor_down",
+                "BACK": "home_all",
+                "START": "stop_listening",
+                "HAT_UP": "step_y_motor_back",
+                "HAT_DOWN": "step_y_motor_forward",
+                "HAT_RIGHT": "step_x_motor_right",
+                "HAT_LEFT": "step_x_motor_left",
+                "L_STICK_LEFT": "move_syringe_motor_down",
+                "L_STICK_RIGHT": "move_syringe_motor_up",
+                "L_STICK_DOWN": "move_z_motor_down",
+                "L_STICK_UP": "move_z_motor_up",
+                "R_STICK_LEFT": "move_x_motor_left",
+                "R_STICK_RIGHT": "move_x_motor_right",
+                "R_STICK_DOWN": "move_y_motor_forward",
+                "R_STICK_UP": "move_y_motor_back",
+                "R_TRIGGER": "step_syringe_motor_up",
+                "L_TRIGGER": "step_syringe_motor_down"
+            }
+        },
+        "gradient_syringe": {
+            "port": "COM4",
+            "motors": {
+                "x": [
+                    "",
+                    "",
+                    ""
+                ],
+                "y": [
+                    "",
+                    "",
+                    ""
+                ],
+                "z": [
+                    "",
+                    "",
+                    ""
+                ]
+            },
+            "syringes": {
+                "s": [
+                    "30",
+                    "4",
+                    "100"
+                ]
+            },
+            "side": "",
+            "type": "Zaber - Syringe Only",
+            "joystick": {
+                "A": "step_size_down",
+                "B": "step_size_up",
+                "X": "unassigned",
+                "Y": "unassigned",
+                "LSTICK": "unassigned",
+                "RSTICK": "unassigned",
+                "RB": "unassigned",
+                "LB": "unassigned",
+                "BACK": "home_all",
+                "START": "stop_listening",
+                "HAT_UP": "unassigned",
+                "HAT_DOWN": "unassigned",
+                "HAT_RIGHT": "unassigned",
+                "HAT_LEFT": "unassigned",
+                "L_STICK_LEFT": "move_syringe_motor_down",
+                "L_STICK_RIGHT": "move_syringe_motor_up",
+                "L_STICK_DOWN": "unassigned",
+                "L_STICK_UP": "unassigned",
+                "R_STICK_LEFT": "unassigned",
+                "R_STICK_RIGHT": "unassigned",
+                "R_STICK_DOWN": "unassigned",
+                "R_STICK_UP": "unassigned",
+                "R_TRIGGER": "step_syringe_motor_up",
+                "L_TRIGGER": "step_syringe_motor_down"
+            }
+        }
+    },
+    "2_position_actuators": [
+        {
+            "port": 0,
+            "Position A Out": "D4",
+            "Position B Out": "D19",
+            "Position A In": "D5",
+            "Position B In": "D21"
+        },
+        {
+            "port": 0,
+            "Position A Out": "D22",
+            "Position B Out": "D33",
+            "Position A In": "D23",
+            "Position B In": "D25"
+        },
+        {
+            "port": 0,
+            "Position A Out": "D32",
+            "Position B Out": "D27",
+            "Position A In": "D13",
+            "Position B In": "D14"
+        },
+        {
+            "port": 1,
+            "Position A Out": "D17",
+            "Position B Out": "D18",
+            "Position A In": "D22",
+            "Position B In": "D21"
+        }
+    ],
+    "selector_actuators": [
+        {
+            "port": 1,
+            "Move Out": "D19",
+            "Home Out": "D23",
+            "Number of Ports": 8
+        }
+    ],
+    "relays": [
+        {
+            "port": 0,
+            "pin": "D17"
+        },
+        {
+            "port": 0,
+            "pin": "D16"
+        },
+        {
+            "port": 0,
+            "pin": "D26"
+        }
+    ],
+    "switches": [],
+    "temp_decks": {},
+    "feedbacks": [
+        {
+            "port": 0,
+            "pin": "D18"
+        }
+    ]
+}

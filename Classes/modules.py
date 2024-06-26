@@ -83,12 +83,13 @@ class Modules:
         log_file_name_head = folder + timestamp
 
         for eachPort in settingsObj["ports"]:
-            print("\nAdding Serial Port")
+            print("\nAdding Serial Port " + eachPort["pattern"])
             self.myPorts.append(SerialPort(eachPort["pattern"])) 
         
         i = 0
         for each2PositionActuator in settingsObj["2_position_actuators"]:
             print("\nAdding 2-Position Valve")
+            print(each2PositionActuator)
             self.my2PosValves.append(Actuator(self, each2PositionActuator["port"],
                 each2PositionActuator["Position A Out"],
                 each2PositionActuator["Position B Out"],
@@ -99,6 +100,7 @@ class Modules:
         i = 0
         for eachSelector in settingsObj["selector_actuators"]:
             print("\nAdding Selector Valve")
+            print(eachSelector)
             self.mySelectors.append(SelectorActuator(self, eachSelector["port"],
              eachSelector["Move Out"],
              eachSelector["Home Out"],

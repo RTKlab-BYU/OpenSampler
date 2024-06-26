@@ -5,8 +5,8 @@ import threading
 print(os.getcwd())
 from Classes.module_files.labware import Labware
 
-MS_WAIT_TIMEOUT = 15 # Time allowed before ignoring he triggering of the MS
-MS_ANALYZE_TIMEOUT = 45 # Time we allow for the MS to stop analyzing the previous cycle and going back to waiting so that it can start analyzing the current sample
+MS_WAIT_TIMEOUT = 20 # Time allowed before ignoring he triggering of the MS
+MS_ANALYZE_TIMEOUT = 40 # Time we allow for the MS to stop analyzing the previous cycle and going back to waiting so that it can start analyzing the current sample
 MS_RELAY = 1
 LC_RELAY = 0
 MS_INPUT = "D14"
@@ -26,9 +26,9 @@ class ProtocolActions:
         it moves to the well, waits for a specified time, aspirates the volume, waits again.
         '''
         # need stage, plate, well
-        stage = self.myCoordinator.myReader.mySample["Stage"] 
-        plate = int(self.myCoordinator.myReader.mySample["Wellplate"])  # uses index value for now...
-        well = self.myCoordinator.myReader.mySample["Well"]
+        stage = self.myCoordinator.myReader.current_run["Stage"] 
+        plate = int(self.myCoordinator.myReader.current_run["Wellplate"])  # uses index value for now...
+        well = self.myCoordinator.myReader.current_run["Well"]
 
         self.move_to_well(stage, plate, well)
         self.wait(wait_seconds)
@@ -42,9 +42,9 @@ class ProtocolActions:
         it moves to the well, waits for a specified time, aspirates the volume, waits again.
         '''
         # need stage, plate, well
-        stage = self.myCoordinator.myReader.mySample["Stage"]
-        plate = int(self.myCoordinator.myReader.mySample["Wellplate"])  # uses index value for now...
-        wells: str = self.myCoordinator.myReader.mySample["Well"]
+        stage = self.myCoordinator.myReader.current_run["Stage"]
+        plate = int(self.myCoordinator.myReader.current_run["Wellplate"])  # uses index value for now...
+        wells: str = self.myCoordinator.myReader.current_run["Well"]
         
         wells = wells.replace(" ", "")
 
@@ -61,9 +61,9 @@ class ProtocolActions:
         it moves to the well, waits for a specified time, aspirates the volume, waits again.
         '''
         # need stage, plate, well
-        stage = self.myCoordinator.myReader.mySample["Stage"] 
-        plate = int(self.myCoordinator.myReader.mySample["Wellplate"])  # uses index value for now...
-        well = self.myCoordinator.myReader.mySample["Well"]
+        stage = self.myCoordinator.myReader.current_run["Stage"] 
+        plate = int(self.myCoordinator.myReader.current_run["Wellplate"])  # uses index value for now...
+        well = self.myCoordinator.myReader.current_run["Well"]
 
         self.move_to_well(stage, plate, well)
         self.wait(wait_seconds)
@@ -77,9 +77,9 @@ class ProtocolActions:
         it moves to the well, waits for a specified time, aspirates the volume, waits again.
         '''
         # need stage, plate, well
-        stage = self.myCoordinator.myReader.mySample["Stage"]
-        plate = int(self.myCoordinator.myReader.mySample["Wellplate"])  # uses index value for now...
-        wells: str = self.myCoordinator.myReader.mySample["Well"]
+        stage = self.myCoordinator.myReader.current_run["Stage"]
+        plate = int(self.myCoordinator.myReader.current_run["Wellplate"])  # uses index value for now...
+        wells: str = self.myCoordinator.myReader.current_run["Well"]
         
         wells.replace(" ", "")
 
@@ -89,7 +89,6 @@ class ProtocolActions:
             self.aspirate_in_place(stage, volume, speed)
             self.wait(wait_seconds)
     
-
     def move_to_custom_location(self, stage, location_name):
 
         #find location in
@@ -111,27 +110,25 @@ class ProtocolActions:
 
         # get well xyz coordinates
         location = self.myCoordinator.myModules.myStages[stage].myLabware.get_well_location(int(well_plate_index), well) 
-        # x,y,z = location.split(" ")
-        # location = tuple([float(x),float(y),float(z)])
 
         self.myCoordinator.myLogger.info(f"Moving to wellplate '{well_plate_index}' at {location}")
         self.myCoordinator.myModules.myStages[stage].move_to(location)
 
         self.myCoordinator.myLogger.info(f"Aspirating {float(volume)} nL at speed {float(speed)} nL/min")
-        self.myCoordinator.myModules.myStages[stage].step_syringe_motor_up(volume, speed)
+        self.myCoordinator.myModules.myStages[stage].step_syringe_motor_up(volume=volume, speed=speed)
         
     def dispense_to_well(self, stage, well_plate_index, well, volume, speed):
         
         # get well xyz coordinates
         location = self.myCoordinator.myModules.myStages[stage].myLabware.get_well_location(int(well_plate_index), well) # Tuple (x,y,z) 
         self.myCoordinator.myLogger.info(f"Moving to wellplate '{well_plate_index}' at {location}")
-        # x,y,z = location.split(" ")
-        # location = tuple([float(x),float(y),float(z)])
 
         self.myCoordinator.myModules.myStages[stage].move_to(location)
 
         self.myCoordinator.myLogger.info(f"Aspirating {float(volume)} nL at speed {float(speed)} nL/min")
-        self.myCoordinator.myModules.myStages[stage].step_syringe_motor_down(volume, speed)
+
+        self.myCoordinator.myModules.myStages[stage].step_syringe_motor_down(volume=volume, speed=speed)
+
 
     def dispense_to_wells(self, stage, well_plate_index, wells, volume, speed):
 
@@ -142,21 +139,20 @@ class ProtocolActions:
             # get well xyz coordinates
             location = self.myCoordinator.myModules.myStages[stage].myLabware.get_well_location(int(well_plate_index), well) # Tuple (x,y,z) 
             self.myCoordinator.myLogger.info(f"Moving to wellplate '{well_plate_index}' at {location}")
-            # x,y,z = location.split(" ").split(", ")
-            # location = tuple([float(x),float(y),float(z)])
             
             self.myCoordinator.myModules.myStages[stage].move_to(location)
 
             self.myCoordinator.myLogger.info(f"Aspirating {float(volume)} nL at speed {float(speed)} nL/min")
-            self.myCoordinator.myModules.myStages[stage].step_syringe_motor_down(volume, speed)
+
+            self.myCoordinator.myModules.myStages[stage].step_syringe_motor_down(volume=volume, speed=speed)
     
     def aspirate_in_place(self, stage, volume, speed): 
         self.myCoordinator.myLogger.info(f"Aspirating {float(volume)} nL at speed {float(speed)} nL/min")
-        self.myCoordinator.myModules.myStages[stage].step_syringe_motor_up(volume, speed)
+        self.myCoordinator.myModules.myStages[stage].step_syringe_motor_up(volume=volume, speed=speed)
     
     def dispense_in_place(self, stage, volume, speed): 
         self.myCoordinator.myLogger.info(f"Aspirating {float(volume)} nL at speed {float(speed)} nL/min")
-        self.myCoordinator.myModules.myStages[stage].step_syringe_motor_down(volume, speed)
+        self.myCoordinator.myModules.myStages[stage].step_syringe_motor_down(volume=volume, speed=speed)
 
     def syringe_to_max(self, stage, nL_min_speed):
         speed = float(nL_min_speed) # pre min to per sec
@@ -174,12 +170,12 @@ class ProtocolActions:
         self.myCoordinator.myModules.myStages[stage].move_syringe_to(rest_position, speed)
 
     def wait(self, seconds):
-        # pauses system, but checks for hardStop 
+        # pauses system, but checks for stop_run
         t = time.localtime()
         current_time = time.strftime("%H:%M:%S", t)
         print(f"{current_time}: Wait for {int(seconds)} seconds")
         seconds_waited = 0
-        while seconds_waited < int(seconds) and not self.myCoordinator.myReader.myStopIndicator.hardStop == True:
+        while seconds_waited < int(seconds) and not self.myCoordinator.myReader.stop_run == True:
             time.sleep(1)
             seconds_waited = seconds_waited + 1
 
@@ -201,17 +197,14 @@ class ProtocolActions:
             data = myfile.read()
         obj = json.loads(data) # parse file
 
-        
         #loop for all commands in json script
         for command in obj['commands']:
-            if self.myCoordinator.myReader.myStopIndicator.hardStop == True: # check to see if we should stop loading
-                break # if hardStop then we break to loop and stop loading
-
+            if self.myCoordinator.myReader.stop_run == True: # check to see if we should stop loading
+                break # if stop_run then we break to loop and stop loading
             
             params = command['parameters'] # save command parameters in a list
 
-                
-                #calls correct function in coordinator & unpacks the parameters list with (*params): logs each parameter
+            # calls correct function in coordinator & unpacks the parameters list with (*params): logs each parameter
             getattr(self.myCoordinator.actionOptions, command['type'])(*params)
 
     def run_sub_method_simultaneously(self, scriptName): #Untracked works better if not necessary
@@ -236,50 +229,64 @@ class ProtocolActions:
         wait_to_analyze_timer = 0
         analyze_to_wait_timer = 0
         MS_Ready = True
-        if not self.myCoordinator.myReader.myStopIndicator.hardStop == True:
+        if not self.myCoordinator.myReader.stop_run == True:
             self.myCoordinator.myLogger.info("THREAD: self.myCoordinator.MS_contact_closure()")
-            while not(self.myCoordinator.myModules.myPorts[int(Port)].getPinState(Input)):
+            pin_state = self.myCoordinator.myModules.myPorts[int(Port)].getPinState(Input)
+            while not(pin_state): #start connected to ground
              #   self.ms_indicator
+                time.sleep(1.5) 
+                pin_state = self.myCoordinator.myModules.myPorts[int(Port)].getPinState(Input)
+
                 analyze_to_wait_timer += 1
                 if (analyze_to_wait_timer >= MS_ANALYZE_TIMEOUT):
                     self.myCoordinator.myLogger.error(f"MS TIMEOUT: MS not ready (still analyzing) after {MS_ANALYZE_TIMEOUT} seconds")
                     MS_Ready = False
                     break
-                time.sleep(1)
+                
+                # print(pin_state)
+                if self.myCoordinator.myReader.stop_run == True:
+                    break
+                self.myCoordinator.myLogger.info("MS just triggered!")
             if MS_Ready:
                 self.myCoordinator.myLogger.info(f"MS IS READY TO BE TRIGGERED, ATTEMPTING CONTACT CLOSURE")
-            while (self.myCoordinator.myModules.myPorts[int(Port)].getPinState(Input) or not MS_Ready):
-                wait_to_analyze_timer += 1
+            while (pin_state or not MS_Ready):
+                pin_state = self.myCoordinator.myModules.myPorts[int(Port)].getPinState(Input)
+                wait_to_analyze_timer += 4
                 self.myCoordinator.myModules.myRelays[int(Relay)].relay_on() # you need to pass in the number relay you want to switch
                                         # in this case the MS is connected to relay 2
-                time.sleep(0.5) # wait half second to make sure signal had time to start pump
+                # time.sleep(2) # wait half second to make sure signal had time to start pump
                 self.myCoordinator.myModules.myRelays[int(Relay)].relay_off() # turn off so it can be turned on again in the next loop
-                time.sleep(0.5) # wait half second to make sure signal had time to start pump
+                # time.sleep(2) # wait half second to make sure signal had time to start pump
+                # print(pin_state)
                 if (wait_to_analyze_timer >= MS_WAIT_TIMEOUT):
                     self.myCoordinator.myLogger.error(f"MS TIMEOUT: MS did not trigger after {MS_WAIT_TIMEOUT} seconds")
                     return "Not triggerd"
                 else:
                     pass
-            self.myCoordinator.myLogger.info("MS just triggered!")
+                if self.myCoordinator.myReader.stop_run == True:
+                    break
+                self.myCoordinator.myLogger.info("MS just triggered!")
 #            return "Successful"
         else:
             self.myCoordinator.myLogger.info("Skipping MS Contact Closure")
           #  return "Skipped MS Trigger"
 
     def LC_contact_closure(self, Relay = LC_RELAY):
-        if not self.myCoordinator.myReader.myStopIndicator.hardStop == True:
+        if not self.myCoordinator.myReader.stop_run == True:
             self.myCoordinator.myLogger.info("THREAD: self.myCoordinator.LC_contact_closure()")  
             self.myCoordinator.myModules.myRelays[int(Relay)].relay_on() # you need to pass in the number relay you want to switch
                                             # in this case the LC is connected to relay 2
-            time.sleep(0.5) # wait half second to make sure signal had time to start pump
+            # time.sleep(2) # wait half second to make sure signal had time to start pump
             self.myCoordinator.myModules.myRelays[int(Relay)].relay_off() # turn off so it can be turned on again in the next loop
-            time.sleep(0.5) # wait half second to make sure signal had time to start pump
+            # time.sleep(2) # wait half second to make sure signal had time to start pump
             #try twice
             self.myCoordinator.myModules.myRelays[int(Relay)].relay_on() # you need to pass in the number relay you want to switch
                                             # in this case the LC is connected to relay 2
-            time.sleep(0.5) # wait half second to make sure signal had time to start pump
+            # time.sleep(2) # wait half second to make sure signal had time to start pump
             self.myCoordinator.myModules.myRelays[int(Relay)].relay_off() # turn off so it can be turned on again in the next loop
-            time.sleep(0.5) # wait half second to make sure signal had time to start pump
+            # time.sleep(2) # wait half second to make sure signal had time to start pump
+        else:
+            print("Stopping")
     
     def set_relay_side(self, Relay=LC_RELAY, value="Left"):
         if value == "Left" or value == "LEFT" or value == "left":
@@ -291,11 +298,13 @@ class ProtocolActions:
 
     def Wait_Contact_Closure(self, Logic, Input = MS_INPUT, Port = MS_INPUT_PORT):
         Logic = Logic == "True"
-        #print(self.myCoordinator.myModules.myPorts[int(Port)].getPinState(Input))
-       # print((Logic))
-        while (self.myCoordinator.myModules.myPorts[int(Port)].getPinState(Input) != Logic):
-            time.sleep(1)
-            if self.myCoordinator.myReader.myStopIndicator.hardStop == True:
+        pin_state = self.myCoordinator.myModules.myPorts[int(Port)].getPinState(Input)
+        #print((Logic))
+        while (pin_state != Logic):
+            time.sleep(1.5)
+            pin_state = self.myCoordinator.myModules.myPorts[int(Port)].getPinState(Input)            
+            print(pin_state)
+            if self.myCoordinator.myReader.stop_run == True:
                 break
         #print("Contact Closure")
 
