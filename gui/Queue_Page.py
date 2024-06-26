@@ -45,10 +45,10 @@ class Queue_Gui(tk.Toplevel,):
         self.page_display_frame = tk.Frame(self) 
         self.page_display_frame.pack(fill="both", expand=True)
 
-        self.upper_frame = tk.Frame(self.page_display_frame) #, highlightbackground="pink", highlightthickness=2)
-        self.queue_frame = tk.Frame(self.page_display_frame) #, highlightbackground="yellow", highlightthickness=2) 
+        self.upper_frame = tk.Frame(self.page_display_frame) 
+        self.queue_frame = tk.Frame(self.page_display_frame) 
         self.sample_prep_frame = tk.Frame(self.page_display_frame)
-        self.scheduled_queue_frame = Active_Queue(self.page_display_frame, self.coordinator)
+        self.active_queue_frame = Active_Queue(self.page_display_frame, self.coordinator)
 
         # Canvas for scrolling through long que 
         self.canvas = tk.Canvas(self.queue_frame, width=4000, height = 1800, scrollregion=(0,0,4000,1800),)
@@ -71,7 +71,7 @@ class Queue_Gui(tk.Toplevel,):
         self.canvas.itemconfig(self.queue_grid_window, width = canvas_width-3)
         
         # Handler must come after que grid 
-        self.handler = Queue_Compiler(self, self.coordinator)
+        self.queue_compiler = Queue_Compiler(self, self.coordinator)
         
         # file bar for ms and frac queues.
         self.file_bar = tk.Frame(self.upper_frame)
@@ -97,8 +97,8 @@ class Queue_Gui(tk.Toplevel,):
         self.sp_run_button = tk.Button(self.sample_prep_frame, text="Run Method", command=lambda: self.run_button_clicked())
         
         self.sp_run_button.pack()
-        self.handler.sp_queue_header.pack(expand=True, fill="x")
-        self.handler.sp_inputs.pack(expand=True, fill="x")
+        self.queue_compiler.sp_queue_header.pack(expand=True, fill="x")
+        self.queue_compiler.sp_inputs.pack(expand=True, fill="x")
 
         
 
@@ -117,39 +117,41 @@ class Queue_Gui(tk.Toplevel,):
 
     def load_page(self):
         page_type = self.page_type.get()
-        self.handler.set_active_page(page_type)
+        self.queue_compiler.set_active_page(page_type)
         
         if page_type == "Sample Prep":
             self.upper_frame.pack_forget()
             self.queue_frame.pack_forget()
-            self.scheduled_queue_frame.pack_forget()
+            self.active_queue_frame.pack_forget()
             self.sample_prep_frame.pack(pady=50, padx=50, expand=True, fill="x", side="top", anchor="n")
 
         elif page_type == "Mass Spec":
+            self.queue_compiler.toggle_ms_frac_display()
             self.sample_prep_frame.pack_forget()
-            self.scheduled_queue_frame.pack_forget()
+            self.active_queue_frame.pack_forget()
             self.upper_frame.pack(fill="x")
             self.queue_frame.pack(fill="both", expand=True, padx=50)
             self.update()
             canvas_width = self.canvas.winfo_width()
             self.canvas.itemconfig(self.queue_grid_window, width = canvas_width-4)         
-            self.handler.clear_grid()
+            
             
         elif page_type == "Fractionation":
+            self.queue_compiler.toggle_ms_frac_display()
             self.sample_prep_frame.pack_forget()
-            self.scheduled_queue_frame.pack_forget()
+            self.active_queue_frame.pack_forget()
             self.upper_frame.pack(fill="x")
             self.queue_frame.pack(fill="both", expand=True, padx=50)
             self.update()
             canvas_width = self.canvas.winfo_width()
             self.canvas.itemconfig(self.queue_grid_window, width = canvas_width-4)
-            self.handler.clear_grid()
+            
 
         elif page_type == "Active Queue":
             self.sample_prep_frame.pack_forget()
             self.upper_frame.pack_forget()
             self.queue_frame.pack_forget()
-            self.scheduled_queue_frame.pack(expand=True, fill="both")
+            self.active_queue_frame.pack(expand=True, fill="both")
         
     def compile_queue_to_schedule(self):
         '''
@@ -157,19 +159,19 @@ class Queue_Gui(tk.Toplevel,):
         '''
 
         page_type = self.page_type.get()
-        self.handler.set_active_page(page_type)
+        self.queue_compiler.set_active_page(page_type)
         
         if page_type == "Sample Prep":
             queue_to_schedule = pd.DataFrame({SP_HEADERS[0]: []})
 
-            queue_to_schedule.loc[0] = [self.handler.sp_inputs.method_var.get()]
+            queue_to_schedule.loc[0] = [self.queue_compiler.sp_inputs.method_var.get()]
 
             return queue_to_schedule            
 
         elif page_type == "Mass Spec":
             # package MS queue
             queue_to_schedule = pd.DataFrame({MS_HEADERS[0]: [], MS_HEADERS[1]: [], MS_HEADERS[2]: [], MS_HEADERS[3]: []})
-            for entry in self.handler.ms_queue[1:]:
+            for entry in self.queue_compiler.ms_queue[1:]:
                 ms_inputs: MS_Queue_Row_Inputs = entry
             
                 temp_list = [ms_inputs.stage_var.get(), ms_inputs.wellplate_var.get(), ms_inputs.well_var.get(), ms_inputs.method_var.get()]
@@ -180,8 +182,8 @@ class Queue_Gui(tk.Toplevel,):
         elif page_type == "Fractionation":
             # package Frac queue
             queue_to_schedule = pd.DataFrame({FRAC_HEADERS[0]: [], FRAC_HEADERS[1]: [], FRAC_HEADERS[2]: [], FRAC_HEADERS[3]: [], FRAC_HEADERS[4]: []})
-            for row, entry in enumerate(self.handler.frac_queue, 1):
-                frac_inputs: Frac_Queue_Row_Inputs = self.handler.frac_queue[row]
+            for row, entry in enumerate(self.queue_compiler.frac_queue, 1):
+                frac_inputs: Frac_Queue_Row_Inputs = self.queue_compiler.frac_queue[row]
                 temp_list = [frac_inputs.stage_var.get(), frac_inputs.wellplate_var.get(), frac_inputs.sample_wells_var.get(), frac_inputs.elution_wells_var.get(), frac_inputs.method_var.get()]
                 queue_to_schedule.loc[len(queue_to_schedule)] = temp_list
 
@@ -211,12 +213,12 @@ class Queue_Gui(tk.Toplevel,):
         # check for conflict between current and new queue
         if not self.my_reader.running:
             compiled_queue = self.compile_queue_to_schedule()
-            self.scheduled_queue_frame.active_queue_type = new_queue_type
-            self.scheduled_queue_frame.format_active_queue_display()
-        elif (new_queue_type == self.scheduled_queue_frame.active_queue_type):
+            self.active_queue_frame.active_queue_type = new_queue_type
+            self.active_queue_frame.format_active_queue_display()
+        elif (new_queue_type == self.active_queue_frame.active_queue_type):
             compiled_queue = self.compile_queue_to_schedule()
         else:
-            print(f"\nCurrent running queue type: {self.scheduled_queue_frame.active_queue_type}")
+            print(f"\nCurrent running queue type: {self.active_queue_frame.active_queue_type}")
             print(f"Attempting to schecdule queue type: {new_queue_type}")
             print("\n\nYou Shall Not Queue!!!\n(Wait until current active que is finished to schedule new queue type)\n\n")
             return
@@ -251,13 +253,14 @@ class Queue_Gui(tk.Toplevel,):
             queueThread = threading.Thread(target = self.my_reader.run_scheduled_methods, args=[]) #finishes the run
             queueThread.start()
             # start thread to watch status
-            watchThread = threading.Thread(target = self.scheduled_queue_frame.watch_status, args=[]) #finishes the run
+            watchThread = threading.Thread(target = self.active_queue_frame.watch_status, args=[]) #finishes the run
             watchThread.start()
 
         self.my_reader.scheduled_queue_changed = True
     
     def clear_queue(self):  # removes all entries from the proposed MS or Frac queue pages
-        self.handler.delete_grid()
+        self.queue_compiler.delete_grid()
+        self.queue_compiler.add_row()
     
     def save_queue(self): 
         filetypes = (
@@ -295,19 +298,25 @@ class Queue_Gui(tk.Toplevel,):
             queue_file = queue_file + ".csv"
         
         df_of_queue = pd.read_csv(queue_file)
-        temp_queue_list = self.scheduled_queue_frame.compile_list_from_dataframe(df_of_queue)
-        print(temp_queue_list)
-        self.handler.delete_grid()
+        temp_queue_list = self.queue_compiler.compile_list_from_dataframe(df_of_queue)
+        self.queue_compiler.delete_grid()
 
-        if self.handler.active_page == 'Mass Spec':
-            self.handler.ms_queue += temp_queue_list
-        elif self.handler.active_page == 'Fractionation':
-            self.handler.frac_queue += temp_queue_list
+        if self.page_type.get() == 'Mass Spec':
+            self.queue_compiler.ms_queue += temp_queue_list
+        elif self.page_type.get() == 'Fractionation':
+            self.queue_compiler.frac_queue += temp_queue_list
+        elif self.page_type.get() == 'Sample Prep':
+            self.queue_compiler.sp_inputs += temp_queue_list
 
-        self.handler.update_grid()
-        
+
+        self.queue_compiler.update_grid()        
 
 class Queue_Compiler:
+    '''
+    This class hanles the displays preparing queues (as opposed to the actively running queue display).
+    Each display is customized around information needed for the type of operations being planned.
+    Displays can be toggled without losing individual progress. 
+    '''
     def __init__(self, queue_page, coordinator):
         self.queue_page: Queue_Gui = queue_page
         self.coordinator = coordinator
@@ -345,7 +354,7 @@ class Queue_Compiler:
         self.sp_inputs = Sample_Prep_Inputs(self.queue_page.sample_prep_frame)
         self.maintain_button_rows()
         
-
+    
         
     # Queue maker display functions
     def delete_grid(self):
@@ -354,16 +363,16 @@ class Queue_Compiler:
             while len(self.ms_queue) > 1:
                 remove_item: MS_Queue_Row_Inputs = self.ms_queue.pop(-1)
                 remove_item.destroy()
-            self.ms_queue.insert(1, MS_Queue_Row_Inputs(self.ms_queue_frame))
+            # self.ms_queue.insert(1, MS_Queue_Row_Inputs(self.ms_queue_frame))
         elif self.active_page == 'Fractionation':
             while len(self.frac_queue) > 1:
                 remove_item: Frac_Queue_Row_Inputs = self.frac_queue.pop(-1)
                 remove_item.destroy()
-            self.frac_queue.insert(1, Frac_Queue_Row_Inputs(self.frac_queue_frame))
+            # self.frac_queue.insert(1, Frac_Queue_Row_Inputs(self.frac_queue_frame))
 
         self.update_grid()
 
-    def clear_grid(self):
+    def toggle_ms_frac_display(self):
         '''
         Only called when switching queue types.
         It clears everything from the queue grid so the proper grid can be displayed
@@ -372,13 +381,15 @@ class Queue_Compiler:
         if self.active_page == 'Mass Spec':
             self.frac_queue_frame.pack_forget()
             self.ms_queue_frame.pack(expand=True, fill="both", side="left")
+            if len(self.ms_queue) == 1:
+                self.add_row()
             
 
         elif self.active_page == 'Fractionation':
             self.ms_queue_frame.pack_forget()
             self.frac_queue_frame.pack(expand=True, fill="both", side="left")
-
-        self.update_grid()
+            if len(self.frac_queue) == 1:
+                self.add_row()
       
     def reset_grid(self):
         '''
@@ -387,6 +398,7 @@ class Queue_Compiler:
         '''
         
         if self.active_page == 'Mass Spec':
+            cnt = 1
              
             for frame in self.ms_queue:
                 frame: tk.Frame = frame
@@ -395,9 +407,8 @@ class Queue_Compiler:
             for frame in self.ms_queue:
                 frame: tk.Frame = frame
                 frame.pack(fill="both", expand=True)
-                # frame.config(height=STANDARD_ROW_HEIGHT)
-            
-                
+                cnt += 1
+   
         elif self.active_page == 'Fractionation':
             for frame in self.frac_queue:
                 frame: tk.Frame = frame
@@ -406,7 +417,6 @@ class Queue_Compiler:
             for frame in self.frac_queue:
                 frame: tk.Frame = frame
                 frame.pack(fill="both", expand=True)
-                # frame.config(height=STANDARD_ROW_HEIGHT) 
 
     def maintain_button_rows(self):
         '''
@@ -536,10 +546,52 @@ class Queue_Compiler:
 
         self.update_grid()
 
+    def compile_list_from_dataframe(self, dataframe: pd.DataFrame):
+            '''
+            This method takes rows from a dataframe and converts them into tkinter frames.
+            The values in each row become entries in the frame.
+            The frames are compiled to a list which is returned.
+            '''
 
+            dataframe_as_list = []
 
-    
-    # functinos for active que display
+            try:
+                if dataframe.empty == True:
+                    print("Dataframe is empty")
+                    pass    
+            
+                elif self.active_page == "Sample Prep":
+                    for row_index in range(dataframe.shape[0]):
+                        scheduled_run = Sample_Prep_Inputs(self.queue_page.sample_prep_frame)
+                        scheduled_run.method_var.set(dataframe[SP_HEADERS[0]].loc[dataframe.index[row_index]])
+
+                        dataframe_as_list.append(scheduled_run)
+
+                elif self.active_page == "Mass Spec":
+                    for row_index in range(dataframe.shape[0]):
+                        scheduled_run = MS_Queue_Row_Inputs(self.ms_queue_frame)
+                        scheduled_run.stage_var.set(dataframe[MS_HEADERS[0]].loc[dataframe.index[row_index]])
+                        scheduled_run.wellplate_var.set(dataframe[MS_HEADERS[1]].loc[dataframe.index[row_index]])
+                        scheduled_run.well_var.set(dataframe[MS_HEADERS[2]].loc[dataframe.index[row_index]])
+                        scheduled_run.method_var.set(dataframe[MS_HEADERS[3]].loc[dataframe.index[row_index]])
+
+                        dataframe_as_list.append(scheduled_run)
+                
+                elif self.active_page == "Fractionation":
+                    for row_index in range(dataframe.shape[0]):
+                        scheduled_run = Frac_Queue_Row_Inputs(self.frac_queue_frame)
+                        scheduled_run.stage_var.set(dataframe[FRAC_HEADERS[0]].loc[dataframe.index[row_index]])
+                        scheduled_run.wellplate_var.set(dataframe[FRAC_HEADERS[1]].loc[dataframe.index[row_index]])
+                        scheduled_run.sample_wells_var.set(dataframe[FRAC_HEADERS[2]].loc[dataframe.index[row_index]])
+                        scheduled_run.elution_wells_var.set(dataframe[FRAC_HEADERS[3]].loc[dataframe.index[row_index]])
+                        scheduled_run.method_var.set(dataframe[FRAC_HEADERS[4]].loc[dataframe.index[row_index]])
+
+                        dataframe_as_list.append(scheduled_run)
+            except:
+                print("Hit a snag trying to compile list from dataframe!")
+                dataframe_as_list = []
+
+            return dataframe_as_list
 
     
 class Active_Queue(tk.Frame,):
@@ -788,7 +840,7 @@ class Active_Queue(tk.Frame,):
         else:
             pass
 
-    def compile_list_from_dataframe(self, dataframe: pd.DataFrame):
+    def compile_list_from_dataframe(self, dataframe: pd.DataFrame, queue_type=None):
         '''
         This method takes rows from a dataframe and converts them into tkinter frames.
         The values in each row become entries in the frame.
@@ -797,19 +849,22 @@ class Active_Queue(tk.Frame,):
 
         dataframe_as_list = []
 
+        if queue_type == None:
+            queue_type = self.active_queue_type
+
         try:
             if dataframe.empty == True:
                 print("Dataframe is empty")
                 pass    
         
-            elif self.active_queue_type == "Sample Prep":
+            elif queue_type == "Sample Prep":
                 for row_index in range(dataframe.shape[0]):
                     scheduled_run = Sample_Prep_Inputs(self.scheduled_runs_inner)
                     scheduled_run.method_var.set(dataframe[SP_HEADERS[0]].loc[dataframe.index[row_index]])
 
                     dataframe_as_list.append(scheduled_run)
 
-            elif self.active_queue_type == "Mass Spec":
+            elif queue_type == "Mass Spec":
                 for row_index in range(dataframe.shape[0]):
                     scheduled_run = MS_Queue_Row_Inputs(self.scheduled_runs_inner)
                     scheduled_run.stage_var.set(dataframe[MS_HEADERS[0]].loc[dataframe.index[row_index]])
@@ -819,7 +874,7 @@ class Active_Queue(tk.Frame,):
 
                     dataframe_as_list.append(scheduled_run)
             
-            elif self.active_queue_type == "Fractionation":
+            elif queue_type == "Fractionation":
                 for row_index in range(dataframe.shape[0]):
                     scheduled_run = Frac_Queue_Row_Inputs(self.scheduled_runs_inner)
                     scheduled_run.stage_var.set(dataframe[FRAC_HEADERS[0]].loc[dataframe.index[row_index]])
@@ -830,6 +885,7 @@ class Active_Queue(tk.Frame,):
 
                     dataframe_as_list.append(scheduled_run)
         except:
+            print("Hit a snag trying to compile list from dataframe!")
             dataframe_as_list = []
 
         return dataframe_as_list
@@ -1077,15 +1133,15 @@ class Queue_Row_Buttons(tk.Frame,):
     Button rows do not need to move around as the inputs do, but the number of button rows should always match 
         the number of input rows.
     '''
-    def __init__(self, master_frame, row_index, handler: Queue_Compiler):
+    def __init__(self, master_frame, row_index, queue_compiler: Queue_Compiler):
         super().__init__(master_frame)
         self.row = row_index
-        self.handler = handler
+        self.queue_compiler = queue_compiler
 
-        self.insert = tk.Button(self, text="Insert", command=lambda: self.handler.insert_row(self.row))
-        self.delete = tk.Button(self, text="Delete", command=lambda: self.handler.delete_row(self.row))
-        self.move_up = tk.Button(self, text="Up", command=lambda: self.handler.move_up(self.row))
-        self.move_down = tk.Button(self, text="Down", command=lambda: self.handler.move_down(self.row))
+        self.insert = tk.Button(self, text="Insert", command=lambda: self.queue_compiler.insert_row(self.row))
+        self.delete = tk.Button(self, text="Delete", command=lambda: self.queue_compiler.delete_row(self.row))
+        self.move_up = tk.Button(self, text="Up", command=lambda: self.queue_compiler.move_up(self.row))
+        self.move_down = tk.Button(self, text="Down", command=lambda: self.queue_compiler.move_down(self.row))
 
         self.insert.grid(row=0, column=0)
         self.delete.grid(row=0, column=1)
