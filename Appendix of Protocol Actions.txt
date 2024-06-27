@@ -1,0 +1,71 @@
+Appendix of Protocol Actions (Commands)
+
+
+Protocols are queued up as either "Sample Prep", "Mass Spec", or "Fractionation" methods.
+These are not strict limiters. 
+You can, for example, run a "mass spec" method without using a mass spec or even LC.
+The distinction is in the variables provided when compiling a queue. 
+Some protocol actions (commands) expect variables such as "sample well",
+    which are not provided until the method is queued.
+This allows one method to be compiled for a series of runs.
+
+"Sample Preparation" is useful when treating all samples simultaneously, 
+    and the only run time variable needed is the method file itself.
+
+"Mass Spectrometry" is useful when you wish to specify a target sample at run time.
+Some protocal actions depend on the variables provided in the mass specrtometry queue page,
+    and are exclusive to "Mass Spectrometry" methods. See Below.
+
+"Fractionation" is similar to "Mass Spectrometry" but with additional variables for elution wells. 
+
+
+***** General Actions *****
+
+move_to_well
+move_to_location
+aspirate_in_place
+dispense_in_place
+
+aspirate_from_wells
+aspirate_from_location
+
+dispense_to_wells
+dispense_to_location
+
+syringe_to_min
+syringe_to_max
+syringe_to_rest
+
+valve_to_run
+valve_to_load
+move_selector
+
+LC_contact_closure
+MS_contact_closure
+
+wait
+set_tempdeck
+run_sub_method
+
+
+***** Mass-Spectrometry-Only Actions *****
+
+dispense_to_sample
+dispense_to_samples
+aspirate_sample
+aspirate_samples
+
+
+
+***** Fractionation-Only Actions *****
+
+-- These actions still need to be created --
+
+
+***** Dual Column Actions *****
+
+run_sub_method_simultaneously
+start_sub_method
+wait_sub_method
+set_relay_side
+Wait_Contact_Closure

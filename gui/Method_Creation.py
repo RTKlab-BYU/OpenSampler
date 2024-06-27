@@ -4,89 +4,127 @@ from tkinter import ttk
 import json
 
 ACTION_TYPES = {
-"dispense_to_sample": ["Amount (nL)", "Speed (nL/min)", "Delay (s)"],
-"dispense_to_samples": ["Amount (nL)", "Speed (nL/min)", "Delay (s)"],
-"collect_sample": ["Amount (nL)", "Speed (nL/min)", "Delay (s)"],
-"collect_samples": ["Amount (nL)", "Speed (nL/min)", "Delay (s)"],
-"aspirate_from_well": ["Stage Name", "Wellplate Index", "Well", "Amount (nL)", "Speed (nL/min)"],
-"dispense_to_well": ["Stage Name", "Wellplate Index", "Well", "Amount (nL)", "Speed (nL/min)"],
-"dispense_to_wells": ["Stage Name", "Wellplate Index", "Wells (CS)", "Amount (nL)", "Speed (nL/min)"],
-"syringe_to_min": ["Stage Name","Speed (nL/min)"],
-"syringe_to_max": ["Stage Name","Speed (nL/min)"],
-"syringe_to_rest": ["Stage Name","Speed (nL/min)"], #need for step LC only and make version for no selector
-"move_to_custom_location": ["Stage Name", "Location Name"],
+
 "move_to_well": ["Stage Name", "Wellplate", "Well"],
-"run_sub_method": ["Method to Run (file path)"],
-"run_sub_method_simultaneously": ["Method to Run (include folder)"],
-"start_sub_method": ["Method to Run (include folder)","Thread Index (starts with 0)"],
-"wait_sub_method": ["Thread Index (starts with 0)"],
+"move_to_location": ["Stage Name", "Location Name"],
 "aspirate_in_place": ["Stage Name", "Amount (nL)", "Speed (nL/min)"],
 "dispense_in_place": ["Stage Name", "Amount (nL)", "Speed (nL/min)"],
-"wait": ["Time (s)"],
+
+"aspirate_from_wells": ["Stage Name", "Wellplate Index", "Well", "Amount (nL)", "Speed (nL/min)"],
+"aspirate_from_location": ["Stage Name", "Location Name", "Amount (nL)", "Speed (nL/min)"],
+"dispense_to_wells": ["Stage Name", "Wellplate Index", "Wells (CS)", "Amount (nL)", "Speed (nL/min)"],
+"dispense_to_location": ["Stage Name", "Location Name", "Amount (nL)", "Speed (nL/min)"],
+
+"syringe_to_min": ["Stage Name","Speed (nL/min)"],
+"syringe_to_max": ["Stage Name","Speed (nL/min)"],
+"syringe_to_rest": ["Stage Name","Speed (nL/min)"],
+
 "valve_to_run": ["Valve Index (Starts at zero)"],
 "valve_to_load": ["Valve Index (Starts at zero)"],
 "move_selector": ["Valve Index (Starts at zero)", "Port (Valve Position)"],
+
 "LC_contact_closure": ["Relay (Starts at zero)"],
 "MS_contact_closure": ["Relay", "Input", "Serial Port (Starts at zero)"],
+
+"wait": ["Time (s)"],
+"run_sub_method": ["Method to Run (file path)"],
+"set_tempdeck": ["Tempdeck Name", "Set Temperature"],
+
+"aspirate_sample": ["Amount (nL)", "Speed (nL/min)", "Delay (s)"],
+"aspirate_samples": ["Amount (nL)", "Speed (nL/min)", "Delay (s)"],
+"dispense_to_sample": ["Amount (nL)", "Speed (nL/min)", "Delay (s)"],
+"dispense_to_samples": ["Amount (nL)", "Speed (nL/min)", "Delay (s)"],
+
 "Wait_Contact_Closure": ["State of Pin", "Input", "Serial Port (Starts at zero"],
 "set_relay_side": ["Relay (Starts at zero)","Left or Right"],
-"set_tempdeck": ["TempDeck Name", "Set Temperature"],
+"run_sub_method_simultaneously": ["Method to Run (include folder)"],
+"start_sub_method": ["Method to Run (include folder)","Thread Index (starts with 0)"],
+"wait_sub_method": ["Thread Index (starts with 0)"],
+
 }
 
 default_stage = ""
 
 ACTION_DEFAULTS = {
+
+"move_to_well": [default_stage, "0", ""],
+"move_to_location": [default_stage, ""],
+"aspirate_in_place": [default_stage, "", "3000"],
+"dispense_in_place": [default_stage, "", "3000"],
+
+"aspirate_from_wells": [default_stage, "", "", "", "3000"],
+"aspirate_from_location": [default_stage, "", "", "3000"],
+"dispense_to_wells": [default_stage, "", "", "", "3000"],
+"dispense_to_location": [default_stage, "", "", "3000"],
+
+"syringe_to_min": [default_stage,"3000"],
+"syringe_to_max": [default_stage,"3000"],
+"syringe_to_rest": [default_stage,"3000"],
+
+"valve_to_run": ["0"],
+"valve_to_load": ["0"],
+"move_selector": ["0", ""],
+
+"LC_contact_closure": ["0"],
+"MS_contact_closure": ["1", "D14", "0"],
+
+"wait": [""],
+"run_sub_method": [""],
+"set_tempdeck": ["", ""],
+
 "dispense_to_sample": ["", "3000", "1"],
 "dispense_to_samples": ["", "3000", "1"],
 "collect_sample": ["", "3000", "1"],
 "collect_samples": ["", "3000", "1"],
-"aspirate_from_well": [default_stage, "", "", "", "3000"],
-"dispense_to_well": [default_stage, "", "", "", "3000"],
-"dispense_to_wells": [default_stage, "", "", "", "3000"],
-"syringe_to_min": [default_stage,"3000"],
-"syringe_to_max": [default_stage,"3000"],
-"syringe_to_rest": [default_stage,"3000"],
-"move_to_custom_location": [default_stage, ""],
-"move_to_well": [default_stage, "0", ""],
-"run_sub_method": [""],
+
+"Wait_Contact_Closure": ["True","D14","0"],
+"set_relay_side": ["0","Left"],
 "run_sub_method_simultaneously": ["methods/"],
 "start_sub_method": ["methods/","0"],
 "wait_sub_method": ["0"],
-"aspirate_in_place": [default_stage,"","3000"],
-"dispense_in_place": [default_stage,"","3000"],
-"wait": [""],
-"valve_to_run": ["0"],
-"valve_to_load": ["0"],
-"move_selector": ["0", ""],
-"LC_contact_closure": ["0"],
-"MS_contact_closure": ["1", "D14", "0"],
-"Wait_Contact_Closure": ["True","D14","0"],
-"set_relay_side": ["0","Left"],
-"set_tempdeck": ["", ""],
+
 }
 
-class Command_Parameter(tk.Frame,):
-    def __init__(self, frame, parameter, value, row_index, parameter_index):
-        super().__init__(frame)
+class Command_Parameter():
 
-        self.master_frame: Method_Creator = frame
+    def __init__(self, frame, parameter, default_value, row_index, parameter_index):
+        self.master_frame: Method_Command_Row = frame
         self.parameter_index = parameter_index
         self.row_index = row_index
         self.static_columns = 6
         self.parameter_var = tk.StringVar()
+        self.parameter = parameter
         
         self.param_label = tk.Label(self.master_frame.command_grid, text=parameter)
         self.param_label.grid(row=row_index, column=parameter_index*2+self.static_columns)
-        self.parameter_entry = tk.Entry(self.master_frame.command_grid, textvariable=self.parameter_var)
-        self.parameter_entry.insert(tk.END,string=value)
+        if self.parameter == "Stage Name":
+            # pass
+            stage_options = list(self.master_frame.coordinator.myModules.myStages.keys())
+            self.parameter_entry = ttk.Combobox(self.master_frame, values=stage_options, textvariable=self.parameter_var)
+        elif parameter == "Location Name":
+            # pass
+            location_options = list(self.master_frame.coordinator.myModules.myStages[self.selected_stage].myLabware.custom_locations.keys())
+            self.parameter_entry = ttk.Combobox(self.master_frame, values=location_options, textvariable=self.parameter_var)
+        elif parameter == "Tempdeck Name":
+            # pass
+            tempdeck_options = list(self.master_frame.coordinator.myModules.myTempDecks.keys())
+            self.parameter_entry = ttk.Combobox(self.master_frame, values=tempdeck_options, textvariable=self.parameter_var)
+        else:
+            self.parameter_entry = tk.Entry(self.master_frame.command_grid, textvariable=self.parameter_var)
+        
+        # self.parameter_entry = tk.Entry(self.master_frame.command_grid, textvariable=self.parameter_var)
+        
+        self.parameter_entry.insert(tk.END,string=default_value)
         self.parameter_entry.grid(row=row_index, column=parameter_index*2+self.static_columns+1)
-        self.parameter_entry.bind('<FocusOut>', lambda x: self.UpdateParameter())
+        self.parameter_var.trace_add("write", self.UpdateParameter())
 
         if parameter == ACTION_TYPES["run_sub_method"][0]:
             self.parameter_entry.bind('<Double-Button-1>', lambda x: self.select_method(x))
 
     def UpdateParameter(self):
-        self.master_frame.commands_list[self.row_index]["parameters"][self.parameter_index] = self.parameter_entry.get()
+        if self.parameter == "Stage Name":
+            self.master_frame.selected_stage = self.parameter_entry.get()
+        self.master_frame.commands_list[self.row_index]["parameters"][self.parameter_index] = self.parameter_var.get()
 
     def select_method(self, event):
         filetypes = (
@@ -102,15 +140,23 @@ class Command_Parameter(tk.Frame,):
         self.parameter_var.set(file_path)
 
 
-class Method_Command_Row(tk.Frame,):
+class Method_Command_Row():
+
     def __init__(self, frame, row_index, command):
         self.row = row_index
-        self.master_frame: Method_Creator = frame
-        tk.Button(self.master_frame.command_grid, text="Insert", command= self.InsertRow).grid(row=self.row, column=0)
-        tk.Button(self.master_frame.command_grid, text="Delete", command=self.DeleteRow).grid(row=self.row, column=1)
-        tk.Button(self.master_frame.command_grid, text="Up", command=self.MoveUp).grid(row=self.row, column=2)
-        tk.Button(self.master_frame.command_grid, text="Down", command=self.MoveDown).grid(row=self.row, column=3)
-        tk.Label(self.master_frame.command_grid, text="Command Type: ").grid(row=self.row,column=4)
+        self.master_frame = frame
+        self.coordinator = self.master_frame.coordinator
+        self.selected_stage = ""
+        self.insert_button = tk.Button(self.master_frame.command_grid, text="Insert", command= self.InsertRow)
+        self.insert_button.grid(row=self.row, column=0)
+        self.delete_button = tk.Button(self.master_frame.command_grid, text="Delete", command=self.DeleteRow)
+        self.delete_button.grid(row=self.row, column=1)
+        self.up_button = tk.Button(self.master_frame.command_grid, text="Up", command=self.MoveUp)
+        self.up_button.grid(row=self.row, column=2)
+        self.down_button = tk.Button(self.master_frame.command_grid, text="Down", command=self.MoveDown)
+        self.down_button.grid(row=self.row, column=3)
+        self.command_label = tk.Label(self.master_frame.command_grid, text="Command Type: ")
+        self.command_label.grid(row=self.row,column=4)
         self.type_box = ttk.Combobox(self.master_frame.command_grid, state='readonly')
         self.type_box.grid(row=self.row,column=5)
         self.type_box["values"] = [*ACTION_TYPES.keys()]
@@ -125,9 +171,6 @@ class Method_Command_Row(tk.Frame,):
                 parameter_index += 1  # 2 columns are used for each command parameter
         else:
             print("Invalid Command! Command Parameters")
-
-        
-        
 
     def UpdateCommandGrid(self):
         new_type = self.type_box.get()
@@ -159,7 +202,8 @@ class Method_Command_Row(tk.Frame,):
 
 class Method_Creator(tk.Toplevel,):
     def __init__(self, coordinator):
-        tk.Toplevel.__init__(self)    
+        tk.Toplevel.__init__(self)
+        self.coordinator = coordinator    
       
         self.title("Create a Method")
 
@@ -285,10 +329,10 @@ class Method_Creator(tk.Toplevel,):
     def PopulateCommandGrid(self):        
         self.command_grid = tk.Frame(self.Canv)
         self.command_grid.pack(side=tk.TOP)
-        self.command_frames = []
+        self.command_rows = []
         row_index = 0
         for command in self.commands_list:
-            self.command_frames.append(Method_Command_Row(self, row_index, command))
+            self.command_rows.append(Method_Command_Row(row_index, command))
             row_index += 1
 
         tk.Button(self.command_grid, text="Add Row", command=lambda: self.add_row(row_index)).grid(row=row_index, column=1)
