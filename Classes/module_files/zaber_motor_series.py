@@ -397,6 +397,7 @@ class ZaberMotorSeries:
     def home_all(self):
         threadList = []
         try:
+            self.motorList[self.axesDefinitions["z"]].home()
             # This creates a list of started threads (one for each move)
             for motor in range(len(self.motorList)):
                 newThread = threading.Thread(target=self.motorList[motor].home)

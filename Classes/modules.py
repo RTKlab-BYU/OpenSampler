@@ -42,8 +42,7 @@ class Modules:
 
     def disconnect(self):
         for eachPort in self.myPorts:
-            eachPort.t.disconnect()
-            eachPort.t.ser.close()
+            eachPort.ser.close()
         for eachStage in self.myStages:
             self.myStages[eachStage].close_motors_connection()
         for eachJoystick in self.myJoysticks:

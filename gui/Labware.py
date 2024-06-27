@@ -100,7 +100,8 @@ class Labware(tk.Toplevel,):
                 self.loadedMotorSeries.current(stageOptions.index("Left_OT"))
             else:
                 self.loadedMotorSeries.current(0)
-            self.loadedMotorSeries.bind("<<ComboboxSelected>>", lambda x: self.UpdateSelectedMotors(coordinator))
+            self.loadedMotorSeries.bind("<<ComboboxSelected>>", lambda x: self.UpdateSelectedMotors(self.coordinator))
+        self.UpdateSelectedMotors(self.coordinator)
 
     def open_labware_selection_page(self):
         if not self.labware_selection_page or not self.labware_selection_page.winfo_exists():
