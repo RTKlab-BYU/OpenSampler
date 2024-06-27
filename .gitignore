@@ -7,3 +7,4 @@ Classes/module_files/__pycache__/*
 gui/__pycache__/*
 queues/*
 methods/*
+settings/__pycache__/*

@@ -1145,7 +1145,7 @@ class JoyCol(tk.Frame,):
   
 class TempDeckName(tk.Entry,):
     def __init__(self, frame, container, string):
-        super().__init__(frame)
+        super().__init__(frame.TempDeckGrid)
         self.text = string
        # self.ButtonVar.trace("w", lambda x,y,z: self.UpdateButton(container, j, eachButton, self.ButtonVar[j][i-2]))
         self.insert(tk.END,string)
@@ -1155,10 +1155,10 @@ class TempDeckName(tk.Entry,):
         new_key = self.get()
         old_value = container.loaded_settings["temp_decks"].pop(old_key)
         container.loaded_settings["temp_decks"][new_key] = old_value
-        frame.UpdateGUI()
+        frame.UpdateGUI(container)
 class TempDeckSerial(tk.Entry,):
     def __init__(self, frame, container, string, eachTemp):
-        super().__init__(frame)
+        super().__init__(frame.TempDeckGrid)
        # self.ButtonVar.trace("w", lambda x,y,z: self.UpdateButton(container, j, eachButton, self.ButtonVar[j][i-2]))
         self.insert(tk.END,string)
         self.bind('<FocusOut>',lambda x: self.UpdateSerial(container,eachTemp, self.get()))
@@ -1168,10 +1168,10 @@ class TempDeckSerial(tk.Entry,):
 class TempdeckRow(tk.Frame,):
     def __init__(self, frame, container, eachTemp, rowNum):
         super().__init__(frame.TempDeckGrid)
-        myName = TempDeckName(frame.TempDeckGrid, container, eachTemp)
+        myName = TempDeckName(frame, container, eachTemp)
         myName.grid(row=rowNum,column=0)
 
-        mySer = TempDeckSerial(frame.TempDeckGrid, container, container.loaded_settings["temp_decks"][eachTemp]["com"], eachTemp)
+        mySer = TempDeckSerial(frame, container, container.loaded_settings["temp_decks"][eachTemp]["com"], eachTemp)
         mySer.grid(row=rowNum,column=1)
 
         delete = tk.Button(frame.TempDeckGrid,text="Remove Tempdeck",command= lambda: self.RemoveTempdeck(frame, container, eachTemp))
