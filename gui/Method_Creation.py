@@ -2,6 +2,16 @@ import tkinter as tk
 from tkinter import filedialog as fd
 from tkinter import ttk
 import json
+from Classes.coordinator import Coordinator
+
+'''
+Method_Creator is the main class for method creation. 
+Method_Command_Row is used inside Method_Creator.
+Command_Parameter_is used inside Method_Command Row.
+'''
+
+
+
 
 ACTION_TYPES = {
 
@@ -87,44 +97,54 @@ ACTION_DEFAULTS = {
 
 class Command_Parameter():
 
-    def __init__(self, frame, parameter, default_value, row_index, parameter_index):
-        self.master_frame: Method_Command_Row = frame
+    def __init__(self, master_frame, parameter, parameter_value, parameter_index, coordinator, toplevel_frame, command_row):
+        self.command_row: Method_Command_Row = command_row
+        self.command_grid: tk.Frame = master_frame
+        self.coordinator: Coordinator = coordinator
+        self.main_frame: Method_Creator = toplevel_frame
         self.parameter_index = parameter_index
-        self.row_index = row_index
+        self.row_index = self.command_row.row_index
         self.static_columns = 6
         self.parameter_var = tk.StringVar()
         self.parameter = parameter
         
-        self.param_label = tk.Label(self.master_frame.command_grid, text=parameter)
-        self.param_label.grid(row=row_index, column=parameter_index*2+self.static_columns)
+        self.param_label = tk.Label(self.command_grid, text=parameter)
+        self.param_label.grid(row=self.row_index, column=parameter_index*2+self.static_columns)
         if self.parameter == "Stage Name":
             # pass
-            stage_options = list(self.master_frame.coordinator.myModules.myStages.keys())
-            self.parameter_entry = ttk.Combobox(self.master_frame, values=stage_options, textvariable=self.parameter_var)
-        elif parameter == "Location Name":
+            stage_options = list(self.coordinator.myModules.myStages.keys())
+            self.parameter_entry = ttk.Combobox(self.command_grid, values=stage_options, textvariable=self.parameter_var)
+        elif self.parameter == "Location Name":
             # pass
-            location_options = list(self.master_frame.coordinator.myModules.myStages[self.selected_stage].myLabware.custom_locations.keys())
-            self.parameter_entry = ttk.Combobox(self.master_frame, values=location_options, textvariable=self.parameter_var)
+            try:
+                location_options = list(self.coordinator.myModules.myStages[self.command_row.selected_stage].myLabware.custom_locations.keys())
+            except:
+                location_options = []
+            self.parameter_entry = ttk.Combobox(self.command_grid, values=location_options, textvariable=self.parameter_var)
         elif parameter == "Tempdeck Name":
             # pass
-            tempdeck_options = list(self.master_frame.coordinator.myModules.myTempDecks.keys())
-            self.parameter_entry = ttk.Combobox(self.master_frame, values=tempdeck_options, textvariable=self.parameter_var)
+            try:
+                tempdeck_options = list(self.coordinator.myModules.myTempDecks.keys())
+            except:
+                tempdeck_options = []
+            self.parameter_entry = ttk.Combobox(self.command_grid, values=tempdeck_options, textvariable=self.parameter_var)
         else:
-            self.parameter_entry = tk.Entry(self.master_frame.command_grid, textvariable=self.parameter_var)
+            self.parameter_entry = tk.Entry(self.command_grid, textvariable=self.parameter_var)
         
         # self.parameter_entry = tk.Entry(self.master_frame.command_grid, textvariable=self.parameter_var)
         
-        self.parameter_entry.insert(tk.END,string=default_value)
-        self.parameter_entry.grid(row=row_index, column=parameter_index*2+self.static_columns+1)
-        self.parameter_var.trace_add("write", self.UpdateParameter())
+        self.parameter_var.set(parameter_value)
+        # self.parameter_entry.insert(tk.END,string=default_value)
+        self.parameter_entry.grid(row=self.row_index, column=parameter_index*2+self.static_columns+1)
+        self.parameter_var.trace_add("write", self.update_parameter())
 
         if parameter == ACTION_TYPES["run_sub_method"][0]:
             self.parameter_entry.bind('<Double-Button-1>', lambda x: self.select_method(x))
 
-    def UpdateParameter(self):
+    def update_parameter(self):
         if self.parameter == "Stage Name":
-            self.master_frame.selected_stage = self.parameter_entry.get()
-        self.master_frame.commands_list[self.row_index]["parameters"][self.parameter_index] = self.parameter_var.get()
+            self.command_row.selected_stage = self.parameter_entry.get()
+        self.main_frame.commands_list[self.row_index]["parameters"][self.parameter_index] = self.parameter_var.get()
 
     def select_method(self, event):
         filetypes = (
@@ -142,65 +162,69 @@ class Command_Parameter():
 
 class Method_Command_Row():
 
-    def __init__(self, frame, row_index, command):
-        self.row = row_index
-        self.master_frame = frame
-        self.coordinator = self.master_frame.coordinator
+    def __init__(self, master_frame, row_index, command, coordinator, toplevel_frame):
+        self.row_index = row_index
+        self.command_grid = master_frame
+        self.main_frame: Method_Creator = toplevel_frame
+        self.coordinator = coordinator
         self.selected_stage = ""
-        self.insert_button = tk.Button(self.master_frame.command_grid, text="Insert", command= self.InsertRow)
-        self.insert_button.grid(row=self.row, column=0)
-        self.delete_button = tk.Button(self.master_frame.command_grid, text="Delete", command=self.DeleteRow)
-        self.delete_button.grid(row=self.row, column=1)
-        self.up_button = tk.Button(self.master_frame.command_grid, text="Up", command=self.MoveUp)
-        self.up_button.grid(row=self.row, column=2)
-        self.down_button = tk.Button(self.master_frame.command_grid, text="Down", command=self.MoveDown)
-        self.down_button.grid(row=self.row, column=3)
-        self.command_label = tk.Label(self.master_frame.command_grid, text="Command Type: ")
-        self.command_label.grid(row=self.row,column=4)
-        self.type_box = ttk.Combobox(self.master_frame.command_grid, state='readonly')
-        self.type_box.grid(row=self.row,column=5)
+        self.insert_button = tk.Button(self.command_grid, text="Insert", command= self.InsertRow)
+        self.insert_button.grid(row=self.row_index, column=0)
+        self.delete_button = tk.Button(self.command_grid, text="Delete", command=self.DeleteRow)
+        self.delete_button.grid(row=self.row_index, column=1)
+        self.up_button = tk.Button(self.command_grid, text="Up", command=self.MoveUp)
+        self.up_button.grid(row=self.row_index, column=2)
+        self.down_button = tk.Button(self.command_grid, text="Down", command=self.MoveDown)
+        self.down_button.grid(row=self.row_index, column=3)
+        self.command_label = tk.Label(self.command_grid, text="Command Type: ")
+        self.command_label.grid(row=self.row_index,column=4)
+        self.type_box = ttk.Combobox(self.command_grid, state='readonly')
+        self.type_box.grid(row=self.row_index,column=5)
         self.type_box["values"] = [*ACTION_TYPES.keys()]
         self.type_box.set(command["type"])
-        self.type_box.bind("<<ComboboxSelected>>", lambda x: self.UpdateCommandGrid())
+        self.type_box.bind("<<ComboboxSelected>>", lambda x: self.update_command_grid())
         #first two are type
         if len(ACTION_TYPES[command["type"]]) == len(command["parameters"]):
             parameter_index = 0
             for parameter in ACTION_TYPES[command["type"]]:
 
-                Command_Parameter(self.master_frame, parameter, command["parameters"][parameter_index], self.row, parameter_index)
+                Command_Parameter(self.command_grid, parameter, command["parameters"][parameter_index], parameter_index, self.coordinator, self.main_frame, self)
                 parameter_index += 1  # 2 columns are used for each command parameter
         else:
             print("Invalid Command! Command Parameters")
 
-    def UpdateCommandGrid(self):
+    def update_command_grid(self):
         new_type = self.type_box.get()
         
-        if not self.master_frame.commands_list[self.row]["type"].__eq__(str(new_type)):
+        if not self.main_frame.commands_list[self.row_index]["type"].__eq__(str(new_type)):
             #print("different")
-            self.master_frame.commands_list[self.row]["type"] = new_type
-            self.master_frame.commands_list[self.row]["parameters"] = list(ACTION_DEFAULTS.get(new_type))
-        self.master_frame.UpdateCommandGrid()
+            self.main_frame.commands_list[self.row_index]["type"] = new_type
+            self.main_frame.commands_list[self.row_index]["parameters"] = list(ACTION_DEFAULTS.get(new_type))
+        self.main_frame.update_command_grid()
 
     def InsertRow(self):
         new_key = list(ACTION_TYPES.keys())[0]
-        self.master_frame.commands_list.insert(self.row, {"type": new_key, "parameters": list(ACTION_DEFAULTS.get(new_key))})
-        self.master_frame.UpdateCommandGrid()
+        self.main_frame.commands_list.insert(self.row_index, {"type": new_key, "parameters": list(ACTION_DEFAULTS.get(new_key))})
+        self.main_frame.update_command_grid()
 
     def MoveUp(self):
-        row_to_move = self.master_frame.commands_list.pop(self.row)
-        self.master_frame.commands_list.insert(abs(self.row - 1),row_to_move)
-        self.master_frame.UpdateCommandGrid()
+        row_to_move = self.main_frame.commands_list.pop(self.row_index)
+        self.main_frame.commands_list.insert((self.row_index - 1), row_to_move)
+        self.main_frame.update_command_grid()
 
     def MoveDown(self):
-        row_to_move = self.master_frame.commands_list.pop(self.row)
-        self.master_frame.commands_list.insert(abs(self.row + 1),row_to_move)
-        self.master_frame.UpdateCommandGrid()
+        row_to_move = self.main_frame.commands_list.pop(self.row_index)
+        self.main_frame.commands_list.insert(abs(self.row_index + 1),row_to_move)
+        self.main_frame.update_command_grid()
     
     def DeleteRow(self):
-        self.master_frame.commands_list.pop(self.row)
-        self.master_frame.UpdateCommandGrid()
+        self.main_frame.commands_list.pop(self.row_index)
+        self.main_frame.update_command_grid()
+
 
 class Method_Creator(tk.Toplevel,):
+    
+
     def __init__(self, coordinator):
         tk.Toplevel.__init__(self)
         self.coordinator = coordinator    
@@ -212,45 +236,59 @@ class Method_Creator(tk.Toplevel,):
         self.state("zoomed")
 
         self.header_bar = tk.Frame(self)
-        self.header_bar.pack(side=tk.TOP)
-        tk.Button(self.header_bar, text="Save Method", command=self.save_method).grid(row=0, column=0)
-        tk.Button(self.header_bar, text="Load Method", command=self.load_method).grid(row=0, column=1)
-        tk.Button(self.header_bar, text="Append Commands", command=self.append_commands).grid(row=0, column=2)        
+        self.header_bar.pack(side="top")
+        self.clear_button = tk.Button(self.header_bar, text="Clear", command=self.clear_command_grid)
+        self.save_button = tk.Button(self.header_bar, text="Save", command=self.save_method)
+        self.load_button = tk.Button(self.header_bar, text="Load", command=self.load_method)
+        self.append_button = tk.Button(self.header_bar, text="Append", command=self.append_commands)
+        self.clear_button.grid(row=0, column=0)
+        self.save_button.grid(row=0, column=1)
+        self.load_button.grid(row=0, column=2)
+        self.append_button.grid(row=0, column=3)
 
         self.commands_list = []
 
-        self.scrollbar = tk.Scrollbar(self, orient="vertical")
-        self.scrollbar.pack( side = tk.RIGHT, fill = tk.Y )
+        # Canvas for scrolling command grid
+
+        self.canvas = tk.Canvas(self, width=4000, height=1800, scrollregion=(0,0,4000,1800))
+        canvas_width = self.canvas.winfo_width()
+        self.command_grid = tk.Frame(self.canvas, width=canvas_width)
+
+        self.y_scrollbar = tk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+        self.x_scrollbar = tk.Scrollbar(self, orient="horizontal", command=self.canvas.xview)   
+        self.canvas.config(yscrollcommand=self.y_scrollbar.set, xscrollcommand=self.x_scrollbar.set)
+
+        self.y_scrollbar.pack(side="right", fill="y")
+        self.x_scrollbar.pack(side="bottom", fill="x")
+        self.canvas.pack(fill="both", expand=True) 
+
+        self.command_grid_window = self.canvas.create_window((4,4), window=self.command_grid, anchor="nw", tags="self.command_grid")
+        self.command_grid.bind("<Configure>", lambda event: self.reset_scroll_region(event))
+
+        self.inner_command_grid = tk.Frame(self.command_grid)
+        self.inner_command_grid.pack(fill="x", expand=True)
+
+        self.add_row_button = tk.Button(self.command_grid, text="Add Row", command=lambda: self.add_row())
+        self.add_row_button.pack(anchor="nw")
+
         
-        self.xscrollbar = tk.Scrollbar(self, orient="horizontal")
-        self.xscrollbar.pack(side = tk.BOTTOM, fill = tk.X)
+        self.update()
+        canvas_width = self.canvas.winfo_width()
+        self.canvas.itemconfig(self.command_grid_window, width = canvas_width-3)
 
-        self.Canv = tk.Canvas(self, width=4000, height = 1800,
-                         scrollregion=(0,0,4000,1800)) #width=1256, height = 1674)
-        self.Canv.pack(fill="both", expand=True) #added sticky
+        # Reconfigure que when reconfiguring window
+        self.bind("<Configure>", lambda x: self.reset_scroll_region(x))
 
-        self.command_grid = tk.Frame(self.Canv)
-        self.command_grid.bind(
-            "<Configure>",
-            lambda e: self.Canv.configure(
-                scrollregion=self.Canv.bbox("all")
-            )
-        )
-        interior_id = self.Canv.create_window((0, 0), window=self.command_grid,
-                                           anchor=tk.NW)
-        self.Canv.config(yscrollcommand = self.scrollbar.set,xscrollcommand = self.xscrollbar.set)
-        self.xscrollbar.config()
-        self.scrollbar.config(command=self.Canv.yview)
-        self.rowconfigure(0, weight=1) 
-        self.columnconfigure(0, weight=1)
-
-        self.UpdateCommandGrid()
+        # add initial row
+        self.add_row()
     
-    def reset_scrollregion(self, event):
-        self.Canv.configure(scrollregion=self.Canv.bbox("all"))
-        #print("Resized")
+    def reset_scroll_region(self, event):
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
-    def LoadFromFile(self):
+        canvas_width = self.canvas.winfo_width()
+        self.canvas.itemconfig(self.command_grid_window, width = canvas_width-4)
+
+    def load_from_file(self):
 
         filetypes = (
             ('json files', '*.json'),
@@ -267,19 +305,19 @@ class Method_Creator(tk.Toplevel,):
 
     def load_method(self):
 
-        my_dict = self.LoadFromFile()
+        my_dict = self.load_from_file()
 
         self.commands_list = my_dict["commands"]
 
-        self.UpdateCommandGrid()
+        self.update_command_grid()
 
     def append_commands(self):
         
-        my_dict = self.LoadFromFile()
+        my_dict = self.load_from_file()
         
         self.commands_list = self.commands_list + my_dict["commands"]
         
-        self.UpdateCommandGrid()
+        self.update_command_grid()
 
     def save_method(self):
         my_dict = {}
@@ -305,40 +343,31 @@ class Method_Creator(tk.Toplevel,):
         # Dump the labware dictionary into the json file
         json.dump(my_dict, output_file)
         
-    def UpdateCommandGrid(self):
-        self.Canv.destroy()
-        self.Canv = tk.Canvas(self, width=1000, height = 1800,
-                         scrollregion=(0,0,1000,1800)) #width=1256, height = 1674)
-        self.Canv.pack(fill="both", expand=True) #added sticky
+    
+    def clear_command_grid(self):
+        self.add_row_button.pack_forget()
+        self.inner_command_grid.destroy()
+        self.inner_command_grid = tk.Frame(self.command_grid) 
+        self.inner_command_grid.pack(fill="x", expand=True)
+        self.add_row_button.pack(anchor="nw")        
+        self.command_rows = []
+        self.commands_list = []
+        self.add_row()
 
-        self.command_grid = tk.Frame(self.Canv)
-        
-        self.PopulateCommandGrid()
-        self.command_grid.bind(
-            "<Configure>",
-            self.reset_scrollregion
-        )
-        # interior_id = self.Canv.create_window((0, 0), window=self.command_grid,
-        #                                    anchor=tk.NW)
-     
-        self.scrollbar.config(command=self.Canv.yview)
-        self.Canv.config(yscrollcommand = self.scrollbar.set)
-        self.Canv.config(xscrollcommand = self.xscrollbar.set)
-        self.xscrollbar.config(command=self.Canv.xview)
-        
-    def PopulateCommandGrid(self):        
-        self.command_grid = tk.Frame(self.Canv)
-        self.command_grid.pack(side=tk.TOP)
+    def update_command_grid(self):
+        self.add_row_button.pack_forget()
+        self.inner_command_grid.destroy()
+        self.inner_command_grid = tk.Frame(self.command_grid)
+        self.inner_command_grid.pack(fill="x", expand=True)
+        self.add_row_button.pack(anchor="nw")       
         self.command_rows = []
         row_index = 0
-        for command in self.commands_list:
-            self.command_rows.append(Method_Command_Row(row_index, command))
+        for command in self.commands_list: 
+            self.command_rows.append(Method_Command_Row(self.inner_command_grid, row_index, command, self.coordinator, self))
             row_index += 1
 
-        tk.Button(self.command_grid, text="Add Row", command=lambda: self.add_row(row_index)).grid(row=row_index, column=1)
-
-    def add_row(self, row):
+    def add_row(self):
         new_key = list(ACTION_TYPES.keys())[0]
         parameters = list(ACTION_DEFAULTS.get(new_key)) # if you don't make it changes the default dictionary when updated
         self.commands_list.append({"type": new_key, "parameters": parameters})
-        self.UpdateCommandGrid()
+        self.update_command_grid()

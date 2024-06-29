@@ -60,11 +60,11 @@ class Queue_Gui(tk.Toplevel,):
         self.canvas.configure(yscrollcommand = self.y_scrollbar.set, xscrollcommand = self.x_scrollbar.set)
 
         self.y_scrollbar.pack(side="right", fill="y")
-        self.x_scrollbar.pack(side = tk.BOTTOM, fill = tk.X)
+        self.x_scrollbar.pack(side="bottom", fill="x")
         self.canvas.pack(fill="both", expand=True)
         
         self.queue_grid_window = self.canvas.create_window((4,4), window=self.queue_grid, anchor="nw", tags="self.queue_grid")
-        self.queue_grid.bind("<Configure>", lambda x: self.config_my_queue(x))
+        self.queue_grid.bind("<Configure>", lambda x: self.reset_scroll_region(x))
 
         self.update()
         canvas_width = self.canvas.winfo_width()
@@ -107,9 +107,9 @@ class Queue_Gui(tk.Toplevel,):
         self.load_page()
 
         # Reconfigure que when reconfiguring window
-        self.bind("<Configure>", lambda x: self.config_my_queue(x))
+        self.bind("<Configure>", lambda x: self.reset_scroll_region(x))
 
-    def config_my_queue(self, event):
+    def reset_scroll_region(self, event):
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
         canvas_width = self.canvas.winfo_width()
