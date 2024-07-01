@@ -105,45 +105,40 @@ class Command_Parameter():
         self.parameter_index = parameter_index
         self.row_index = self.command_row.row_index
         self.static_columns = 6
-        self.parameter_var = tk.StringVar()
+        self.parameter_var = tk.StringVar(value=parameter_value)
         self.parameter = parameter
         
         self.param_label = tk.Label(self.command_grid, text=parameter)
         self.param_label.grid(row=self.row_index, column=parameter_index*2+self.static_columns)
-        if self.parameter == "Stage Name":
-            # pass
+
+        if self.parameter == "Stage Name":          
             stage_options = list(self.coordinator.myModules.myStages.keys())
             self.parameter_entry = ttk.Combobox(self.command_grid, values=stage_options, textvariable=self.parameter_var)
+            self.command_row.selected_stage = self.parameter_var.get()
+                      
         elif self.parameter == "Location Name":
-            # pass
             try:
                 location_options = list(self.coordinator.myModules.myStages[self.command_row.selected_stage].myLabware.custom_locations.keys())
             except:
                 location_options = []
             self.parameter_entry = ttk.Combobox(self.command_grid, values=location_options, textvariable=self.parameter_var)
+            
         elif parameter == "Tempdeck Name":
-            # pass
-            try:
-                tempdeck_options = list(self.coordinator.myModules.myTempDecks.keys())
-            except:
-                tempdeck_options = []
+            tempdeck_options = list(self.coordinator.myModules.myTempDecks.keys())
             self.parameter_entry = ttk.Combobox(self.command_grid, values=tempdeck_options, textvariable=self.parameter_var)
+
         else:
             self.parameter_entry = tk.Entry(self.command_grid, textvariable=self.parameter_var)
         
-        # self.parameter_entry = tk.Entry(self.master_frame.command_grid, textvariable=self.parameter_var)
-        
-        self.parameter_var.set(parameter_value)
-        # self.parameter_entry.insert(tk.END,string=default_value)
         self.parameter_entry.grid(row=self.row_index, column=parameter_index*2+self.static_columns+1)
-        self.parameter_var.trace_add("write", self.update_parameter())
+        self.parameter_var.trace_add("write", self.update_parameter)
 
         if parameter == ACTION_TYPES["run_sub_method"][0]:
             self.parameter_entry.bind('<Double-Button-1>', lambda x: self.select_method(x))
 
-    def update_parameter(self):
+    def update_parameter(self, *args):
         if self.parameter == "Stage Name":
-            self.command_row.selected_stage = self.parameter_entry.get()
+            self.command_row.selected_stage = self.parameter_var.get()
         self.main_frame.commands_list[self.row_index]["parameters"][self.parameter_index] = self.parameter_var.get()
 
     def select_method(self, event):
@@ -178,12 +173,15 @@ class Method_Command_Row():
         self.down_button.grid(row=self.row_index, column=3)
         self.command_label = tk.Label(self.command_grid, text="Command Type: ")
         self.command_label.grid(row=self.row_index,column=4)
-        self.type_box = ttk.Combobox(self.command_grid, state='readonly')
+        self.type_var = tk.StringVar()
+        self.type_box = ttk.Combobox(self.command_grid, state='readonly', textvariable=self.type_var)
         self.type_box.grid(row=self.row_index,column=5)
         self.type_box["values"] = [*ACTION_TYPES.keys()]
-        self.type_box.set(command["type"])
+        self.type_var.set(command["type"])
         self.type_box.bind("<<ComboboxSelected>>", lambda x: self.update_command_grid())
         #first two are type
+        
+
         if len(ACTION_TYPES[command["type"]]) == len(command["parameters"]):
             parameter_index = 0
             for parameter in ACTION_TYPES[command["type"]]:
@@ -296,7 +294,7 @@ class Method_Creator(tk.Toplevel,):
         )
 
         new_file = fd.askopenfile(parent=self, title='Open a file', initialdir='methods', filetypes=filetypes)
-        
+
         if new_file == None:  # in the event of a cancel 
             return
 
@@ -307,7 +305,25 @@ class Method_Creator(tk.Toplevel,):
 
         my_dict = self.load_from_file()
 
-        self.commands_list = my_dict["commands"]
+        try:
+            self.commands_list = my_dict["commands"]
+
+            # replace old commands with current ones
+            for command in self.commands_list:
+                if command["type"] == "move_to_custom_location":
+                    command["type"] = "move_to_location"
+                elif command["type"] == "aspirate_from_well":
+                    command["type"] = "aspirate_from_wells"
+                elif command["type"] == "dispense_to_well":
+                    command["type"] = "dispense_to_wells"
+                elif command["type"] == "collect_sample":
+                    command["type"] = "aspirate_samples"
+                elif command["type"] == "aspirate_sample":
+                    command["type"] = "aspirate_samples"
+                else:
+                    pass
+        except:
+            pass
 
         self.update_command_grid()
 
@@ -316,6 +332,19 @@ class Method_Creator(tk.Toplevel,):
         my_dict = self.load_from_file()
         
         self.commands_list = self.commands_list + my_dict["commands"]
+        for command in self.commands_list:
+            if command["type"] == "move_to_custom_location":
+                command["type"] = "move_to_location"
+            elif command["type"] == "aspirate_from_well":
+                command["type"] = "aspirate_from_wells"
+            elif command["type"] == "dispense_to_well":
+                command["type"] = "dispense_to_wells"
+            elif command["type"] == "collect_sample":
+                command["type"] = "aspirate_samples"
+            elif command["type"] == "aspirate_sample":
+                command["type"] = "aspirate_samples"
+            else:
+                pass
         
         self.update_command_grid()
 

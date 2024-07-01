@@ -163,4 +163,4 @@ class Manual(tk.Toplevel,):
 
     def GoToLocation(self):
         # this isn't finished
-        self.coordinator.actionOptions.move_to_custom_location(self.selected_stage, self.selected_labware)
+        self.coordinator.actionOptions.move_to_location(self.selected_stage, self.selected_labware)
