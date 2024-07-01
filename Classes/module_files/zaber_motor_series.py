@@ -465,7 +465,16 @@ class ZaberMotorSeries:
                     self.logger.debug("Unable to retrieve device timeout setting")
                 self.logger.debug(f"Connection_error flag set to True due to an exception of the type: {type(ex).__name__}")
                 exception_additional_info += f"The request timeout is set to {request_timeout_setting} ms\n"
-
+            elif type(ex).__name__  == "MovementFailedException":
+                self.logger.info("A MovementFailedException occurred. Retrying...")
+                
+                self.abs_move_attempt_after_reconnection += 1
+                if (self.abs_move_attempt_after_reconnection >= 4):
+                    self.logger.error(f"Unsuccesfully attempted the move 3 times and failed. Aborting command: {move.to_string()}")
+                    self.abs_move_attempt_after_reconnection = 0
+                    return 
+                self.absolute_move(move, False) # Here I call it with the first_call flag as False so that the counter for attempted moves doesn't get reset, but keeps adding 
+                
             self.logger.debug(exception_additional_info)
 
         else:
@@ -619,8 +628,6 @@ class ZaberMotorSeries:
                     self.abs_move_attempt_after_reconnection = 0
                     return 
                 self.single_absolute_move_syringe(move, False) # Here I call it with the first_call flag as False so that the counter for attempted moves doesn't get reset, but keeps adding 
-                
-            self.logger.debug(exception_additional_info)
 
         else:
             self.logger.debug(f"absolute_move performed. {move.to_string()}")
