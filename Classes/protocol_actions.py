@@ -76,7 +76,7 @@ class ProtocolActions:
             self.myCoordinator.myModules.myStages[stage].step_syringe_motor_up(volume=volume, speed=speed)
 
     def aspirate_from_location(self, stage, location_name, volume, speed):
-        self.move_to_custom_location(stage, location_name)
+        self.move_to_location(stage, location_name)
         self.aspirate_in_place(stage, volume, speed)
 
     def dispense_to_well(self, stage, well_plate_index, well, volume, speed):
@@ -108,7 +108,7 @@ class ProtocolActions:
             self.myCoordinator.myModules.myStages[stage].step_syringe_motor_down(volume=volume, speed=speed)
 
     def dispense_to_location(self, stage, location_name, volume, speed):
-        self.move_to_custom_location(stage, location_name)
+        self.move_to_location(stage, location_name)
         self.dispense_in_place(stage, volume, speed)
 
 

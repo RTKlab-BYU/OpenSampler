@@ -81,7 +81,7 @@ class TempDeck:
 
     def connect(self, port=None) -> Optional[str]:
         try:
-            self.disconnect(port)
+            self.disconnect()
             self._connect_to_port(port)
             self._wait_for_ack()  # verify the device is there
             self._port = port
