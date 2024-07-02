@@ -417,16 +417,18 @@ class ZaberMotorSeries:
         self.motorList[device].set_default_speed(speed) # Set the speed acording to move
         self.motorList[device].move_step(step) # Perform a relative move
 
-    def absolute_move(self, move: Move):
+    def absolute_move(self, move: Move, first_call = True):
         # Reset flag for failed connection
         self.connection_error = False
 
         device, position, speed = move.get_move() # Extract each element of the move
         self.logger.debug(f"Attempting to perform an absolute move. {move.to_string()}")
+        if (first_call == True):
+            self.error_trys = 0
         try:
             self.motorList[device].set_default_speed(speed) # Set the speed acording to move
             self.motorList[device].move_to(position) # Perform a relative move
-
+        
         except Exception as ex:
             exception_message = f"An exception of type {type(ex).__name__} occurred while attempting to perform an absolute_move\n\
                                 device #{device}, target_position: {position}, target_speed: {speed} [mm/s]"
@@ -465,16 +467,23 @@ class ZaberMotorSeries:
                     self.logger.debug("Unable to retrieve device timeout setting")
                 self.logger.debug(f"Connection_error flag set to True due to an exception of the type: {type(ex).__name__}")
                 exception_additional_info += f"The request timeout is set to {request_timeout_setting} ms\n"
+                print("Connection problem")
+            
             elif type(ex).__name__  == "MovementFailedException":
                 self.logger.info("A MovementFailedException occurred. Retrying...")
-                
-                self.abs_move_attempt_after_reconnection += 1
-                if (self.abs_move_attempt_after_reconnection >= 4):
+                print("trying")
+                # exception_additional_info = ex.reason
+                print(exception_additional_info)
+                self.error_trys += 1
+                if (self.error_trys >= 10):
                     self.logger.error(f"Unsuccesfully attempted the move 3 times and failed. Aborting command: {move.to_string()}")
-                    self.abs_move_attempt_after_reconnection = 0
+                    self.error_trys = 0
                     return 
                 self.absolute_move(move, False) # Here I call it with the first_call flag as False so that the counter for attempted moves doesn't get reset, but keeps adding 
-                
+            else:
+                print(type(ex))    #zaber_motion.exceptions import MovementFailedExceptionData
+            
+
             self.logger.debug(exception_additional_info)
 
         else:
@@ -486,6 +495,8 @@ class ZaberMotorSeries:
 
         if (first_call == True):
             self.sing_abs_move_attempt_after_reconnection = 0
+        if (first_call == True):
+            self.error_trys = 0
 
         device, position, speed = move.get_move() # Extract each element of the move
         self.logger.debug(f"Attempting to perform an absolute move. {move.to_string()}")
@@ -529,12 +540,23 @@ class ZaberMotorSeries:
                 self.initialize_motors(True)
 
                 self.abs_move_attempt_after_reconnection += 1
-                if (self.abs_move_attempt_after_reconnection >= 4):
+                if (self.abs_move_attempt_after_reconnection >= 10):
                     self.logger.error(f"Unsuccesfully attempted the move 3 times and failed. Aborting command: {move.to_string()}")
                     self.abs_move_attempt_after_reconnection = 0
                     return 
                 self.single_absolute_move(move, False) # Here I call it with the first_call flag as False so that the counter for attempted moves doesn't get reset, but keeps adding 
                 
+            elif type(ex).__name__  == "MovementFailedException":
+                self.logger.info("A MovementFailedException occurred. Retrying...")
+                print("trying")
+                # exception_additional_info = ex.reason
+                print(exception_additional_info)
+                self.error_trys += 1
+                if (self.error_trys >= 4):
+                    self.logger.error(f"Unsuccesfully attempted the move 3 times and failed. Aborting command: {move.to_string()}")
+                    self.error_trys = 0
+                    return 
+                self.absolute_move(move, False) # Here I call it with the first_call flag as False so that the counter for attempted moves doesn't get reset, but keeps adding 
             self.logger.debug(exception_additional_info)
 
         else:
