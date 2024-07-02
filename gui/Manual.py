@@ -123,7 +123,7 @@ class Manual(tk.Toplevel,):
                 self.selected_labware_box = ttk.Combobox(self.loaded_labware_bar, state='readonly')
                 self.selected_labware_box.grid(row=2,column=1)
                 self.selected_labware_box["values"] = [*self.loaded_labware]
-                self.selected_labware_box.bind("<<ComboboxSelected>>", lambda x: self.UpdateSelectedLabware(coordinator))
+                self.selected_labware_box.bind("<<ComboboxSelected>>", lambda x: self.UpdateSelectedLabware())
                 self.selected_labware_label = tk.Label(self.loaded_labware_bar, text="Select Wellplate Index: ",justify=tk.LEFT)
                 self.selected_labware_label.grid(row=2,column=0)
             
@@ -133,9 +133,9 @@ class Manual(tk.Toplevel,):
                 self.selected_labware_box = ttk.Combobox(self.loaded_labware_bar, state='readonly')
                 self.selected_labware_box.grid(row=2,column=1)
                 self.selected_labware_box["values"] = [*self.loaded_labware]
-                self.selected_labware_box.bind("<<ComboboxSelected>>", lambda x: self.UpdateSelectedLabware(coordinator))
+                self.selected_labware_box.bind("<<ComboboxSelected>>", lambda x: self.UpdateSelectedLabware())
 
-    def UpdateSelectedLabware(self):
+    def UpdateSelectedLabware(self, *args):
         self.selected_labware = self.selected_labware_box.get()
         self.past_labware = self.selected_labware
         self.wellName =tk.Entry(self.loaded_labware_bar)
@@ -163,4 +163,4 @@ class Manual(tk.Toplevel,):
 
     def GoToLocation(self):
         # this isn't finished
-        self.coordinator.actionOptions.move_to_custom_location(self.selected_stage, self.selected_labware)
+        self.coordinator.actionOptions.move_to_location(self.selected_stage, self.selected_labware)

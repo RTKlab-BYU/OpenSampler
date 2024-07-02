@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 from tkinter import filedialog as fd
 import time
 import threading
@@ -20,8 +21,8 @@ class Queue_Gui(tk.Toplevel,):
         tk.Toplevel.__init__(self)    
       
         self.title("Run Method")
-        self.geometry("1000x1800")
-        self.state("zoomed")
+        self.geometry("1000x600")
+        # self.state("zoomed")
         self.coordinator: Coordinator = coordinator
         self.my_reader = self.coordinator.myReader
         self.page_type = tk.StringVar()
@@ -60,11 +61,11 @@ class Queue_Gui(tk.Toplevel,):
         self.canvas.configure(yscrollcommand = self.y_scrollbar.set, xscrollcommand = self.x_scrollbar.set)
 
         self.y_scrollbar.pack(side="right", fill="y")
-        self.x_scrollbar.pack(side = tk.BOTTOM, fill = tk.X)
+        self.x_scrollbar.pack(side="bottom", fill="x")
         self.canvas.pack(fill="both", expand=True)
         
         self.queue_grid_window = self.canvas.create_window((4,4), window=self.queue_grid, anchor="nw", tags="self.queue_grid")
-        self.queue_grid.bind("<Configure>", lambda x: self.config_my_queue(x))
+        self.queue_grid.bind("<Configure>", lambda x: self.reset_scroll_region(x))
 
         self.update()
         canvas_width = self.canvas.winfo_width()
@@ -107,9 +108,9 @@ class Queue_Gui(tk.Toplevel,):
         self.load_page()
 
         # Reconfigure que when reconfiguring window
-        self.bind("<Configure>", lambda x: self.config_my_queue(x))
+        self.bind("<Configure>", lambda x: self.reset_scroll_region(x))
 
-    def config_my_queue(self, event):
+    def reset_scroll_region(self, event):
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
         canvas_width = self.canvas.winfo_width()
@@ -335,9 +336,9 @@ class Queue_Compiler:
         self.add_row_button.pack(side=tk.LEFT)
 
         # headers (input labels) for respective queues
-        self.sp_queue_header = Sample_Prep_Inputs(self.queue_page.sample_prep_frame)
-        self.ms_queue_header = MS_Queue_Row_Inputs(self.ms_queue_frame)
-        self.frac_queue_header = Frac_Queue_Row_Inputs(self.frac_queue_frame)
+        self.sp_queue_header = Sample_Prep_Inputs(self.queue_page.sample_prep_frame, self.coordinator)
+        self.ms_queue_header = MS_Queue_Row_Inputs(self.ms_queue_frame, self.coordinator)
+        self.frac_queue_header = Frac_Queue_Row_Inputs(self.frac_queue_frame, self.coordinator)
 
         self.sp_queue_header.sp_headers()
         self.ms_queue_header.ms_headers()
@@ -348,10 +349,9 @@ class Queue_Compiler:
         self.queue_row_buttons = [self.buttons_header]
 
         # Add an initial row to queues
-        # self.add_row_buttons(1)
-        self.ms_queue.insert(1, MS_Queue_Row_Inputs(self.ms_queue_frame))
-        self.frac_queue.insert(1, Frac_Queue_Row_Inputs(self.frac_queue_frame))
-        self.sp_inputs = Sample_Prep_Inputs(self.queue_page.sample_prep_frame)
+        self.ms_queue.insert(1, MS_Queue_Row_Inputs(self.ms_queue_frame, self.coordinator))
+        self.frac_queue.insert(1, Frac_Queue_Row_Inputs(self.frac_queue_frame, self.coordinator))
+        self.sp_inputs = Sample_Prep_Inputs(self.queue_page.sample_prep_frame, self.coordinator)
         self.maintain_button_rows()
         
     
@@ -479,10 +479,10 @@ class Queue_Compiler:
         # self.add_row_buttons(len(self.queue_row_buttons))
 
         if self.active_page == 'Mass Spec':
-            new_row = MS_Queue_Row_Inputs(self.ms_queue_frame)
+            new_row = MS_Queue_Row_Inputs(self.ms_queue_frame, self.coordinator)
             self.ms_queue.insert(buttons_index, new_row)
         elif self.active_page == 'Fractionation':
-            new_row = Frac_Queue_Row_Inputs(self.frac_queue_frame)
+            new_row = Frac_Queue_Row_Inputs(self.frac_queue_frame, self.coordinator)
             self.frac_queue.insert(buttons_index, new_row)
 
         new_row.pack(fill="both", expand=True)
@@ -497,9 +497,9 @@ class Queue_Compiler:
         # self.add_row_buttons(len(self.queue_row_buttons))
 
         if self.active_page == 'Mass Spec':
-            self.ms_queue.insert(buttons_index, MS_Queue_Row_Inputs(self.ms_queue_frame))
+            self.ms_queue.insert(buttons_index, MS_Queue_Row_Inputs(self.ms_queue_frame, self.coordinator))
         elif self.active_page == 'Fractionation':
-            self.frac_queue.insert(buttons_index, Frac_Queue_Row_Inputs(self.frac_queue_frame))
+            self.frac_queue.insert(buttons_index, Frac_Queue_Row_Inputs(self.frac_queue_frame, self.coordinator))
 
         self.update_grid()
 
@@ -562,14 +562,14 @@ class Queue_Compiler:
             
                 elif self.active_page == "Sample Prep":
                     for row_index in range(dataframe.shape[0]):
-                        scheduled_run = Sample_Prep_Inputs(self.queue_page.sample_prep_frame)
+                        scheduled_run = Sample_Prep_Inputs(self.queue_page.sample_prep_frame, self.coordinator)
                         scheduled_run.method_var.set(dataframe[SP_HEADERS[0]].loc[dataframe.index[row_index]])
 
                         dataframe_as_list.append(scheduled_run)
 
                 elif self.active_page == "Mass Spec":
                     for row_index in range(dataframe.shape[0]):
-                        scheduled_run = MS_Queue_Row_Inputs(self.ms_queue_frame)
+                        scheduled_run = MS_Queue_Row_Inputs(self.ms_queue_frame, self.coordinator)
                         scheduled_run.stage_var.set(dataframe[MS_HEADERS[0]].loc[dataframe.index[row_index]])
                         scheduled_run.wellplate_var.set(dataframe[MS_HEADERS[1]].loc[dataframe.index[row_index]])
                         scheduled_run.well_var.set(dataframe[MS_HEADERS[2]].loc[dataframe.index[row_index]])
@@ -579,7 +579,7 @@ class Queue_Compiler:
                 
                 elif self.active_page == "Fractionation":
                     for row_index in range(dataframe.shape[0]):
-                        scheduled_run = Frac_Queue_Row_Inputs(self.frac_queue_frame)
+                        scheduled_run = Frac_Queue_Row_Inputs(self.frac_queue_frame, self.coordinator)
                         scheduled_run.stage_var.set(dataframe[FRAC_HEADERS[0]].loc[dataframe.index[row_index]])
                         scheduled_run.wellplate_var.set(dataframe[FRAC_HEADERS[1]].loc[dataframe.index[row_index]])
                         scheduled_run.sample_wells_var.set(dataframe[FRAC_HEADERS[2]].loc[dataframe.index[row_index]])
@@ -657,21 +657,21 @@ class Active_Queue(tk.Frame,):
         self.clear_all_button.pack(fill="x")
 
         # sample prep header
-        self.sp_current_headers = Sample_Prep_Inputs(self.current_run_inner)
+        self.sp_current_headers = Sample_Prep_Inputs(self.current_run_inner, self.coordinator)
         self.sp_current_headers.sp_headers()
 
         # ms headers 
-        self.ms_current_headers = MS_Queue_Row_Inputs(self.current_run_inner)
+        self.ms_current_headers = MS_Queue_Row_Inputs(self.current_run_inner, self.coordinator)
         self.ms_current_headers.ms_headers()
 
-        self.ms_scheduled_headers = MS_Queue_Row_Inputs(self.scheduled_runs_inner)
+        self.ms_scheduled_headers = MS_Queue_Row_Inputs(self.scheduled_runs_inner, self.coordinator)
         self.ms_scheduled_headers.ms_headers()
 
         # frac headers 
-        self.frac_current_headers = Frac_Queue_Row_Inputs(self.current_run_inner)
+        self.frac_current_headers = Frac_Queue_Row_Inputs(self.current_run_inner, self.coordinator)
         self.frac_current_headers.frac_headers()
         
-        self.frac_scheduled_headers = Frac_Queue_Row_Inputs(self.scheduled_runs_inner)
+        self.frac_scheduled_headers = Frac_Queue_Row_Inputs(self.scheduled_runs_inner, self.coordinator)
         self.frac_scheduled_headers.frac_headers()
 
         # spacers
@@ -696,7 +696,7 @@ class Active_Queue(tk.Frame,):
             except:
                 pass
 
-            self.active_que_current_run = Sample_Prep_Inputs(self.current_run_inner)
+            self.active_que_current_run = Sample_Prep_Inputs(self.current_run_inner, self.coordinator)
 
             # remove previous displays if any
             self.ms_current_headers.pack_forget()
@@ -721,7 +721,7 @@ class Active_Queue(tk.Frame,):
             except:
                 pass
 
-            self.active_que_current_run = MS_Queue_Row_Inputs(self.current_run_inner)
+            self.active_que_current_run = MS_Queue_Row_Inputs(self.current_run_inner, self.coordinator)
 
             self.sp_current_headers.pack_forget()
             self.frac_current_headers.pack_forget()
@@ -745,7 +745,7 @@ class Active_Queue(tk.Frame,):
             except:
                 pass
 
-            self.active_que_current_run = Frac_Queue_Row_Inputs(self.current_run_inner)
+            self.active_que_current_run = Frac_Queue_Row_Inputs(self.current_run_inner, self.coordinator)
 
             self.sp_current_headers.pack_forget()
             self.ms_current_headers.pack_forget()
@@ -859,14 +859,14 @@ class Active_Queue(tk.Frame,):
         
             elif queue_type == "Sample Prep":
                 for row_index in range(dataframe.shape[0]):
-                    scheduled_run = Sample_Prep_Inputs(self.scheduled_runs_inner)
+                    scheduled_run = Sample_Prep_Inputs(self.scheduled_runs_inner, self.coordinator)
                     scheduled_run.method_var.set(dataframe[SP_HEADERS[0]].loc[dataframe.index[row_index]])
 
                     dataframe_as_list.append(scheduled_run)
 
             elif queue_type == "Mass Spec":
                 for row_index in range(dataframe.shape[0]):
-                    scheduled_run = MS_Queue_Row_Inputs(self.scheduled_runs_inner)
+                    scheduled_run = MS_Queue_Row_Inputs(self.scheduled_runs_inner, self.coordinator)
                     scheduled_run.stage_var.set(dataframe[MS_HEADERS[0]].loc[dataframe.index[row_index]])
                     scheduled_run.wellplate_var.set(dataframe[MS_HEADERS[1]].loc[dataframe.index[row_index]])
                     scheduled_run.well_var.set(dataframe[MS_HEADERS[2]].loc[dataframe.index[row_index]])
@@ -876,7 +876,7 @@ class Active_Queue(tk.Frame,):
             
             elif queue_type == "Fractionation":
                 for row_index in range(dataframe.shape[0]):
-                    scheduled_run = Frac_Queue_Row_Inputs(self.scheduled_runs_inner)
+                    scheduled_run = Frac_Queue_Row_Inputs(self.scheduled_runs_inner, self.coordinator)
                     scheduled_run.stage_var.set(dataframe[FRAC_HEADERS[0]].loc[dataframe.index[row_index]])
                     scheduled_run.wellplate_var.set(dataframe[FRAC_HEADERS[1]].loc[dataframe.index[row_index]])
                     scheduled_run.sample_wells_var.set(dataframe[FRAC_HEADERS[2]].loc[dataframe.index[row_index]])
@@ -974,7 +974,7 @@ class Sample_Prep_Inputs(tk.Frame,):
     This class contains and displays the method for a sample prep protocol.
     It is designed to match the formating of the Mass Spec and Fractionation queues. 
     '''
-    def __init__(self, master_frame):
+    def __init__(self, master_frame, coordinator):
         super().__init__(master_frame)
         
         
@@ -1014,17 +1014,23 @@ class MS_Queue_Row_Inputs(tk.Frame,):
     This class contains and displays the inputs needed for each protocol in the queue.
     It assigns a row index to each instance in order to inform the affect those buttons have on the corresponding rows of inputs
     '''
-    def __init__(self, master_frame):
+    def __init__(self, master_frame, coordinator):
         super().__init__(master_frame)
+        self.coordinator = coordinator
         
         self.stage_var = tk.StringVar()
         self.wellplate_var = tk.StringVar()
         self.well_var = tk.StringVar()
         self.method_var = tk.StringVar()
 
-        self.stage_box = tk.Entry(self, textvariable=self.stage_var)
-        self.wellplate_box = tk.Entry(self, textvariable=self.wellplate_var)
-        self.well_box = tk.Entry(self, textvariable=self.well_var)
+        try:
+            self.stage_options = list(self.coordinator.myModules.myStages.keys())
+        except:
+            self.stage_options = []
+
+        self.stage_box = ttk.Combobox(self, width=30, values=self.stage_options, textvariable=self.stage_var)
+        self.wellplate_box = tk.Entry(self, width=30, textvariable=self.wellplate_var)  # changing this to combobox soon!
+        self.well_box = tk.Entry(self, width=30, textvariable=self.well_var)
         self.method_box = tk.Entry(self, textvariable=self.method_var)
 
         self.stage_box.pack(side="left")
@@ -1037,6 +1043,19 @@ class MS_Queue_Row_Inputs(tk.Frame,):
 
     # MS queue headers
     def ms_headers(self):
+        self.stage_box.destroy()
+        self.wellplate_box.destroy()
+        self.well_box.pack_forget()
+        self.method_box.pack_forget()
+
+        self.stage_box = tk.Entry(self, width=33, textvariable=self.stage_var)
+        self.wellplate_box = tk.Entry(self, width=30, textvariable=self.wellplate_var)
+
+        self.stage_box.pack(side="left")
+        self.wellplate_box.pack(side="left")
+        self.well_box.pack(side="left")
+        self.method_box.pack(expand=True, fill="x", side="left")
+
         self.stage_var.set(MS_HEADERS[0])
         self.wellplate_var.set(MS_HEADERS[1])
         self.well_var.set(MS_HEADERS[2])
@@ -1071,19 +1090,26 @@ class Frac_Queue_Row_Inputs(tk.Frame,):
     This class contains and displays the inputs needed for each protocol in the queue.
     It assigns a row index to each instance in order to inform the affect those buttons have on the corresponding rows of inputs
     '''
-    def __init__(self, master_frame):
+    def __init__(self, master_frame, coordinator):
         super().__init__(master_frame)
+        self.coordinator = coordinator
+        self.entry_width = 30
         
         self.stage_var = tk.StringVar()
         self.wellplate_var = tk.StringVar()
         self.sample_wells_var = tk.StringVar()
         self.elution_wells_var = tk.StringVar()
         self.method_var = tk.StringVar()
+
+        try:
+            self.stage_options = list(self.coordinator.myModules.myStages.keys())
+        except:
+            self.stage_options = []
         
-        self.stage_box = tk.Entry(self, textvariable=self.stage_var)
-        self.wellplate_box = tk.Entry(self, textvariable=self.wellplate_var)
-        self.sample_wells_box = tk.Entry(self, textvariable=self.sample_wells_var)
-        self.elution_wells_box = tk.Entry(self, textvariable=self.elution_wells_var)
+        self.stage_box = ttk.Combobox(self, width=self.entry_width, values=self.stage_options, textvariable=self.stage_var)
+        self.wellplate_box = tk.Entry(self, width=self.entry_width, textvariable=self.wellplate_var)  # changing this to combobox soon!
+        self.sample_wells_box = tk.Entry(self, width=self.entry_width, textvariable=self.sample_wells_var)
+        self.elution_wells_box = tk.Entry(self, width=self.entry_width, textvariable=self.elution_wells_var)
         self.method_box = tk.Entry(self, textvariable=self.method_var)
 
         self.stage_box.pack(side="left")
@@ -1097,6 +1123,22 @@ class Frac_Queue_Row_Inputs(tk.Frame,):
 
     # fractionation queue headers
     def frac_headers(self):
+        self.stage_box.destroy()
+        self.wellplate_box.destroy()
+        self.sample_wells_box.pack_forget()
+        self.elution_wells_box.pack_forget()
+        self.method_box.pack_forget()
+
+        self.stage_options = []
+
+        self.stage_box = tk.Entry(self, width=self.entry_width+3, textvariable=self.stage_var)
+        self.wellplate_box = tk.Entry(self, width=self.entry_width, textvariable=self.wellplate_var)
+
+        self.stage_box.pack(side="left")
+        self.wellplate_box.pack(side="left")
+        self.sample_wells_box.pack(side="left")
+        self.elution_wells_box.pack(side="left")
+        self.method_box.pack(expand=True, fill="x", side="left")  
 
         self.stage_var.set(FRAC_HEADERS[0])
         self.wellplate_var.set(FRAC_HEADERS[1])

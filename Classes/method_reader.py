@@ -68,7 +68,7 @@ class MethodReader:  # should call read from coordinator file
         else:
             dictionary = json.loads(data)
             for command in dictionary["commands"]:
-                if command["type"] == "move_to_custom_location":  # why this specifically?
+                if command["type"] == "move_to_location":  # why this specifically?
                     stage = command["parameters"][0]
                     location_name = command["parameters"][1]
                     stage_exists = stage in self.myCoordinator.myModules.myStages.keys()
