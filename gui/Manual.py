@@ -147,19 +147,19 @@ class Manual(tk.Toplevel,):
                 self.wellLabel.grid(row=3,column=0)
                 self.wellName = tk.Entry(self.loaded_labware_bar)
                 self.wellName.grid(row=3,column=1)
-                self.moveButton = tk.Button(self.loaded_labware_bar, text="Go To Well", command=lambda: self.GoToWell(self.coordinator))
+                self.moveButton = tk.Button(self.loaded_labware_bar, text="Go To Well", command=lambda: self.GoToWell())
                 self.moveButton.grid(row=4,column=1)
 
             case "Named Location":
                 # this isn't finished 
-                self.moveButton = tk.Button(self.loaded_labware_bar, text="Go To Location", command=lambda: self.GoToLocation(self.coordinator))
+                self.moveButton = tk.Button(self.loaded_labware_bar, text="Go To Location", command=lambda: self.GoToLocation())
                 self.moveButton.grid(row=1,column=3)
     
-    def GoToWell(self, coordinator):
+    def GoToWell(self):
         match self.selected_labware_type:
             case "Wellplate":
-                location = coordinator.myModules.myStages[self.selected_stage].myLabware.get_well_location(int(self.selected_labware[0]), self.wellName.get())
-                coordinator.myModules.myStages[self.selected_stage].move_to(location)           
+                location = self.coordinator.myModules.myStages[self.selected_stage].myLabware.get_well_location(int(self.selected_labware[0]), self.wellName.get())
+                self.coordinator.myModules.myStages[self.selected_stage].move_to(location)           
 
     def GoToLocation(self):
         # this isn't finished
