@@ -161,6 +161,6 @@ class Manual(tk.Toplevel,):
                 location = self.coordinator.myModules.myStages[self.selected_stage].myLabware.get_well_location(int(self.selected_labware[0]), self.wellName.get())
                 self.coordinator.myModules.myStages[self.selected_stage].move_to(location)           
 
-    def GoToLocation(self, coordinator):
+    def GoToLocation(self):
         # this isn't finished
         self.coordinator.actionOptions.move_to_location(self.selected_stage, self.selected_labware)
