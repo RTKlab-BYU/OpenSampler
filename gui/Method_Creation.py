@@ -147,7 +147,7 @@ class Command_Parameter():
             ('All files', '*')
         )
 
-        file_path = fd.askopenfilename(parent=self, title='Open a file', initialdir='methods', filetypes=filetypes)
+        file_path = fd.askopenfilename(parent=self.command_grid, title='Open a file', initialdir='methods', filetypes=filetypes)
         
         if file_path == "":  # in the event of a cancel 
             return
