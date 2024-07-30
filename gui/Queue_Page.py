@@ -191,15 +191,8 @@ class Queue_Gui(tk.Toplevel,):
             return queue_to_schedule
         
     def run_button_clicked(self):
-        self.run_button.config(state="disabled")
-        self.sp_run_button.config(state="disabled")
-
         self.schedule_queue()
 
-        time.sleep(3)
-        self.run_button.config(state="normal")
-        self.sp_run_button.config(state="normal")
-                    
     def schedule_queue(self):
         '''
         Compile the current queue into a pandas dataframe.
@@ -653,7 +646,7 @@ class Active_Queue(tk.Frame,):
 
         self.scheduled_buttons_spacer.pack()
         self.pause_button.pack(fill="x")
-        self.clear_selected_button.pack(fill="x")
+        # self.clear_selected_button.pack(fill="x") # README we have no way to select runs, so this doesn't work
         self.clear_all_button.pack(fill="x")
 
         # sample prep header
@@ -929,7 +922,7 @@ class Active_Queue(tk.Frame,):
                 elif not self.my_reader.queue_paused:
                     self.pause_button.config(text="Pause")
                     self.my_reader.update_pause_button = False
-        
+            
     def stop_immediately(self):
         '''
         Pauses queue and interupts current run.
