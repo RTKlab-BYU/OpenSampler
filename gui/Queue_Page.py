@@ -192,6 +192,7 @@ class Queue_Gui(tk.Toplevel,):
         
     def run_button_clicked(self):
         self.schedule_queue()
+        time.sleep(0.5)
 
     def schedule_queue(self):
         '''
@@ -237,7 +238,7 @@ class Queue_Gui(tk.Toplevel,):
 
         else:
             new_scheduled_queue = pd.concat([self.my_reader.scheduled_queue, compiled_queue])
-            new_scheduled_queue = new_scheduled_queue.reset_index()
+            new_scheduled_queue = new_scheduled_queue.reset_index(drop=True)
             self.my_reader.scheduled_queue = new_scheduled_queue
             self.scheduled_queue_changed = True
 

@@ -191,7 +191,10 @@ class MethodReader:  # should call read from coordinator file
         sample_count = 0
         while self.running:
         
-            if self.scheduled_queue.shape[0] <= 0:
+            try:
+                if self.scheduled_queue.shape[0] <= 0:
+                    break
+            except:
                 break
             
         
