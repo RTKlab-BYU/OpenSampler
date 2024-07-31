@@ -64,8 +64,8 @@ HIGH_SPEED = 160  # mm/s?
 STEP_CHANGE = 50  # how much to decrease step size for continuous movement
 
 SYRINGE_MM_FACTOR = 4  # 3.8896 4.16
-DEFAULT_SYRINGE_STEP = 1 * SYRINGE_MM_FACTOR # mm/s 
-DEFAULT_SYRINGE_SPEED = 1 * SYRINGE_MM_FACTOR # mm/s 
+DEFAULT_SYRINGE_STEP = 1 # mm 
+DEFAULT_SYRINGE_SPEED = 0.25 # mm/s 
 
 
 DEFAULT_VOL_STEP_SIZE = 400
@@ -532,7 +532,7 @@ class OT2_nanotrons_driver(SM):
                         self.move({'A': z}, speed= SLOW_SPEED)
                 
     def move_syringe_to(self, location, vol_speed=3000): #nL/min
-        mm_speed = self.uL_to_mm(vol_speed/1000)  * SYRINGE_MM_FACTOR /60 #nL to uL
+        mm_speed = self.uL_to_mm(vol_speed/1000)/60 #nL to uL
         self.update_position()
         if self.side == LEFT:
             if(self.check_for_valid_move(location, 'B')):

@@ -59,7 +59,7 @@ class ProtocolActions:
         self.myCoordinator.myLogger.info(f"Aspirating {float(volume)} nL at speed {float(speed)} nL/min")
         self.myCoordinator.myModules.myStages[stage].step_syringe_motor_up(volume=volume, speed=speed)
         
-    def aspirate_from_wells(self, stage, well_plate_index, well, volume, speed):
+    def aspirate_from_wells(self, stage, well_plate_index, wells, volume, speed):
 
         wells = wells.replace(" ","")
         well_list = wells.split(",")
