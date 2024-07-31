@@ -84,8 +84,8 @@ ACTION_DEFAULTS = {
 
 "dispense_to_sample": ["", "3000", "1"],
 "dispense_to_samples": ["", "3000", "1"],
-"collect_sample": ["", "3000", "1"],
-"collect_samples": ["", "3000", "1"],
+"aspirate_sample": ["", "3000", "1"],
+"aspirate_samples": ["", "3000", "1"],
 
 "Wait_Contact_Closure": ["True","D14","0"],
 "set_relay_side": ["0","Left"],
