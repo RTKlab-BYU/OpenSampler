@@ -134,7 +134,7 @@ class Connect(tk.Toplevel,):
     def __init__(self, coordinator):
         tk.Toplevel.__init__(self)    
       
-        self.title("Settings and Configuration")
+        self.title("Basic Connect")
         self.coordinator = coordinator
 
         self.available_ports = list_ports.comports()

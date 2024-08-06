@@ -123,12 +123,14 @@ class MethodReader:  # should call read from coordinator file
     def reset(self):
         self.stop_run = False
         self.queue_paused = False
+        self.update_pause_button = True
         self.current_run = None
         self.current_run_changed = True
 
     def stop_current_run(self):
         print("\n------- Stopping current run. -------\n")
         self.stop_run = True
+        self.pause_scheduled_queue()
 
     def pause_scheduled_queue(self):
         self.queue_paused = True
@@ -189,7 +191,11 @@ class MethodReader:  # should call read from coordinator file
         sample_count = 0
         while self.running:
         
-
+            try:
+                if self.scheduled_queue.shape[0] <= 0:
+                    break
+            except:
+                break
             
         
             while self.queue_paused:
@@ -211,57 +217,55 @@ class MethodReader:  # should call read from coordinator file
                 break
 
             self.scheduled_queue: pd.DataFrame
-            if self.scheduled_queue.shape[0] > 0:
-                
-                self.current_run = self.scheduled_queue.iloc[0] # set the location of 'current_run' to the first row of the scheduled queue
-                self.scheduled_queue = self.scheduled_queue.drop(self.scheduled_queue.index[0])
-                self.current_run_changed = True
-                self.scheduled_queue_changed = True
+            
+            self.current_run = self.scheduled_queue.iloc[0] # set the location of 'current_run' to the first row of the scheduled queue
+            self.scheduled_queue = self.scheduled_queue.drop(self.scheduled_queue.index[0])
+            self.current_run_changed = True
+            self.scheduled_queue_changed = True
 
-                time.sleep(3)  # lets display update before continuing
-                
+            time.sleep(3)  # lets display update before continuing
+            
 
-                
+            
+            now_date = datetime.now().strftime("%m/%d/%Y")
+            now_time = datetime.now().strftime("%I:%M %p")  # uses AM/PM time format
+            sample_count += 1
+
+            logging.info(f"Running sample {sample_count} with {self.current_run['Method']} \nStarted at {now_time} on {now_date}.")
+            print("\n*****************************************************************\n")
+            print(f"Sample {sample_count} started at {now_time} on {now_date}.")  
+
+            print(f"\nSamples remaining in scheduled queue: {int(self.scheduled_queue.shape[0])}")
+            print("\n*****************************************************************\n")
+
+            run_completed = self.run_next_sample() # run self.current_run, return True if completed without stopping
+
+            if self.error_during_run:
                 now_date = datetime.now().strftime("%m/%d/%Y")
                 now_time = datetime.now().strftime("%I:%M %p")  # uses AM/PM time format
-                sample_count += 1
-
-                logging.info(f"Running sample {sample_count} with {self.current_run['Method']} \nStarted at {now_time} on {now_date}.")
-                print("\n*****************************************************************\n")
-                print(f"Sample {sample_count} started at {now_time} on {now_date}.")  
-
-                print(f"\nSamples remaining in scheduled queue: {int(self.scheduled_queue.shape[0])}")
-                print("\n*****************************************************************\n")
-
-                run_completed = self.run_next_sample() # run self.current_run, return True if completed without stopping
-
-                if self.error_during_run:
-                    now_date = datetime.now().strftime("%m/%d/%Y")
-                    now_time = datetime.now().strftime("%I:%M %p")  # uses AM/PM time format
-                    logging.info(f"Run for sample {sample_count} !EXPERIENCED AN ERROR! at {now_time} on {now_date}.")
-                    print(f"\nRun for sample {sample_count} !EXPERIENCED AN ERROR! at {now_time} on {now_date}.")
-                    self.pause_scheduled_queue()
+                logging.info(f"Run for sample {sample_count} !EXPERIENCED AN ERROR! at {now_time} on {now_date}.")
+                print(f"\nRun for sample {sample_count} !EXPERIENCED AN ERROR! at {now_time} on {now_date}.")
+                self.pause_scheduled_queue()
+            
+            now_date = datetime.now().strftime("%m/%d/%Y")
+            now_time = datetime.now().strftime("%I:%M %p")
                 
-                now_date = datetime.now().strftime("%m/%d/%Y")
-                now_time = datetime.now().strftime("%I:%M %p")
-                    
-                if run_completed:
-                    print("\n*****************************************************************\n")
-                    logging.info(f"Run for sample {sample_count} completed at {now_time} on {now_date}.")
-                    print(f"Run for sample {sample_count} completed at {now_time} on {now_date}.")
-                    print("\n*****************************************************************\n")
-                else:
-                    print("\n*************************** Warning ******************************\n")
-                    logging.info(f"Run for sample {sample_count} was interupted by user at {now_time} on {now_date}.")
-                    print(f"Run for sample {sample_count} was interupted by user at {now_time} on {now_date}.")
-                    print("\n*****************************************************************\n")
-                        
-                
+            if run_completed:
                 print("\n*****************************************************************\n")
-                self.current_run = None
-                self.current_run_changed = True
+                logging.info(f"Run for sample {sample_count} completed at {now_time} on {now_date}.")
+                print(f"Run for sample {sample_count} completed at {now_time} on {now_date}.")
+                print("\n*****************************************************************\n")
             else:
-                break
+                print("\n*************************** Warning ******************************\n")
+                logging.info(f"Run for sample {sample_count} was interupted by user at {now_time} on {now_date}.")
+                print(f"Run for sample {sample_count} was interupted by user at {now_time} on {now_date}.")
+                print("\n*****************************************************************\n")
+                    
+            
+            print("\n*****************************************************************\n")
+            self.current_run = None
+            self.current_run_changed = True
+            
 
             
         # End of queue commands
