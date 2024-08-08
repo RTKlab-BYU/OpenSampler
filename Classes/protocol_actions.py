@@ -349,7 +349,7 @@ class ProtocolActions:
         while (pin_state != Logic):
             time.sleep(1.5)
             pin_state = self.myCoordinator.myModules.myPorts[int(Port)].getPinState(Input)            
-            print(pin_state)
+            # print(pin_state)
             if self.myCoordinator.myReader.stop_run == True:
                 break
         #print("Contact Closure")
