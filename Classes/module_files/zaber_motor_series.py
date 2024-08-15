@@ -596,6 +596,25 @@ class ZaberMotorSeries:
         # Perform an absolute displacement to move in the Z axis
         self.single_absolute_move(z_move_lower, True)
 
+    def small_move_xy(self, location, move_speed):
+
+        x = self.get_x_motor_index()
+        y = self.get_y_motor_index()
+
+        moves_list = []
+        motor_indeces = [x, y]
+        index  = 0
+        # Create the Move objects for the X-Y plane (and put them on a list)
+        for motor in motor_indeces:
+            position = location[index]
+            move_string = f"{motor_indeces[index]} {position} {move_speed}"
+            newMove = Move(move_string)
+            moves_list.append(newMove)
+            index = index + 1
+
+        # Perform a simultaneous absolute displacement to move in the X-Y plane
+        self.simultaneous_absolute_move(moves_list)
+
     def single_absolute_move_syringe(self, move: Move, first_call):
         # Reset flag for failed connection
         self.connection_error = False

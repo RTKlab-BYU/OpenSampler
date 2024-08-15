@@ -530,6 +530,23 @@ class OT2_nanotrons_driver(SM):
                         if (current_a_pos + 5) < self.a_max:
                             self.move({'A': z + 5}, speed= MEDIUM_SPEED)
                         self.move({'A': z}, speed= SLOW_SPEED)
+
+    def small_move_xy(self, location, move_speed):
+        '''
+        This function breaks a location tuple into its respective pieces. 
+        Then it checks with the motors for a real position update.
+        Next it checks that each component of the move is an allowed movement (in bounds).
+        Before moving to the desired location it moves the z and a axes out of the way.
+        Then finally it sends the commands to move to the target location.
+        '''
+
+        x = location[0] 
+        y = location[1] 
+
+        self.update_position()
+
+        self.move({'Y': y}, speed= move_speed)
+        self.move({'X': x}, speed= move_speed)
                 
     def move_syringe_to(self, location, vol_speed=3000): #nL/min
         mm_speed = self.uL_to_mm(vol_speed/1000)/60 #nL to uL

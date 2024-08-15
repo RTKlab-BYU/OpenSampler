@@ -180,31 +180,39 @@ class ProtocolActions:
             # coordinates of well center
             location: tuple = self.myCoordinator.myModules.myStages[stage].myLabware.get_well_location(int(plate), well)
             x = location[0] 
-            y = location[1] 
+            y = location[1]
+            z = location[2] 
             
             # move "up" by spread distance (mm)
             y = y + spread
-            self.myCoordinator.myModules.myStages[stage].move({'Y': y}, speed=spread)
+            new_location = (x,y,z)
+            
+            self.myCoordinator.myModules.myStages[stage].small_move_xy(new_location, move_speed=spread)
 
             # move "left" by spread distance (mm)
             x = x + spread
-            self.myCoordinator.myModules.myStages[stage].move({'X': x}, speed=spread)
+            new_location = (x,y,z)
+            self.myCoordinator.myModules.myStages[stage].small_move_xy(new_location, move_speed=spread)
 
             # move "down" by 2x spread distance (mm)
             y = y - (2*spread)
-            self.myCoordinator.myModules.myStages[stage].move({'Y': y}, speed=spread)
+            new_location = (x,y,z)
+            self.myCoordinator.myModules.myStages[stage].small_move_xy(new_location, move_speed=spread)
 
             # move "right" by 2x spread distance (mm)
             x = x - (2*spread)
-            self.myCoordinator.myModules.myStages[stage].move({'X': x}, speed=spread)
+            new_location = (x,y,z)
+            self.myCoordinator.myModules.myStages[stage].small_move_xy(new_location, move_speed=spread)
 
             # move "up" by 2x spread distance (mm)
             y = y + (2*spread)
-            self.myCoordinator.myModules.myStages[stage].move({'Y': y}, speed=spread)
+            new_location = (x,y,z)
+            self.myCoordinator.myModules.myStages[stage].small_move_xy(new_location, move_speed=spread)
 
             # move "left" by spread distance (mm)
             x = x + spread
-            self.myCoordinator.myModules.myStages[stage].move({'X': x}, speed=spread)
+            new_location = (x,y,z)
+            self.myCoordinator.myModules.myStages[stage].small_move_xy(new_location, move_speed=spread)
             
             self.aspirate_in_place(stage, volume, speed)
             self.wait(wait_seconds)
