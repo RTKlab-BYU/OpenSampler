@@ -58,9 +58,9 @@ MEDIUM_LONG_STEP_LIMIT = 50 # used for determining appropriate motor speeds
 APPROACH_DISTANCE = 30 # Distance from target where robot slows down if needed
 
 DEFAULT_STEP_SPEED = 10  # default speed for protocols (only used if user forgets to specify speeds)
-SLOW_SPEED = 10  # mm/s?
-MEDIUM_SPEED = 40  # mm/s?
-HIGH_SPEED = 160  # mm/s?
+SLOW_SPEED = 10  # mm/s
+MEDIUM_SPEED = 40  # mm/s
+HIGH_SPEED = 160  # mm/s
 STEP_CHANGE = 50  # how much to decrease step size for continuous movement
 
 SYRINGE_MM_FACTOR = 4  # 3.8896 4.16
@@ -502,9 +502,9 @@ class OT2_nanotrons_driver(SM):
         Then finally it sends the commands to move to the target location.
         '''
 
-        x = location[0] #or self.ot_control._position["X"]
-        y = location[1] #or self.ot_control._position["Y"]
-        z = location[2] #or self.ot_control._position["Z"]
+        x = location[0] 
+        y = location[1] 
+        z = location[2]
 
         self.update_position()
         current_z_pos = self._position['Z']

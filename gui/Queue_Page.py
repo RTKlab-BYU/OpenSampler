@@ -842,45 +842,49 @@ class Active_Queue(tk.Frame,):
         '''
 
         dataframe_as_list = []
+        skip = False
 
         if queue_type == None:
             queue_type = self.active_queue_type
 
         try:
             if dataframe.empty == True:
-                print("Dataframe is empty")
-                pass    
-        
-            elif queue_type == "Sample Prep":
-                for row_index in range(dataframe.shape[0]):
-                    scheduled_run = Sample_Prep_Inputs(self.scheduled_runs_inner, self.coordinator)
-                    scheduled_run.method_var.set(dataframe[SP_HEADERS[0]].loc[dataframe.index[row_index]])
-
-                    dataframe_as_list.append(scheduled_run)
-
-            elif queue_type == "Mass Spec":
-                for row_index in range(dataframe.shape[0]):
-                    scheduled_run = MS_Queue_Row_Inputs(self.scheduled_runs_inner, self.coordinator)
-                    scheduled_run.stage_var.set(dataframe[MS_HEADERS[0]].loc[dataframe.index[row_index]])
-                    scheduled_run.wellplate_var.set(dataframe[MS_HEADERS[1]].loc[dataframe.index[row_index]])
-                    scheduled_run.well_var.set(dataframe[MS_HEADERS[2]].loc[dataframe.index[row_index]])
-                    scheduled_run.method_var.set(dataframe[MS_HEADERS[3]].loc[dataframe.index[row_index]])
-
-                    dataframe_as_list.append(scheduled_run)
-            
-            elif queue_type == "Fractionation":
-                for row_index in range(dataframe.shape[0]):
-                    scheduled_run = Frac_Queue_Row_Inputs(self.scheduled_runs_inner, self.coordinator)
-                    scheduled_run.stage_var.set(dataframe[FRAC_HEADERS[0]].loc[dataframe.index[row_index]])
-                    scheduled_run.wellplate_var.set(dataframe[FRAC_HEADERS[1]].loc[dataframe.index[row_index]])
-                    scheduled_run.sample_wells_var.set(dataframe[FRAC_HEADERS[2]].loc[dataframe.index[row_index]])
-                    scheduled_run.elution_wells_var.set(dataframe[FRAC_HEADERS[3]].loc[dataframe.index[row_index]])
-                    scheduled_run.method_var.set(dataframe[FRAC_HEADERS[4]].loc[dataframe.index[row_index]])
-
-                    dataframe_as_list.append(scheduled_run)
+                skip = True
         except:
-            print("Hit a snag trying to compile list from dataframe!")
-            dataframe_as_list = []
+            # print("Dataframe not recognized!!!")
+            skip = True
+
+        if skip:
+            pass
+
+        elif queue_type == "Sample Prep":
+            for row_index in range(dataframe.shape[0]):
+                scheduled_run = Sample_Prep_Inputs(self.scheduled_runs_inner, self.coordinator)
+                scheduled_run.method_var.set(dataframe[SP_HEADERS[0]].loc[dataframe.index[row_index]])
+
+                dataframe_as_list.append(scheduled_run)
+
+        elif queue_type == "Mass Spec":
+            for row_index in range(dataframe.shape[0]):
+                scheduled_run = MS_Queue_Row_Inputs(self.scheduled_runs_inner, self.coordinator)
+                scheduled_run.stage_var.set(dataframe[MS_HEADERS[0]].loc[dataframe.index[row_index]])
+                scheduled_run.wellplate_var.set(dataframe[MS_HEADERS[1]].loc[dataframe.index[row_index]])
+                scheduled_run.well_var.set(dataframe[MS_HEADERS[2]].loc[dataframe.index[row_index]])
+                scheduled_run.method_var.set(dataframe[MS_HEADERS[3]].loc[dataframe.index[row_index]])
+
+                dataframe_as_list.append(scheduled_run)
+        
+        elif queue_type == "Fractionation":
+            for row_index in range(dataframe.shape[0]):
+                scheduled_run = Frac_Queue_Row_Inputs(self.scheduled_runs_inner, self.coordinator)
+                scheduled_run.stage_var.set(dataframe[FRAC_HEADERS[0]].loc[dataframe.index[row_index]])
+                scheduled_run.wellplate_var.set(dataframe[FRAC_HEADERS[1]].loc[dataframe.index[row_index]])
+                scheduled_run.sample_wells_var.set(dataframe[FRAC_HEADERS[2]].loc[dataframe.index[row_index]])
+                scheduled_run.elution_wells_var.set(dataframe[FRAC_HEADERS[3]].loc[dataframe.index[row_index]])
+                scheduled_run.method_var.set(dataframe[FRAC_HEADERS[4]].loc[dataframe.index[row_index]])
+
+                dataframe_as_list.append(scheduled_run)
+        
 
         return dataframe_as_list
 
