@@ -964,7 +964,7 @@ class Active_Queue(tk.Frame,):
         self.my_reader.scheduled_queue = None  # overwrite any scheduled runs
         self.my_reader.scheduled_queue_changed = True
         self.my_reader.resume_scheduled_queue()  # if paused, resume
-        print("Clear all - This should be working now.")
+        print("Clearing scheduled queue. Current run will continue unless interupted.")
 
 
 class Sample_Prep_Inputs(tk.Frame,):
