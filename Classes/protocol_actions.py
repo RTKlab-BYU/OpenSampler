@@ -376,7 +376,7 @@ class ProtocolActions:
             if minutes > 60:
                 hours = minutes//60
                 minutes = minutes%60
-            print(f"Wait called at {current_time}: Wait for {hours} h, {minutes} min, {seconds} s")
+            print(f"Wait called at {current_time}: Wait for {hours} h, {minutes} min, {seconds_remainder} s")
         seconds_waited = 0
         while seconds_waited < int(seconds) and not self.myCoordinator.myReader.stop_run == True:
             time.sleep(1)
