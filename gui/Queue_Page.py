@@ -203,7 +203,7 @@ class Queue_Gui(tk.Toplevel,):
             for index, row in proposed_queue.iterrows():
                 row["Well"] = row["Well"].replace(" ", "")
                 if row["Well"] == '':
-                    message = F"Well not specified in row {index} of proposed queue."
+                    message = F"Well not specified in row '{index}' of proposed queue."
                     self.queue_error_message = messagebox.showwarning(parent=self, title="Missing Entry", message=message)
                     return False
 
@@ -213,7 +213,7 @@ class Queue_Gui(tk.Toplevel,):
                     well_exists = self.coordinator.myModules.myStages[row["Stage"]].myLabware.check_well_exists(int(row["Wellplate"]), well)
 
                     if not well_exists:
-                        message = f"Well {well} does not exist for wellplate {row['Wellplate']}"
+                        message = f"Well '{well}' does not exist for wellplate {row['Wellplate']}"
                         self.queue_error_message = messagebox.showwarning(parent=self, title="Entry Not Recognized", message=message)
                         return False
 
@@ -229,7 +229,7 @@ class Queue_Gui(tk.Toplevel,):
             with open(path_to_method, 'r') as myfile: # open file
                 data = myfile.read()
         except:
-            message = f"Method not found on the record.\n Method Path: {path_to_method}"
+            message = f"Method not found on the record.\n Method Path Submitted: '{path_to_method}'"
             self.queue_error_message = messagebox.showwarning(parent=self, title="Entry Not Recognized", message=message)
             return False
         else:
@@ -238,16 +238,26 @@ class Queue_Gui(tk.Toplevel,):
                 for parameter in command["parameters"]:
                     if parameter == "":
 
-                        message = f"A parameter in the proposed queue (row {index}) is blank. \nFix and resubmit!"
+                        message = f"A parameter in the proposed queue (row '{index}') is blank. \nFix and resubmit!"
                         self.queue_error_message = messagebox.showwarning(parent=self, title="Missing Entry", message=message)
                         return False
                 if command["type"] == "run_sub_method":
                     self.verify_method(self, command["parameters"][0])
 
-                if command["type"] in WELL_ACTIONS:
+                elif command["type"] in WELL_ACTIONS:
                     stage = command["parameters"][0]
+                    wellplate_index = int(command["parameters"][1])
+                    wells = command["parameters"][2]
+                    wells = wells.replace(" ", "")
+
+                    for well in wells.split(","):
+                        well_exists = self.coordinator.myModules.myStages[stage].myLabware.check_well_exists(wellplate_index, well)
+                        if not well_exists:
+                            message = f"Well '{well}' does not exist for wellplate {wellplate_index}"
+                            self.queue_error_message = messagebox.showwarning(parent=self, title="Entry Not Recognized", message=message)
+                            return False
                 
-                if command["type"] in LOCATION_ACTIONS:
+                elif command["type"] in LOCATION_ACTIONS:
                     stage = command["parameters"][0]
                     location_name = command["parameters"][1]
                     stage_exists = stage in self.coordinator.myModules.myStages.keys()
@@ -257,13 +267,14 @@ class Queue_Gui(tk.Toplevel,):
                             pass
                         else:
 
-                            message = f"Cannot find location named: {location_name}"
+                            message = f"Cannot find location named: '{location_name}'"
                             self.queue_error_message = messagebox.showwarning(parent=self, title="Entry Not Recognized", message=message)
                             return False
                     else:
-                        message = f"Cannot find stage named: {location_name}"
+                        message = f"Cannot find stage named: '{location_name}'"
                         self.queue_error_message = messagebox.showwarning(parent=self, title="Entry Not Recognized", message=message)
                         return False
+                    
             return True
                     
     def verify_methods(self, proposed_queue: pd.DataFrame): # checks all the json files in CSV to make sure they all exist
