@@ -367,13 +367,14 @@ class ProtocolActions:
         # t = time.localtime()
         current_time = datetime.datetime.now().strftime("%I:%M %p")  # uses AM/PM time format
         seconds = int(seconds)
+        seconds_remainder = seconds
         minutes = 0
         hours = 0
         if seconds > 1:
-            if seconds > 60:
+            if seconds >= 60:
                 minutes = seconds//60
                 seconds_remainder = seconds%60
-            if minutes > 60:
+            if minutes >= 60:
                 hours = minutes//60
                 minutes = minutes%60
             print(f"Wait called at {current_time}: Wait for {hours} h, {minutes} min, {seconds_remainder} s")

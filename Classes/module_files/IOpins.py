@@ -25,7 +25,7 @@ class SerialPort:
         else:
             self.ser = Serial(port=self.port, baudrate=115200,
                                     bytesize=8, timeout=1, stopbits=STOPBITS_ONE)
-            print(self.ser)
+            # print(self.ser)
 
     def find_port(self, name):
         """Find the serial port with specific name
