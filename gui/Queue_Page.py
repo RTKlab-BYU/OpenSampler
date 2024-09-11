@@ -191,15 +191,9 @@ class Queue_Gui(tk.Toplevel,):
             return queue_to_schedule
         
     def run_button_clicked(self):
-        self.run_button.config(state="disabled")
-        self.sp_run_button.config(state="disabled")
-
         self.schedule_queue()
+        time.sleep(0.5)
 
-        time.sleep(3)
-        self.run_button.config(state="normal")
-        self.sp_run_button.config(state="normal")
-                    
     def schedule_queue(self):
         '''
         Compile the current queue into a pandas dataframe.
@@ -244,7 +238,7 @@ class Queue_Gui(tk.Toplevel,):
 
         else:
             new_scheduled_queue = pd.concat([self.my_reader.scheduled_queue, compiled_queue])
-            new_scheduled_queue = new_scheduled_queue.reset_index()
+            new_scheduled_queue = new_scheduled_queue.reset_index(drop=True)
             self.my_reader.scheduled_queue = new_scheduled_queue
             self.scheduled_queue_changed = True
 
@@ -653,7 +647,7 @@ class Active_Queue(tk.Frame,):
 
         self.scheduled_buttons_spacer.pack()
         self.pause_button.pack(fill="x")
-        self.clear_selected_button.pack(fill="x")
+        # self.clear_selected_button.pack(fill="x") # README we have no way to select runs, so this doesn't work
         self.clear_all_button.pack(fill="x")
 
         # sample prep header
@@ -848,45 +842,49 @@ class Active_Queue(tk.Frame,):
         '''
 
         dataframe_as_list = []
+        skip = False
 
         if queue_type == None:
             queue_type = self.active_queue_type
 
         try:
             if dataframe.empty == True:
-                print("Dataframe is empty")
-                pass    
-        
-            elif queue_type == "Sample Prep":
-                for row_index in range(dataframe.shape[0]):
-                    scheduled_run = Sample_Prep_Inputs(self.scheduled_runs_inner, self.coordinator)
-                    scheduled_run.method_var.set(dataframe[SP_HEADERS[0]].loc[dataframe.index[row_index]])
-
-                    dataframe_as_list.append(scheduled_run)
-
-            elif queue_type == "Mass Spec":
-                for row_index in range(dataframe.shape[0]):
-                    scheduled_run = MS_Queue_Row_Inputs(self.scheduled_runs_inner, self.coordinator)
-                    scheduled_run.stage_var.set(dataframe[MS_HEADERS[0]].loc[dataframe.index[row_index]])
-                    scheduled_run.wellplate_var.set(dataframe[MS_HEADERS[1]].loc[dataframe.index[row_index]])
-                    scheduled_run.well_var.set(dataframe[MS_HEADERS[2]].loc[dataframe.index[row_index]])
-                    scheduled_run.method_var.set(dataframe[MS_HEADERS[3]].loc[dataframe.index[row_index]])
-
-                    dataframe_as_list.append(scheduled_run)
-            
-            elif queue_type == "Fractionation":
-                for row_index in range(dataframe.shape[0]):
-                    scheduled_run = Frac_Queue_Row_Inputs(self.scheduled_runs_inner, self.coordinator)
-                    scheduled_run.stage_var.set(dataframe[FRAC_HEADERS[0]].loc[dataframe.index[row_index]])
-                    scheduled_run.wellplate_var.set(dataframe[FRAC_HEADERS[1]].loc[dataframe.index[row_index]])
-                    scheduled_run.sample_wells_var.set(dataframe[FRAC_HEADERS[2]].loc[dataframe.index[row_index]])
-                    scheduled_run.elution_wells_var.set(dataframe[FRAC_HEADERS[3]].loc[dataframe.index[row_index]])
-                    scheduled_run.method_var.set(dataframe[FRAC_HEADERS[4]].loc[dataframe.index[row_index]])
-
-                    dataframe_as_list.append(scheduled_run)
+                skip = True
         except:
-            print("Hit a snag trying to compile list from dataframe!")
-            dataframe_as_list = []
+            # print("Dataframe not recognized!!!")
+            skip = True
+
+        if skip:
+            pass
+
+        elif queue_type == "Sample Prep":
+            for row_index in range(dataframe.shape[0]):
+                scheduled_run = Sample_Prep_Inputs(self.scheduled_runs_inner, self.coordinator)
+                scheduled_run.method_var.set(dataframe[SP_HEADERS[0]].loc[dataframe.index[row_index]])
+
+                dataframe_as_list.append(scheduled_run)
+
+        elif queue_type == "Mass Spec":
+            for row_index in range(dataframe.shape[0]):
+                scheduled_run = MS_Queue_Row_Inputs(self.scheduled_runs_inner, self.coordinator)
+                scheduled_run.stage_var.set(dataframe[MS_HEADERS[0]].loc[dataframe.index[row_index]])
+                scheduled_run.wellplate_var.set(dataframe[MS_HEADERS[1]].loc[dataframe.index[row_index]])
+                scheduled_run.well_var.set(dataframe[MS_HEADERS[2]].loc[dataframe.index[row_index]])
+                scheduled_run.method_var.set(dataframe[MS_HEADERS[3]].loc[dataframe.index[row_index]])
+
+                dataframe_as_list.append(scheduled_run)
+        
+        elif queue_type == "Fractionation":
+            for row_index in range(dataframe.shape[0]):
+                scheduled_run = Frac_Queue_Row_Inputs(self.scheduled_runs_inner, self.coordinator)
+                scheduled_run.stage_var.set(dataframe[FRAC_HEADERS[0]].loc[dataframe.index[row_index]])
+                scheduled_run.wellplate_var.set(dataframe[FRAC_HEADERS[1]].loc[dataframe.index[row_index]])
+                scheduled_run.sample_wells_var.set(dataframe[FRAC_HEADERS[2]].loc[dataframe.index[row_index]])
+                scheduled_run.elution_wells_var.set(dataframe[FRAC_HEADERS[3]].loc[dataframe.index[row_index]])
+                scheduled_run.method_var.set(dataframe[FRAC_HEADERS[4]].loc[dataframe.index[row_index]])
+
+                dataframe_as_list.append(scheduled_run)
+        
 
         return dataframe_as_list
 
@@ -929,7 +927,7 @@ class Active_Queue(tk.Frame,):
                 elif not self.my_reader.queue_paused:
                     self.pause_button.config(text="Pause")
                     self.my_reader.update_pause_button = False
-        
+            
     def stop_immediately(self):
         '''
         Pauses queue and interupts current run.
@@ -966,7 +964,7 @@ class Active_Queue(tk.Frame,):
         self.my_reader.scheduled_queue = None  # overwrite any scheduled runs
         self.my_reader.scheduled_queue_changed = True
         self.my_reader.resume_scheduled_queue()  # if paused, resume
-        print("Clear all - This should be working now.")
+        print("Clearing scheduled queue. Current run will continue unless interupted.")
 
 
 class Sample_Prep_Inputs(tk.Frame,):

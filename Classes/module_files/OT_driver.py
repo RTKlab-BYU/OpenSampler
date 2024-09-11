@@ -58,14 +58,14 @@ MEDIUM_LONG_STEP_LIMIT = 50 # used for determining appropriate motor speeds
 APPROACH_DISTANCE = 30 # Distance from target where robot slows down if needed
 
 DEFAULT_STEP_SPEED = 10  # default speed for protocols (only used if user forgets to specify speeds)
-SLOW_SPEED = 10  # mm/s?
-MEDIUM_SPEED = 40  # mm/s?
-HIGH_SPEED = 160  # mm/s?
+SLOW_SPEED = 10  # mm/s
+MEDIUM_SPEED = 40  # mm/s
+HIGH_SPEED = 160  # mm/s
 STEP_CHANGE = 50  # how much to decrease step size for continuous movement
 
 SYRINGE_MM_FACTOR = 4  # 3.8896 4.16
-DEFAULT_SYRINGE_STEP = 1 * SYRINGE_MM_FACTOR # mm/s 
-DEFAULT_SYRINGE_SPEED = 1 * SYRINGE_MM_FACTOR # mm/s 
+DEFAULT_SYRINGE_STEP = 1 # mm 
+DEFAULT_SYRINGE_SPEED = 0.25 # mm/s 
 
 
 DEFAULT_VOL_STEP_SIZE = 400
@@ -502,9 +502,9 @@ class OT2_nanotrons_driver(SM):
         Then finally it sends the commands to move to the target location.
         '''
 
-        x = location[0] #or self.ot_control._position["X"]
-        y = location[1] #or self.ot_control._position["Y"]
-        z = location[2] #or self.ot_control._position["Z"]
+        x = location[0] 
+        y = location[1] 
+        z = location[2]
 
         self.update_position()
         current_z_pos = self._position['Z']
@@ -530,9 +530,26 @@ class OT2_nanotrons_driver(SM):
                         if (current_a_pos + 5) < self.a_max:
                             self.move({'A': z + 5}, speed= MEDIUM_SPEED)
                         self.move({'A': z}, speed= SLOW_SPEED)
+
+    def small_move_xy(self, location, move_speed):
+        '''
+        This function breaks a location tuple into its respective pieces. 
+        Then it checks with the motors for a real position update.
+        Next it checks that each component of the move is an allowed movement (in bounds).
+        Before moving to the desired location it moves the z and a axes out of the way.
+        Then finally it sends the commands to move to the target location.
+        '''
+
+        x = location[0] 
+        y = location[1] 
+
+        self.update_position()
+
+        self.move({'Y': y}, speed= move_speed)
+        self.move({'X': x}, speed= move_speed)
                 
     def move_syringe_to(self, location, vol_speed=3000): #nL/min
-        mm_speed = self.uL_to_mm(vol_speed/1000)  * SYRINGE_MM_FACTOR /60 #nL to uL
+        mm_speed = self.uL_to_mm(vol_speed/1000)/60 #nL to uL
         self.update_position()
         if self.side == LEFT:
             if(self.check_for_valid_move(location, 'B')):

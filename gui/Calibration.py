@@ -332,6 +332,5 @@ class Calibration(tk.Toplevel,):
     def on_closing(self):
         self.kill_joystick()
         time.sleep(3)
-        print("Thread Closed")
         self.destroy()
 

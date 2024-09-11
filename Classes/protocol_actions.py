@@ -1,9 +1,11 @@
+import datetime 
 import json
 import time
-import os
 import threading
-print(os.getcwd())
+
+
 from Classes.module_files.labware import Labware
+import datetime
 
 MS_WAIT_TIMEOUT = 20 # Time allowed before ignoring he triggering of the MS
 MS_ANALYZE_TIMEOUT = 40 # Time we allow for the MS to stop analyzing the previous cycle and going back to waiting so that it can start analyzing the current sample
@@ -12,6 +14,7 @@ LC_RELAY = 0
 MS_INPUT = "D14"
 MS_INPUT_PORT = 0
 DEFAULT_OUTPUT = 0
+
 
 
 class ProtocolActions:
@@ -47,19 +50,8 @@ class ProtocolActions:
 
 
     # Compounded Commands (convenient combinations of basic commands)
-
-    def aspirate_from_well(self, stage, well_plate_index, well, volume, speed):
-
-        # get well xyz coordinates
-        location = self.myCoordinator.myModules.myStages[stage].myLabware.get_well_location(int(well_plate_index), well) 
-
-        self.myCoordinator.myLogger.info(f"Moving to wellplate '{well_plate_index}' at {location}")
-        self.myCoordinator.myModules.myStages[stage].move_to(location)
-
-        self.myCoordinator.myLogger.info(f"Aspirating {float(volume)} nL at speed {float(speed)} nL/min")
-        self.myCoordinator.myModules.myStages[stage].step_syringe_motor_up(volume=volume, speed=speed)
-        
-    def aspirate_from_wells(self, stage, well_plate_index, well, volume, speed):
+       
+    def aspirate_from_wells(self, stage, well_plate_index, wells, volume, speed):
 
         wells = wells.replace(" ","")
         well_list = wells.split(",")
@@ -78,18 +70,6 @@ class ProtocolActions:
     def aspirate_from_location(self, stage, location_name, volume, speed):
         self.move_to_location(stage, location_name)
         self.aspirate_in_place(stage, volume, speed)
-
-    def dispense_to_well(self, stage, well_plate_index, well, volume, speed):
-        
-        # get well xyz coordinates
-        location = self.myCoordinator.myModules.myStages[stage].myLabware.get_well_location(int(well_plate_index), well) # Tuple (x,y,z) 
-        self.myCoordinator.myLogger.info(f"Moving to wellplate '{well_plate_index}' at {location}")
-
-        self.myCoordinator.myModules.myStages[stage].move_to(location)
-
-        self.myCoordinator.myLogger.info(f"Aspirating {float(volume)} nL at speed {float(speed)} nL/min")
-
-        self.myCoordinator.myModules.myStages[stage].step_syringe_motor_down(volume=volume, speed=speed)
 
     def dispense_to_wells(self, stage, well_plate_index, wells, volume, speed):
 
@@ -111,24 +91,33 @@ class ProtocolActions:
         self.move_to_location(stage, location_name)
         self.dispense_in_place(stage, volume, speed)
 
+    '''
+    # def aspirate_from_well(self, stage, well_plate_index, well, volume, speed):
 
-    # LC-MS Commands (specify target wells at run time)
+    #     # get well xyz coordinates
+    #     location = self.myCoordinator.myModules.myStages[stage].myLabware.get_well_location(int(well_plate_index), well) 
 
-    def aspirate_sample(self, volume, speed, wait_seconds):
-        '''
-        this is a mass spec method. 
-        it retrieves the current sample specs from the method reader, and unpackages them.
-        it moves to the well, waits for a specified time, aspirates the volume, waits again.
-        '''
-        # need stage, plate, well
-        stage = self.myCoordinator.myReader.current_run["Stage"] 
-        plate = int(self.myCoordinator.myReader.current_run["Wellplate"])  # uses index value for now...
-        well = self.myCoordinator.myReader.current_run["Well"]
+    #     self.myCoordinator.myLogger.info(f"Moving to wellplate '{well_plate_index}' at {location}")
+    #     self.myCoordinator.myModules.myStages[stage].move_to(location)
 
-        self.move_to_well(stage, plate, well)
-        self.wait(wait_seconds)
-        self.aspirate_in_place(stage, volume, speed)
-        self.wait(wait_seconds)
+    #     self.myCoordinator.myLogger.info(f"Aspirating {float(volume)} nL at speed {float(speed)} nL/min")
+    #     self.myCoordinator.myModules.myStages[stage].step_syringe_motor_up(volume=volume, speed=speed)
+
+    # def dispense_to_well(self, stage, well_plate_index, well, volume, speed):
+        
+    #     # get well xyz coordinates
+    #     location = self.myCoordinator.myModules.myStages[stage].myLabware.get_well_location(int(well_plate_index), well) # Tuple (x,y,z) 
+    #     self.myCoordinator.myLogger.info(f"Moving to wellplate '{well_plate_index}' at {location}")
+
+    #     self.myCoordinator.myModules.myStages[stage].move_to(location)
+
+    #     self.myCoordinator.myLogger.info(f"Aspirating {float(volume)} nL at speed {float(speed)} nL/min")
+
+    #     self.myCoordinator.myModules.myStages[stage].step_syringe_motor_down(volume=volume, speed=speed)
+    '''
+
+
+    ## LC-MS Commands (specify target wells at run time)
 
     def aspirate_samples(self, volume, speed, wait_seconds):
         '''
@@ -145,26 +134,10 @@ class ProtocolActions:
 
         for well in wells.split(","):
             self.move_to_well(stage, plate, well)
-            self.wait(wait_seconds)
             self.aspirate_in_place(stage, volume, speed)
-            self.wait(wait_seconds)
+            if not wait_seconds==0:
+                self.wait(wait_seconds)
             
-    def dispense_to_sample(self, volume, speed, wait_seconds):
-        '''
-        this is a mass spec method. 
-        it retrieves the current sample specs from the method reader, and unpackages them.
-        it moves to the well, waits for a specified time, aspirates the volume, waits again.
-        '''
-        # need stage, plate, well
-        stage = self.myCoordinator.myReader.current_run["Stage"] 
-        plate = int(self.myCoordinator.myReader.current_run["Wellplate"])  # uses index value for now...
-        well = self.myCoordinator.myReader.current_run["Well"]
-
-        self.move_to_well(stage, plate, well)
-        self.wait(wait_seconds)
-        self.dispense_in_place(stage, volume, speed)
-        self.wait(wait_seconds)
-
     def dispense_to_samples(self, volume, speed, wait_seconds):
         '''
         this is a mass spec method. 
@@ -180,12 +153,106 @@ class ProtocolActions:
 
         for well in wells.split(","):
             self.move_to_well(stage, plate, well)
-            self.wait(wait_seconds)
             self.dispense_in_place(stage, volume, speed)
+            if not wait_seconds==0:
+                self.wait(wait_seconds)
+
+    def pool_samples(self, volume, speed, spread, wait_seconds):
+        '''
+        this is a mass spec method for pooling labeled samples. 
+        The capillary needle must be moved around to collect all pico-well samples. 
+        The needle starts in the middle of the well just like other sample commands.
+        after dispensing liquid, the needle moves a chosen "spread" distance in the y axis.
+        it then makes a circuit around the well before aspirating the sample once more.
+        '''
+        # need stage, plate, well
+        stage = self.myCoordinator.myReader.current_run["Stage"]
+        plate = int(self.myCoordinator.myReader.current_run["Wellplate"])  # uses index value for now...
+        wells: str = self.myCoordinator.myReader.current_run["Well"]
+        spread = float(spread)
+        
+        wells.replace(" ", "")
+
+        for well in wells.split(","):
+            self.move_to_well(stage, plate, well)
+            self.dispense_in_place(stage, volume, speed)
+
+            # coordinates of well center
+            location: tuple = self.myCoordinator.myModules.myStages[stage].myLabware.get_well_location(int(plate), well)
+            x = location[0] 
+            y = location[1]
+            z = location[2] 
+            
+            # move "up" by spread distance (mm)
+            y = y + spread
+            new_location = (x,y,z)
+            
+            self.myCoordinator.myModules.myStages[stage].small_move_xy(new_location, move_speed=spread)
+
+            # move "left" by spread distance (mm)
+            x = x + spread
+            new_location = (x,y,z)
+            self.myCoordinator.myModules.myStages[stage].small_move_xy(new_location, move_speed=spread)
+
+            # move "down" by 2x spread distance (mm)
+            y = y - (2*spread)
+            new_location = (x,y,z)
+            self.myCoordinator.myModules.myStages[stage].small_move_xy(new_location, move_speed=spread)
+
+            # move "right" by 2x spread distance (mm)
+            x = x - (2*spread)
+            new_location = (x,y,z)
+            self.myCoordinator.myModules.myStages[stage].small_move_xy(new_location, move_speed=spread)
+
+            # move "up" by 2x spread distance (mm)
+            y = y + (2*spread)
+            new_location = (x,y,z)
+            self.myCoordinator.myModules.myStages[stage].small_move_xy(new_location, move_speed=spread)
+
+            # move "left" by spread distance (mm)
+            x = x + spread
+            new_location = (x,y,z)
+            self.myCoordinator.myModules.myStages[stage].small_move_xy(new_location, move_speed=spread)
+            
+            self.aspirate_in_place(stage, volume, speed)
             self.wait(wait_seconds)
 
+    '''
+    # def aspirate_sample(self, volume, speed, wait_seconds):
+    #     
+    #     # this is a mass spec method. 
+    #     # it retrieves the current sample specs from the method reader, and unpackages them.
+    #     # it moves to the well, waits for a specified time, aspirates the volume, waits again.
+    #     
+    #     # need stage, plate, well
+    #     stage = self.myCoordinator.myReader.current_run["Stage"] 
+    #     plate = int(self.myCoordinator.myReader.current_run["Wellplate"])  # uses index value for now...
+    #     well = self.myCoordinator.myReader.current_run["Well"]
+
+    #     self.move_to_well(stage, plate, well)
+    #     self.wait(wait_seconds)
+    #     self.aspirate_in_place(stage, volume, speed)
+    #     self.wait(wait_seconds)
+
+    # def dispense_to_sample(self, volume, speed, wait_seconds):
+    #     
+    #     # this is a mass spec method. 
+    #     # it retrieves the current sample specs from the method reader, and unpackages them.
+    #     # it moves to the well, waits for a specified time, aspirates the volume, waits again.
+    #     
+    #     # need stage, plate, well
+    #     stage = self.myCoordinator.myReader.current_run["Stage"] 
+    #     plate = int(self.myCoordinator.myReader.current_run["Wellplate"])  # uses index value for now...
+    #     well = self.myCoordinator.myReader.current_run["Well"]
+
+    #     self.move_to_well(stage, plate, well)
+    #     self.wait(wait_seconds)
+    #     self.dispense_in_place(stage, volume, speed)
+    #     self.wait(wait_seconds)
+    '''
     
-    # Syringe Commands
+
+    ## Syringe Commands
 
     def syringe_to_max(self, stage, nL_min_speed):
         speed = float(nL_min_speed) # pre min to per sec
@@ -280,14 +347,37 @@ class ProtocolActions:
             self.myCoordinator.myLogger.info("Skipping MS Contact Closure")
           #  return "Skipped MS Trigger"
 
+    def Wait_Contact_Closure(self, Logic, Input = MS_INPUT, Port = MS_INPUT_PORT):
+        Logic = Logic == "True"
+        pin_state = self.myCoordinator.myModules.myPorts[int(Port)].getPinState(Input)
+        #print((Logic))
+        while (pin_state != Logic):
+            time.sleep(1.5)
+            pin_state = self.myCoordinator.myModules.myPorts[int(Port)].getPinState(Input)            
+            # print(pin_state)
+            if self.myCoordinator.myReader.stop_run == True:
+                break
+        #print("Contact Closure")
+
 
     # Other Commands
 
     def wait(self, seconds):
         # pauses system, but checks for stop_run
-        t = time.localtime()
-        current_time = time.strftime("%H:%M:%S", t)
-        print(f"{current_time}: Wait for {int(seconds)} seconds")
+        # t = time.localtime()
+        current_time = datetime.datetime.now().strftime("%I:%M %p")  # uses AM/PM time format
+        seconds = int(seconds)
+        seconds_remainder = seconds
+        minutes = 0
+        hours = 0
+        if seconds > 1:
+            if seconds >= 60:
+                minutes = seconds//60
+                seconds_remainder = seconds%60
+            if minutes >= 60:
+                hours = minutes//60
+                minutes = minutes%60
+            print(f"Wait called at {current_time}: Wait for {hours} h, {minutes} min, {seconds_remainder} s")
         seconds_waited = 0
         while seconds_waited < int(seconds) and not self.myCoordinator.myReader.stop_run == True:
             time.sleep(1)
@@ -313,7 +403,6 @@ class ProtocolActions:
             getattr(self.myCoordinator.actionOptions, command['type'])(*params)
 
 
-    
     # Dual Column Commands
 
     def run_sub_method_simultaneously(self, scriptName): #Untracked works better if not necessary
@@ -342,17 +431,7 @@ class ProtocolActions:
         else:
             print(f"{value} is not a valid side")
 
-    def Wait_Contact_Closure(self, Logic, Input = MS_INPUT, Port = MS_INPUT_PORT):
-        Logic = Logic == "True"
-        pin_state = self.myCoordinator.myModules.myPorts[int(Port)].getPinState(Input)
-        #print((Logic))
-        while (pin_state != Logic):
-            time.sleep(1.5)
-            pin_state = self.myCoordinator.myModules.myPorts[int(Port)].getPinState(Input)            
-            print(pin_state)
-            if self.myCoordinator.myReader.stop_run == True:
-                break
-        #print("Contact Closure")
+
 
     
    
