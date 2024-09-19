@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 import threading
+import time
 
 class Manual(tk.Toplevel,):
     def __init__(self, coordinator):
@@ -51,11 +52,17 @@ class Manual(tk.Toplevel,):
         # stage selection
         self.stage_label = tk.Label(self.stage_selection, text="Stage: ")
         self.stage_label.pack(side="left")
-        self.stage_drop_box = ttk.Combobox(self.stage_selection, state="readonly")
+        self.selected_stage = tk.StringVar(value="")
+        self.stage_drop_box = ttk.Combobox(self.stage_selection, textvariable=self.selected_stage, state="readonly")
         self.stage_drop_box.pack(side="left")
         stageOptions = coordinator.myModules.myStages.keys()
+        stageOptions.insert(0,"")
+        if "Left_OT" in stageOptions:
+            self.stage_drop_box.current(stageOptions.index("Left_OT"))
+        else:
+            self.stage_drop_box.current(0)
         self.stage_drop_box["values"] = [*stageOptions]
-        self.stage_drop_box.bind("<<ComboboxSelected>>", lambda x: self.UpdateSelectedMotors(coordinator))
+        self.stage_drop_box.bind("<<ComboboxSelected>>", self.update_options())
 
 
         # inside xyz_controls
@@ -123,7 +130,7 @@ class Manual(tk.Toplevel,):
         self.rest_frame.pack(side="left", fill="x")
         self.min_frame.pack(side="left", fill="x")
 
-        self.syringe_max_button = tk.Button(self.max_frame, text="Max", padx=5)
+        self.syringe_max_button = tk.Button(self.max_frame, text="Max", padx=5, command=self.syring_to_max)
         self.syringe_rest_button = tk.Button(self.rest_frame, text="Rest", padx=5)
         self.syringe_min_button = tk.Button(self.min_frame, text="Min", padx=5)
 
@@ -212,65 +219,124 @@ class Manual(tk.Toplevel,):
         self.temperature_entry.pack(side="left")
         self.set_temp_button.pack(side="left")
 
+        self.position_thread = threading.Thread(target=self.update_positions)
+        self.updating_positions = False
+
+        self.update_options()
+
+        self.protocol('WM_DELETE_WINDOW', self.on_closing)
 
 
 
 
-        # self.joyBar = tk.Frame(self)
-        # self.joyBar.pack(side=tk.TOP)
 
-        # stageOptions = coordinator.myModules.myStages.keys()
-        # self.loaded_labware_bar = tk.Frame(self)
-        # self.loaded_labware_bar.pack(side=tk.TOP)
-        # self.settingsFileLabel = tk.Label(self.loaded_labware_bar, text="Select Stage: ",justify=tk.LEFT)
-        # self.settingsFileLabel.grid(row=0,column=0)
-        # if(len(stageOptions)>0):
-        #     self.loadedMotorSeries = ttk.Combobox(self.loaded_labware_bar, state='readonly')
-        #     self.loadedMotorSeries.grid(row=0,column=1)
-        #     self.loadedMotorSeries["values"] = [*stageOptions]
-        #     self.loadedMotorSeries.bind("<<ComboboxSelected>>", lambda x: self.UpdateSelectedMotors(coordinator))
+
+
+
+    def update_options(self):
+        if not self.selected_stage.get() == "":
+            # turn on position tracking
+            if not self.updating_positions:
+                self.position_thread = threading.Thread(target=self.update_positions)
+                self.position_thread.start()
+            # enable joystick button
+            self.joy_button["state"] = "normal"
+            # enable xyz and syringe buttons
+            self.x_left["state"] = "normal"
+            self.x_right["state"] = "normal"
+            self.y_back["state"] = "normal"
+            self.y_front["state"] = "normal"
+            self.z_up["state"] = "normal"
+            self.z_down["state"] = "normal"
+            self.syringe_max_button["state"] = "normal"
+            self.syringe_min_button["state"] = "normal"
+            self.syringe_rest_button["state"] = "normal"
+            self.aspirate_button["state"] = "normal"
+            self.dispense_button["state"] = "normal"
+            self.update_move_to_options()
+            
+        else:
+            self.updating_positions = False
+
+        if not self.selected_tempdeck.get() == "":
+            self.set_temp_button["state"] = "normal"
+            # add current temp report
         
-        # # self.joystick = ttk.Combobox(self.joyBar, state='readonly')
-        # # self.joystick.grid(row=0,column=0)
-        # # self.joystick["values"] = [*coordinator.myModules.myJoystickProfiles.keys()]
-        # self.joyButton = tk.Button(self.joyBar,text="Start Joystick",command=lambda: self.StartJoystick(coordinator),justify=tk.LEFT)
-        # self.joyButton.grid(row=0,column=1)
-        # self.joyButton["state"] = "disabled"
-        # self.killButton = tk.Button(self.joyBar,text="Kill Joystick",command=lambda: self.KillJoystick(coordinator),justify=tk.LEFT)
-        # self.killButton.grid(row=0,column=2)
-        # self.killButton["state"] = "disabled"
-        # self.selected_labware_type = tk.StringVar(self,None)
-        # self.selected_labware = tk.StringVar(self,None)
-        # self.past_type = None
-        # self.past_motor = None
-        # self.past_labware = None
+    def update_move_to_options(self):
+        pass
 
-        # self.protocol('WM_DELETE_WINDOW', self.on_closing)
+    def update_positions(self):
+        self.updating_positions = True
+        
+        while self.updating_positions == True:
+            x,y,z = self.coordinator.myModules.myStages[self.selected_stage].get_motor_coordinates()
+            self.current_x.set(x)
+            self.current_y.set(y)
+            self.current_z.set(z)
+            time.sleep(1)
+            
+            if self.updating_positions == False:
+                break
+
+    def move_x_left(self):
+        self.coordinator.myModules.myStages[self.selected_stage.get()].step_x_motor_left()
+        pass
+
+    def move_x_right(self):
+        self.coordinator.myModules.myStages[self.selected_stage.get()].step_x_motor_right()
+        pass
+    
+
+    def move_y_back(self):
+        self.coordinator.myModules.myStages[self.selected_stage.get()].step_y_motor_back()
+        pass
+
+    def move_y_forward(self):
+        self.coordinator.myModules.myStages[self.selected_stage.get()].step_y_motor_forward()
+        pass
+
+    def move_z_up(self):
+        self.coordinator.myModules.myStages[self.selected_stage.get()].step_z_motor_up()
+        pass
+
+    def move_z_down(self):
+        self.coordinator.myModules.myStages[self.selected_stage.get()].step_z_motor_down()
+        pass
+
+    def aspirate(self):
+        volume = float(self.syringe_volume_entry.get())
+        speed = float(self.syringe_speed_entry.get())
+        self.coordinator.myModules.myStages[self.selected_stage.get()].step_syringe_motor_up(volume, speed)
+
+    def dispense(self):
+        volume = float(self.syringe_volume_entry.get())
+        speed = float(self.syringe_speed_entry.get())
+        self.coordinator.myModules.myStages[self.selected_stage.get()].step_syringe_motor_down(volume, speed)
+
+    def syring_to_max():
+        pass
+    def syring_to_min():
+        pass
+    def syring_to_rest():
+        pass
 
     def on_closing(self):
         if self.thread.is_alive():
             self.KillJoystick(self.coordinator)
         self.destroy()
 
-    def do_nothing(self, *args):
+    def toggle_joystick(self):
         pass
-        #do nothing
 
     def StartJoystick(self, coordinator):
-        self.selected_stage = self.loadedMotorSeries.get()
         # self.selected_joystick = self.joystick.get()
-        self.thread = threading.Thread(target=coordinator.start_joystick,args=(self.selected_stage,))
+        self.thread = threading.Thread(target=coordinator.start_joystick,args=(self.selected_stage.get(),))
         self.thread.start()
-        self.killButton["state"] = "normal"
-        self.joyButton["state"] = "disabled"
 
     def KillJoystick(self, coordinator):
         coordinator.stop_joystick()
-        self.killButton["state"] = "disabled"
-        self.joyButton["state"] = "normal"
 
     def UpdateSelectedMotors(self, coordinator):
-        self.selected_stage = self.loadedMotorSeries.get()
         self.joyButton["state"] = "normal"
         tk.Label(self.loaded_labware_bar, text="Select Type: ",justify=tk.LEFT).grid(row=1,column=0)
         self.selected_labware_type = tk.StringVar(self)
@@ -278,9 +344,9 @@ class Manual(tk.Toplevel,):
             self.selected_labware_type_box.destroy()
         self.selected_labware_type_box = ttk.Combobox(self.loaded_labware_bar, state='readonly')
         self.selected_labware_type_box.grid(row=1,column=1)
-        if "Syringe_Only" not in coordinator.myModules.myStages[self.selected_stage].stage_type:
+        if "Syringe_Only" not in coordinator.myModules.myStages[self.selected_stage.get()].stage_type:
             self.selected_labware_type_box["values"] = ["Wellplate","Named Location"]
-        elif "Syringe_Only" in coordinator.myModules.myStages[self.selected_stage].stage_type:
+        elif "Syringe_Only" in coordinator.myModules.myStages[self.selected_stage.get()].stage_type:
             self.selected_labware_type_box["values"] = []
         self.selected_labware_type_box.bind("<<ComboboxSelected>>", lambda x: self.UpdateSelectedType(coordinator))
 
@@ -295,7 +361,7 @@ class Manual(tk.Toplevel,):
                     self.wellLabel.destroy()
 
         self.past_type = None
-        self.past_motor = self.selected_stage
+        self.past_motor = self.selected_stage.get()
         self.past_labware = None
 
     def UpdateSelectedType(self, coordinator):
@@ -321,7 +387,7 @@ class Manual(tk.Toplevel,):
         match self.selected_labware_type:
             case "Wellplate":
                 i = 0
-                for eachWellplate in coordinator.myModules.myStages[self.selected_stage].myLabware.plate_list:
+                for eachWellplate in coordinator.myModules.myStages[self.selected_stage.get()].myLabware.plate_list:
                     self.loaded_labware.append(str(i) + ": " + eachWellplate.model)
                     i = i + 1
                 self.selected_labware_box = ttk.Combobox(self.loaded_labware_bar, state='readonly')
@@ -332,7 +398,7 @@ class Manual(tk.Toplevel,):
                 self.selected_labware_label.grid(row=2,column=0)
             
             case "Named Location":
-                for eachLocation in coordinator.myModules.myStages[self.selected_stage].myLabware.custom_locations:
+                for eachLocation in coordinator.myModules.myStages[self.selected_stage.get()].myLabware.custom_locations:
                     self.loaded_labware.append(eachLocation)
                 self.selected_labware_box = ttk.Combobox(self.loaded_labware_bar, state='readonly')
                 self.selected_labware_box.grid(row=2,column=1)
@@ -362,9 +428,9 @@ class Manual(tk.Toplevel,):
     def GoToWell(self):
         match self.selected_labware_type:
             case "Wellplate":
-                location = self.coordinator.myModules.myStages[self.selected_stage].myLabware.get_well_location(int(self.selected_labware[0]), self.wellName.get())
-                self.coordinator.myModules.myStages[self.selected_stage].move_to(location)           
+                location = self.coordinator.myModules.myStages[self.selected_stage.get()].myLabware.get_well_location(int(self.selected_labware[0]), self.wellName.get())
+                self.coordinator.myModules.myStages[self.selected_stage.get()].move_to(location)           
 
     def GoToLocation(self):
         # this isn't finished
-        self.coordinator.actionOptions.move_to_location(self.selected_stage, self.selected_labware)
+        self.coordinator.actionOptions.move_to_location(self.selected_stage.get(), self.selected_labware)

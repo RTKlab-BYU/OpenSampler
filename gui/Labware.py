@@ -107,7 +107,7 @@ class Labware(tk.Toplevel,):
 
     def open_labware_selection_page(self):
         if not self.labware_selection_page or not self.labware_selection_page.winfo_exists():
-            self.labware_selection_page = Labware_Selection(self.coordinator, self.selected_stage)
+            self.labware_selection_page = Labware_Selection(self.coordinator, self.selected_stage.get())
         else:
             self.labware_selection_page.deiconify()
 
@@ -119,7 +119,7 @@ class Labware(tk.Toplevel,):
 
     def open_syringe_selection_page(self):
         if not self.syringe_selection_page or not self.syringe_selection_page.winfo_exists():
-            self.syringe_selection_page = Syringe_Selection(self.coordinator, self.selected_stage)
+            self.syringe_selection_page = Syringe_Selection(self.coordinator, self.selected_stage.get())
             self.syringe_selection_page.deiconify()
 
     def LoadLabware(self, coordinator):
@@ -133,7 +133,7 @@ class Labware(tk.Toplevel,):
         if file_path == "":  # in the event of a cancel 
             return
         
-        coordinator.load_labware_setup(file_path, self.selected_stage)
+        coordinator.load_labware_setup(file_path, self.selected_stage.get())
 
         self.UpdateLabware(coordinator)
 
@@ -176,9 +176,9 @@ class Labware(tk.Toplevel,):
         else:
             new_file = new_file.name + ".json"
         
-        if (len(coordinator.myModules.myStages[self.selected_stage].myLabware.plate_list)+len(coordinator.myModules.myStages[self.selected_stage].myLabware.custom_locations)>0):
+        if (len(coordinator.myModules.myStages[self.selected_stage.get()].myLabware.plate_list)+len(coordinator.myModules.myStages[self.selected_stage.get()].myLabware.custom_locations)>0):
             
-            coordinator.save_labware_setup(self.selected_stage, new_file)
+            coordinator.save_labware_setup(self.selected_stage.get(), new_file)
             
     def UpdateLabware(self, coordinator):
         for wellplate in self.wellplate_list:
@@ -197,22 +197,22 @@ class Labware(tk.Toplevel,):
         if self.stage_type == "XYZ_Stage":
             
             row = 1 # row 0 is the label
-            for eachWellplate in coordinator.myModules.myStages[self.selected_stage].myLabware.plate_list:
-                self.wellplate_list.append(WellPlate_Row(self, coordinator, self.selected_stage, eachWellplate.model, row))
+            for eachWellplate in coordinator.myModules.myStages[self.selected_stage.get()].myLabware.plate_list:
+                self.wellplate_list.append(WellPlate_Row(self, coordinator, self.selected_stage.get(), eachWellplate.model, row))
                 row += 1
 
             row = 1 # row 0 is the label
-            for eachLocation in coordinator.myModules.myStages[self.selected_stage].myLabware.custom_locations.keys():
-                self.nickname_list.append(Nickname_Row(self, coordinator, self.selected_stage, eachLocation, row))
+            for eachLocation in coordinator.myModules.myStages[self.selected_stage.get()].myLabware.custom_locations.keys():
+                self.nickname_list.append(Nickname_Row(self, coordinator, self.selected_stage.get(), eachLocation, row))
                 row += 1
                 
-            my_syringe = coordinator.myModules.myStages[self.selected_stage].myLabware.syringe_model
-            self.syringe_list = [Syringe_Row(self, coordinator, self.selected_stage, my_syringe, row=1)]
+            my_syringe = coordinator.myModules.myStages[self.selected_stage.get()].myLabware.syringe_model
+            self.syringe_list = [Syringe_Row(self, coordinator, self.selected_stage.get(), my_syringe, row=1)]
 
 
         elif self.stage_type == "Zaber_Syringe_Only":
-            my_syringe = coordinator.myModules.myStages[self.selected_stage].myLabware.syringe_model
-            self.syringe_list = [Syringe_Row(self, coordinator, self.selected_stage, my_syringe, row=1)]
+            my_syringe = coordinator.myModules.myStages[self.selected_stage.get()].myLabware.syringe_model
+            self.syringe_list = [Syringe_Row(self, coordinator, self.selected_stage.get(), my_syringe, row=1)]
 
        
         
