@@ -8,3 +8,4 @@ gui/__pycache__/*
 queues/*
 methods/*
 settings/__pycache__/*
+.venv/*
