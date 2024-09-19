@@ -7,7 +7,8 @@ from tkinter import ttk, filedialog
 
 class WellPlate_Row(tk.Frame,):
     def __init__(self, frame, coordinator, stage, labware_name, row):
-        self.row= row
+        super().__init__(frame)
+        self.row = row
         tk.Label(frame.wellplateBox, text=labware_name).grid(row=self.row,column=1)
         tk.Button(frame.wellplateBox, text="Delete", command=lambda: self.DeleteRow(frame, coordinator, stage)).grid(row=self.row, column=0)
 
@@ -19,6 +20,7 @@ class WellPlate_Row(tk.Frame,):
 
 class Nickname_Row(tk.Frame,):
     def __init__(self, frame, coordinator, stage, nickname_name, row):
+        super().__init__(frame)
         self.row = row
         tk.Label(frame.nicknameBox, text=nickname_name).grid(row=self.row,column=1)
         x, y, z = coordinator.myModules.myStages[stage].myLabware.custom_locations[nickname_name]
@@ -27,11 +29,12 @@ class Nickname_Row(tk.Frame,):
         tk.Button(frame.nicknameBox, text="Delete", command=lambda: self.DeleteRow(frame, coordinator, stage, nickname_name)).grid(row=self.row, column=0)
 
     def DeleteRow(self, frame, coordinator, stage, nickname_name):
-        coordinator.myModules.myStages[stage].myLabware.custom_locations.pop(nickname_name) # does this work on a dictionary?
+        coordinator.myModules.myStages[stage].myLabware.custom_locations.pop(nickname_name) 
         frame.UpdateLabware(coordinator)
 
 class Syringe_Row(tk.Frame,):
     def __init__(self, frame, coordinator, stage, nickname_name, row):
+        super().__init__(frame)
         self.row = row
         tk.Label(frame.syringeBox, text=nickname_name).grid(row=self.row,column=1)
         tk.Button(frame.syringeBox, text="Reset", command=lambda: self.ResetSyringe(frame, coordinator, stage)).grid(row=self.row, column=0)

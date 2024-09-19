@@ -123,7 +123,7 @@ class Command_Parameter():
             stage_options = list(self.coordinator.myModules.myStages.keys())
             self.parameter_entry = ttk.Combobox(self.command_grid, values=stage_options, textvariable=self.parameter_var)
             self.command_row.selected_stage = self.parameter_var.get()
-            self.parameter_entry.bind("<<ComboboxSelected>>", lambda x: self.command_row.update_command_row())
+            self.parameter_entry.bind("<<ComboboxSelected>>", lambda x: self.command_row.update_dependent_parameters())
                       
         elif self.parameter == "Location Name":
             location_options = []
