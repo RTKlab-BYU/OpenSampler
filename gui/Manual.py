@@ -102,7 +102,7 @@ class Manual(tk.Toplevel,):
         self.xyz_move_buttons.columnconfigure(1, weight=3)
 
         self.x_left = tk.Button(self.xy_buttons, text="X Left")
-        self.x_right = tk.Button(self.xy_buttons, text="X Left")
+        self.x_right = tk.Button(self.xy_buttons, text="X Right")
         self.y_back = tk.Button(self.xy_buttons, text="Y Back")
         self.y_front = tk.Button(self.xy_buttons, text="Y Front")
         self.z_up = tk.Button(self.z_buttons, text="Z Up")
@@ -199,6 +199,20 @@ class Manual(tk.Toplevel,):
         self.max_label.grid(row=1, column=0)
         self.current_label.grid(row=2, column=0)
         self.min_label.grid(row=3, column=0)
+
+        self.x_max_label.grid(row=1, column=1)
+        self.x_current_label.grid(row=2, column=1)
+        self.x_min_label.grid(row=3, column=1)
+        self.y_max_label.grid(row=1, column=2)
+        self.y_current_label.grid(row=2, column=2)
+        self.y_min_label.grid(row=3, column=2)
+        self.z_max_label.grid(row=1, column=3)
+        self.z_current_label.grid(row=2, column=3)
+        self.z_min_label.grid(row=3, column=3)
+        self.syringe_max_label.grid(row=1, column=4)
+        self.syringe_current_label.grid(row=2, column=4)
+        self.syringe_min_label.grid(row=3, column=4)
+
         self.coordinates_box.columnconfigure(index=0, weight=1)
         self.coordinates_box.columnconfigure(index=1, weight=1)
         self.coordinates_box.columnconfigure(index=2, weight=1)
@@ -339,14 +353,14 @@ class Manual(tk.Toplevel,):
         stage_type = self.coordinator.myModules.myStages[self.selected_stage.get()].stage_type
         
         if stage_type == "Opentrons":
-            x_max = self.coordinator.myModules.myStages[self.selected_stage].x_max
-            x_min = self.coordinator.myModules.myStages[self.selected_stage].x_min
-            y_max = self.coordinator.myModules.myStages[self.selected_stage].y_max
-            y_min = self.coordinator.myModules.myStages[self.selected_stage].y_min
-            z_max = self.coordinator.myModules.myStages[self.selected_stage].z_max
-            z_min = self.coordinator.myModules.myStages[self.selected_stage].z_min
-            syringe_max = self.coordinator.myModules.myStages[self.selected_stage].myLabware.get_syringe_max())
-            syringe_min = self.coordinator.myModules.myStages[self.selected_stage].myLabware.get_syringe_min())
+            x_max = self.coordinator.myModules.myStages[self.selected_stage.get()].x_max
+            x_min = self.coordinator.myModules.myStages[self.selected_stage.get()].x_min
+            y_max = self.coordinator.myModules.myStages[self.selected_stage.get()].y_max
+            y_min = self.coordinator.myModules.myStages[self.selected_stage.get()].y_min
+            z_max = self.coordinator.myModules.myStages[self.selected_stage.get()].z_max
+            z_min = self.coordinator.myModules.myStages[self.selected_stage.get()].z_min
+            syringe_max = self.coordinator.myModules.myStages[self.selected_stage.get()].myLabware.get_syringe_max()
+            syringe_min = self.coordinator.myModules.myStages[self.selected_stage.get()].myLabware.get_syringe_min()
 
             self.x_max.set(str(round(x_max, 2)))
             self.x_min.set(str(round(x_min, 2)))
@@ -358,8 +372,8 @@ class Manual(tk.Toplevel,):
             self.syringe_min.set(str(round(syringe_min, 2)))
         
         while self.updating_positions == True:
-            x,y,z = self.coordinator.myModules.myStages[self.selected_stage].get_motor_coordinates()
-            s = self.coordinator.myModules.myStages[self.selected_stage].get_syringe_location()
+            x,y,z = self.coordinator.myModules.myStages[self.selected_stage.get()].get_motor_coordinates()
+            s = self.coordinator.myModules.myStages[self.selected_stage.get()].get_syringe_location()
             self.x_current.set(str(round(x, 2)))
             self.y_current.set(str(round(y, 2)))
             self.z_current.set(str(round(z, 2)))
