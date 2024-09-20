@@ -55,14 +55,14 @@ class Manual(tk.Toplevel,):
         self.selected_stage = tk.StringVar(value="")
         self.stage_drop_box = ttk.Combobox(self.stage_selection, textvariable=self.selected_stage, state="readonly")
         self.stage_drop_box.pack(side="left")
-        stageOptions = coordinator.myModules.myStages.keys()
+        stageOptions = list(coordinator.myModules.myStages.keys())
         stageOptions.insert(0,"")
+        self.stage_drop_box["values"] = [*stageOptions]
         if "Left_OT" in stageOptions:
             self.stage_drop_box.current(stageOptions.index("Left_OT"))
         else:
             self.stage_drop_box.current(0)
-        self.stage_drop_box["values"] = [*stageOptions]
-        self.stage_drop_box.bind("<<ComboboxSelected>>", self.update_options())
+        self.stage_drop_box.bind("<<ComboboxSelected>>", lambda x: self.update_options)
 
 
         # inside xyz_controls
@@ -166,6 +166,31 @@ class Manual(tk.Toplevel,):
         self.current_label = tk.Label(self.coordinates_box, text="Current")
         self.min_label = tk.Label(self.coordinates_box, text="Min")
 
+        self.x_max = tk.StringVar(self, value="")
+        self.x_current = tk.StringVar(self, value="")
+        self.x_min = tk.StringVar(self, value="")
+        self.y_max = tk.StringVar(self, value="")
+        self.y_current = tk.StringVar(self, value="")
+        self.y_min = tk.StringVar(self, value="")
+        self.z_max = tk.StringVar(self, value="")
+        self.z_current = tk.StringVar(self, value="")
+        self.z_min = tk.StringVar(self, value="")
+        self.syringe_max = tk.StringVar(self, value="")
+        self.syringe_current = tk.StringVar(self, value="")
+        self.syringe_min = tk.StringVar(self, value="")
+
+        self.x_max_label = tk.Label(self.coordinates_box, textvariable=self.x_max) 
+        self.x_current_label = tk.Label(self.coordinates_box, textvariable=self.x_current)
+        self.x_min_label = tk.Label(self.coordinates_box, textvariable=self.x_min)
+        self.y_max_label = tk.Label(self.coordinates_box, textvariable=self.y_max)
+        self.y_current_label = tk.Label(self.coordinates_box, textvariable=self.y_current)
+        self.y_min_label = tk.Label(self.coordinates_box, textvariable=self.y_min)
+        self.z_max_label = tk.Label(self.coordinates_box, textvariable=self.z_max) 
+        self.z_current_label = tk.Label(self.coordinates_box, textvariable=self.z_current)
+        self.z_min_label = tk.Label(self.coordinates_box, textvariable=self.z_min) 
+        self.syringe_max_label = tk.Label(self.coordinates_box, textvariable=self.syringe_max)
+        self.syringe_current_label = tk.Label(self.coordinates_box, textvariable=self.syringe_current)
+        self.syringe_min_label = tk.Label(self.coordinates_box, textvariable=self.syringe_min) 
 
         self.x_label.grid(row=0, column=1)
         self.y_label.grid(row=0, column=2)
@@ -219,7 +244,7 @@ class Manual(tk.Toplevel,):
         self.temperature_entry.pack(side="left")
         self.set_temp_button.pack(side="left")
 
-        self.position_thread = threading.Thread(target=self.update_positions)
+        self.position_thread = threading.Thread(target=self.enable_coordinates)
         self.updating_positions = False
 
         self.update_options()
@@ -237,42 +262,109 @@ class Manual(tk.Toplevel,):
         if not self.selected_stage.get() == "":
             # turn on position tracking
             if not self.updating_positions:
-                self.position_thread = threading.Thread(target=self.update_positions)
+                self.position_thread = threading.Thread(target=self.enable_coordinates)
                 self.position_thread.start()
-            # enable joystick button
-            self.joy_button["state"] = "normal"
-            # enable xyz and syringe buttons
-            self.x_left["state"] = "normal"
-            self.x_right["state"] = "normal"
-            self.y_back["state"] = "normal"
-            self.y_front["state"] = "normal"
-            self.z_up["state"] = "normal"
-            self.z_down["state"] = "normal"
-            self.syringe_max_button["state"] = "normal"
-            self.syringe_min_button["state"] = "normal"
-            self.syringe_rest_button["state"] = "normal"
-            self.aspirate_button["state"] = "normal"
-            self.dispense_button["state"] = "normal"
+            self.enable_xyz()
             self.update_move_to_options()
             
+            
         else:
-            self.updating_positions = False
+            self.disable_buttons
+            self.update_move_to_options()
 
         if not self.selected_tempdeck.get() == "":
             self.set_temp_button["state"] = "normal"
             # add current temp report
-        
+    
+    def enable_xyz(self):
+        # enable joystick button
+        self.joy_button["state"] = "normal"
+        # enable xyz 
+        self.x_left["state"] = "normal"
+        self.x_right["state"] = "normal"
+        self.y_back["state"] = "normal"
+        self.y_front["state"] = "normal"
+        self.z_up["state"] = "normal"
+        self.z_down["state"] = "normal"
+
+    def enable_syringe(self):
+        # enable syringe buttons
+        self.syringe_max_button["state"] = "normal"
+        self.syringe_min_button["state"] = "normal"
+        self.syringe_rest_button["state"] = "normal"
+        self.aspirate_button["state"] = "normal"
+        self.dispense_button["state"] = "normal"
+
+    def disable_buttons(self):
+        # enable joystick button
+        self.joy_button["state"] = "disabled"
+        # enable xyz and syringe buttons
+        self.x_left["state"] = "disabled"
+        self.x_right["state"] = "disabled"
+        self.y_back["state"] = "disabled"
+        self.y_front["state"] = "disabled"
+        self.z_up["state"] = "disabled"
+        self.z_down["state"] = "disabled"
+
+    def disable_syringe(self):
+        # enable syringe buttons
+        self.syringe_max_button["state"] = "disabled"
+        self.syringe_min_button["state"] = "disabled"
+        self.syringe_rest_button["state"] = "disabled"
+        self.aspirate_button["state"] = "disabled"
+        self.dispense_button["state"] = "disabled"
+
+    def disable_coordinates(self):
+        self.updating_positions = False
+        self.x_max.set("")
+        self.x_current.set("")
+        self.x_min.set("")
+        self.y_max.set("")
+        self.y_current.set("")
+        self.y_min.set("")
+        self.z_max.set("")
+        self.z_current.set("")
+        self.z_min.set("")
+        self.syringe_max.set("")
+        self.syringe_current.set("")
+        self.syringe_min.set("")
+
+
     def update_move_to_options(self):
         pass
 
-    def update_positions(self):
+    def enable_coordinates(self):
         self.updating_positions = True
+
+        stage_type = self.coordinator.myModules.myStages[self.selected_stage.get()].stage_type
+        
+        if stage_type == "Opentrons":
+            x_max = self.coordinator.myModules.myStages[self.selected_stage].x_max
+            x_min = self.coordinator.myModules.myStages[self.selected_stage].x_min
+            y_max = self.coordinator.myModules.myStages[self.selected_stage].y_max
+            y_min = self.coordinator.myModules.myStages[self.selected_stage].y_min
+            z_max = self.coordinator.myModules.myStages[self.selected_stage].z_max
+            z_min = self.coordinator.myModules.myStages[self.selected_stage].z_min
+            syringe_max = self.coordinator.myModules.myStages[self.selected_stage].myLabware.get_syringe_max())
+            syringe_min = self.coordinator.myModules.myStages[self.selected_stage].myLabware.get_syringe_min())
+
+            self.x_max.set(str(round(x_max, 2)))
+            self.x_min.set(str(round(x_min, 2)))
+            self.y_max.set(str(round(y_max, 2)))
+            self.y_min.set(str(round(y_min, 2)))
+            self.z_max.set(str(round(z_max, 2)))
+            self.z_min.set(str(round(z_min, 2)))
+            self.syringe_max.set(str(round(syringe_max, 2)))
+            self.syringe_min.set(str(round(syringe_min, 2)))
         
         while self.updating_positions == True:
             x,y,z = self.coordinator.myModules.myStages[self.selected_stage].get_motor_coordinates()
-            self.current_x.set(x)
-            self.current_y.set(y)
-            self.current_z.set(z)
+            s = self.coordinator.myModules.myStages[self.selected_stage].get_syringe_location()
+            self.x_current.set(str(round(x, 2)))
+            self.y_current.set(str(round(y, 2)))
+            self.z_current.set(str(round(z, 2)))
+            self.syringe_current.set(str(round(s, 2)))
+
             time.sleep(1)
             
             if self.updating_positions == False:
