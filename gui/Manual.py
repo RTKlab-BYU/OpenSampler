@@ -130,9 +130,9 @@ class Manual(tk.Toplevel,):
         self.rest_frame.pack(side="left", fill="x")
         self.min_frame.pack(side="left", fill="x")
 
-        self.syringe_max_button = tk.Button(self.max_frame, text="Max", padx=5, command=self.syring_to_max)
-        self.syringe_rest_button = tk.Button(self.rest_frame, text="Rest", padx=5)
-        self.syringe_min_button = tk.Button(self.min_frame, text="Min", padx=5)
+        self.syringe_max_button = tk.Button(self.max_frame, text="Max", padx=5, command=self.syringe_to_max)
+        self.syringe_rest_button = tk.Button(self.rest_frame, text="Rest", padx=5, command=self.syringe_to_rest)
+        self.syringe_min_button = tk.Button(self.min_frame, text="Min", padx=5, command=self.syringe_to_min)
 
         self.syringe_max_button.grid(row=0, column=0, sticky="E")
         self.syringe_rest_button.grid(row=0, column=1)
@@ -258,8 +258,8 @@ class Manual(tk.Toplevel,):
         self.temperature_entry.pack(side="left")
         self.set_temp_button.pack(side="left")
 
-        self.position_thread = threading.Thread(target=self.enable_coordinates)
         self.updating_positions = False
+        self.position_thread = threading.Thread(target=self.enable_coordinates)
 
         self.update_options()
 
@@ -273,80 +273,27 @@ class Manual(tk.Toplevel,):
 
 
     def update_options(self):
-        if not self.selected_stage.get() == "":
-            # turn on position tracking
-            if not self.updating_positions:
-                self.position_thread = threading.Thread(target=self.enable_coordinates)
-                self.position_thread.start()
-            self.enable_xyz()
-            self.update_move_to_options()
-            
-            
-        else:
-            self.disable_buttons
-            self.update_move_to_options()
+        if self.selected_stage.get() != self.previous_selected_stage:
+            self.previous_selected_stage = self.selected_stage.get()
+            if not self.selected_stage.get() == "":
+                # turn on position tracking
+                if not self.updating_positions:
+                    self.position_thread = threading.Thread(target=self.enable_coordinates)
+                    self.position_thread.start()
+                self.enable_xyz()
+                self.enable_syringe
+                self.update_move_to_options()
+                
+            else:
+                self.disable_coordinates()
+                self.disable_xyz()
+                self.disable_syringe
+                self.update_move_to_options()
 
-        if not self.selected_tempdeck.get() == "":
-            self.set_temp_button["state"] = "normal"
-            # add current temp report
+            if not self.selected_tempdeck.get() == "":
+                self.set_temp_button["state"] = "normal"
+                # add current temp report
     
-    def enable_xyz(self):
-        # enable joystick button
-        self.joy_button["state"] = "normal"
-        # enable xyz 
-        self.x_left["state"] = "normal"
-        self.x_right["state"] = "normal"
-        self.y_back["state"] = "normal"
-        self.y_front["state"] = "normal"
-        self.z_up["state"] = "normal"
-        self.z_down["state"] = "normal"
-
-    def enable_syringe(self):
-        # enable syringe buttons
-        self.syringe_max_button["state"] = "normal"
-        self.syringe_min_button["state"] = "normal"
-        self.syringe_rest_button["state"] = "normal"
-        self.aspirate_button["state"] = "normal"
-        self.dispense_button["state"] = "normal"
-
-    def disable_buttons(self):
-        # enable joystick button
-        self.joy_button["state"] = "disabled"
-        # enable xyz and syringe buttons
-        self.x_left["state"] = "disabled"
-        self.x_right["state"] = "disabled"
-        self.y_back["state"] = "disabled"
-        self.y_front["state"] = "disabled"
-        self.z_up["state"] = "disabled"
-        self.z_down["state"] = "disabled"
-
-    def disable_syringe(self):
-        # enable syringe buttons
-        self.syringe_max_button["state"] = "disabled"
-        self.syringe_min_button["state"] = "disabled"
-        self.syringe_rest_button["state"] = "disabled"
-        self.aspirate_button["state"] = "disabled"
-        self.dispense_button["state"] = "disabled"
-
-    def disable_coordinates(self):
-        self.updating_positions = False
-        self.x_max.set("")
-        self.x_current.set("")
-        self.x_min.set("")
-        self.y_max.set("")
-        self.y_current.set("")
-        self.y_min.set("")
-        self.z_max.set("")
-        self.z_current.set("")
-        self.z_min.set("")
-        self.syringe_max.set("")
-        self.syringe_current.set("")
-        self.syringe_min.set("")
-
-
-    def update_move_to_options(self):
-        pass
-
     def enable_coordinates(self):
         self.updating_positions = True
 
@@ -383,6 +330,71 @@ class Manual(tk.Toplevel,):
             
             if self.updating_positions == False:
                 break
+            
+    def disable_coordinates(self):
+        self.updating_positions = False
+        self.x_max.set("")
+        self.x_current.set("")
+        self.x_min.set("")
+        self.y_max.set("")
+        self.y_current.set("")
+        self.y_min.set("")
+        self.z_max.set("")
+        self.z_current.set("")
+        self.z_min.set("")
+        self.syringe_max.set("")
+        self.syringe_current.set("")
+        self.syringe_min.set("")
+
+    def enable_xyz(self):
+        # enable joystick button
+        self.update_joystick(case="reset")
+        self.joy_button["state"] = "normal"
+        # enable xyz 
+        self.x_left["state"] = "normal"
+        self.x_right["state"] = "normal"
+        self.y_back["state"] = "normal"
+        self.y_front["state"] = "normal"
+        self.z_up["state"] = "normal"
+        self.z_down["state"] = "normal"
+
+    def disable_xyz(self):
+        # enable joystick button
+        self.update_joystick(case="kill")
+        self.joy_button["state"] = "disabled"
+        # enable xyz and syringe buttons
+        self.x_left["state"] = "disabled"
+        self.x_right["state"] = "disabled"
+        self.y_back["state"] = "disabled"
+        self.y_front["state"] = "disabled"
+        self.z_up["state"] = "disabled"
+        self.z_down["state"] = "disabled"
+
+    def enable_syringe(self):
+        my_syringe = self.coordinator.myModules.myStages[self.selected_stage.get()].myLabware.syringe_model
+        # enable syringe buttons
+        if my_syringe != "Not Selected":
+            self.syringe_max_button["state"] = "normal"
+            self.syringe_min_button["state"] = "normal"
+            self.syringe_rest_button["state"] = "normal"
+            self.aspirate_button["state"] = "normal"
+            self.dispense_button["state"] = "normal"
+
+    def disable_syringe(self):
+        # enable syringe buttons
+        self.syringe_max_button["state"] = "disabled"
+        self.syringe_min_button["state"] = "disabled"
+        self.syringe_rest_button["state"] = "disabled"
+        self.aspirate_button["state"] = "disabled"
+        self.dispense_button["state"] = "disabled"
+
+    
+
+
+    def update_move_to_options(self):
+        pass
+
+    
 
     def move_x_left(self):
         self.coordinator.myModules.myStages[self.selected_stage.get()].step_x_motor_left()
@@ -409,38 +421,72 @@ class Manual(tk.Toplevel,):
         self.coordinator.myModules.myStages[self.selected_stage.get()].step_z_motor_down()
         pass
 
+
+    # Syringe methods
     def aspirate(self):
         volume = float(self.syringe_volume_entry.get())
         speed = float(self.syringe_speed_entry.get())
+        # self.coordinator.myLogger.info(f"Aspirating {volume} nL at speed {speed} nL/min")
         self.coordinator.myModules.myStages[self.selected_stage.get()].step_syringe_motor_up(volume, speed)
 
     def dispense(self):
         volume = float(self.syringe_volume_entry.get())
         speed = float(self.syringe_speed_entry.get())
+        # self.coordinator.myLogger.info(f"Dispensing {volume} nL at speed {speed} nL/min")
         self.coordinator.myModules.myStages[self.selected_stage.get()].step_syringe_motor_down(volume, speed)
 
-    def syring_to_max():
-        pass
-    def syring_to_min():
-        pass
-    def syring_to_rest():
-        pass
+    def syringe_to_max(self):
+        speed = float(self.syringe_speed_entry.get())
+        max_position = self.coordinator.myModules.myStages[self.selected_stage.get()].myLabware.get_syringe_max()
+        self.coordinator.myModules.myStages[self.selected_stage.get()].move_syringe_to(max_position, speed)
+
+    def syringe_to_min(self):
+        speed = float(self.syringe_speed_entry.get())
+        min_position = self.coordinator.myModules.myStages[self.selected_stage.get()].myLabware.get_syringe_min()
+        self.coordinator.myModules.myStages[self.selected_stage.get()].move_syringe_to(min_position, speed)
+    
+    def syringe_to_rest(self):        
+        speed = float(self.syringe_speed_entry.get())
+        rest_position = self.coordinator.myModules.myStages[self.selected_stage.get()].myLabware.get_syringe_rest()
+        self.coordinator.myModules.myStages[self.selected_stage.get()].move_syringe_to(rest_position, speed)
 
     def on_closing(self):
         if self.thread.is_alive():
-            self.KillJoystick(self.coordinator)
+            self.kill_joystick(self.coordinator)
         self.destroy()
 
-    def toggle_joystick(self):
-        pass
+    def update_joystick(self, case="none"):
 
-    def StartJoystick(self, coordinator):
+        if case == "reset":
+            self.kill_joystick()
+            if self.joystick_running == True:
+                self.start_joystick()
+
+        elif case == "kill":
+            self.kill_joystick()
+            self.joystick_running = False
+            self.joy_label["background"] = "red"
+            self.joy_on_off.set("Turn On")
+
+        elif self.joystick_running == True:
+            self.kill_joystick()
+            self.joystick_running = False
+            self.joy_label["background"] = "red"
+            self.joy_on_off.set("Turn On")
+
+        elif self.joystick_running == False:
+            self.start_joystick()
+            self.joystick_running = True
+            self.joy_label["background"] = "green"
+            self.joy_on_off.set("Turn Off")
+
+    def start_joystick(self):
         # self.selected_joystick = self.joystick.get()
-        self.thread = threading.Thread(target=coordinator.start_joystick,args=(self.selected_stage.get(),))
+        self.thread = threading.Thread(target=self.coordinator.start_joystick,args=(self.selected_stage.get()))
         self.thread.start()
 
-    def KillJoystick(self, coordinator):
-        coordinator.stop_joystick()
+    def kill_joystick(self):
+        self.coordinator.stop_joystick()
 
     def UpdateSelectedMotors(self, coordinator):
         self.joyButton["state"] = "normal"
