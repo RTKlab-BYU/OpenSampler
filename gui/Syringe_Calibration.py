@@ -213,7 +213,7 @@ class Syringe_Calibration(tk.Toplevel,):
     def Dispense(self):
         # print(f"stage index: {self.selected_stage}")
         # print(f"stage side: {self.coordinator.myModules.myStages[self.selected_stage].side}")
-        self.coordinator.myLogger.info(f"Aspirating {self.volume_var.get()} nL at speed {self.speed_var.get()} nL/min")
+        self.coordinator.myLogger.info(f"Dispensing {self.volume_var.get()} nL at speed {self.speed_var.get()} nL/min")
         self.coordinator.myModules.myStages[self.selected_stage].step_syringe_motor_down(volume = float(self.volume_var.get()), speed = float(self.speed_var.get()))
         self.update_syringe_states()
 
