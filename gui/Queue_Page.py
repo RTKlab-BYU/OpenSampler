@@ -912,6 +912,21 @@ class Active_Queue(tk.Frame,):
         
         while self.my_reader.running:
             time.sleep(1)
+
+            # check if there is a current_run, value can be None or a pandas series
+            try: 
+                no_current_run = self.my_reader.current_run.empty()
+            except:
+                no_current_run = True
+
+            if self.scheduled_queue_list == [] and no_current_run:
+                self.my_reader.running = False
+                self.my_reader.queue_paused = False
+                self.pause_button.config(text="Pause")
+                self.update_scheduled_queues_display()
+                self.update_current_run_display()
+                break
+
             if self.my_reader.scheduled_queue_changed:
                 self.update_scheduled_queues_display()  # change this
                 self.my_reader.scheduled_queue_changed = False
@@ -932,6 +947,12 @@ class Active_Queue(tk.Frame,):
         '''
         Pauses queue and interupts current run.
         '''
+        if not self.my_reader.running:
+            return
+
+        if not self.scheduled_queue_list == []:
+            self.my_reader.pause_scheduled_queue()
+
         self.my_reader.stop_current_run()
 
     def pause_resume_scheduled_queue(self):
@@ -939,12 +960,20 @@ class Active_Queue(tk.Frame,):
         Pauses queue after finishing current run. 
 
         '''
+        if not self.my_reader.running:
+            print("Currently No Runs Scheduled")
+            return
+        
+        if self.scheduled_queue_list == []:
+            self.my_reader.queue_paused = False
+            self.my_reader.update_pause_button = True
+            print("Currently No Runs Scheduled")
+            return
+        
         if self.my_reader.queue_paused:
             self.my_reader.resume_scheduled_queue()
-            # Change button color?
         elif not self.my_reader.queue_paused:
             self.my_reader.pause_scheduled_queue()
-            # Change button color?
 
     def clear_selected_runs(self):
         '''
@@ -959,12 +988,14 @@ class Active_Queue(tk.Frame,):
         '''
         Remove all future runs from scheduled queue. Does not affect current run.
         '''
-
+        if not self.my_reader.running:
+            return
         
-        self.my_reader.scheduled_queue = None  # overwrite any scheduled runs
-        self.my_reader.scheduled_queue_changed = True
-        self.my_reader.resume_scheduled_queue()  # if paused, resume
-        print("Clearing scheduled queue. Current run will continue unless interupted.")
+        if not self.scheduled_queue_list == []:
+            self.my_reader.scheduled_queue = None  # overwrite any scheduled runs
+            self.my_reader.scheduled_queue_changed = True
+            self.my_reader.resume_scheduled_queue()  # if paused, resume
+            print("Clearing scheduled queue. Current run will continue unless interupted.")
 
 
 class Sample_Prep_Inputs(tk.Frame,):

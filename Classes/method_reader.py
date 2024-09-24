@@ -129,8 +129,10 @@ class MethodReader:  # should call read from coordinator file
 
     def stop_current_run(self):
         print("\n------- Stopping current run. -------\n")
+        self.current_run = None
+        self.current_run_changed = True
         self.stop_run = True
-        self.pause_scheduled_queue()
+        
 
     def pause_scheduled_queue(self):
         self.queue_paused = True

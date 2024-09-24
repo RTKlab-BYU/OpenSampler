@@ -359,7 +359,10 @@ class ProtocolActions:
             seconds_waited = seconds_waited + 1
 
     def set_tempdeck(self, tempdeck_name, temperature):
-        self.myCoordinator.myModules.myTempDecks[tempdeck_name].start_set_temperature(temperature)
+        try:
+            self.myCoordinator.myModules.myTempDecks[tempdeck_name].start_set_temperature(temperature)
+        except:
+            print("Tempdeck Not Responding")
 
     def run_sub_method(self, scriptName):
         # read file
