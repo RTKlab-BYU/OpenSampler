@@ -91,31 +91,6 @@ class ProtocolActions:
         self.move_to_location(stage, location_name)
         self.dispense_in_place(stage, volume, speed)
 
-    '''
-    # def aspirate_from_well(self, stage, well_plate_index, well, volume, speed):
-
-    #     # get well xyz coordinates
-    #     location = self.myCoordinator.myModules.myStages[stage].myLabware.get_well_location(int(well_plate_index), well) 
-
-    #     self.myCoordinator.myLogger.info(f"Moving to wellplate '{well_plate_index}' at {location}")
-    #     self.myCoordinator.myModules.myStages[stage].move_to(location)
-
-    #     self.myCoordinator.myLogger.info(f"Aspirating {float(volume)} nL at speed {float(speed)} nL/min")
-    #     self.myCoordinator.myModules.myStages[stage].step_syringe_motor_up(volume=volume, speed=speed)
-
-    # def dispense_to_well(self, stage, well_plate_index, well, volume, speed):
-        
-    #     # get well xyz coordinates
-    #     location = self.myCoordinator.myModules.myStages[stage].myLabware.get_well_location(int(well_plate_index), well) # Tuple (x,y,z) 
-    #     self.myCoordinator.myLogger.info(f"Moving to wellplate '{well_plate_index}' at {location}")
-
-    #     self.myCoordinator.myModules.myStages[stage].move_to(location)
-
-    #     self.myCoordinator.myLogger.info(f"Aspirating {float(volume)} nL at speed {float(speed)} nL/min")
-
-    #     self.myCoordinator.myModules.myStages[stage].step_syringe_motor_down(volume=volume, speed=speed)
-    '''
-
 
     ## LC-MS Commands (specify target wells at run time)
 
