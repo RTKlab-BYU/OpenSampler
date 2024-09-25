@@ -322,6 +322,8 @@ class Queue_Gui(tk.Toplevel,):
         Add the dataframe to the schedule queue,
         If not currently running, begin running.
         '''
+        # Make sure joystick is off
+        self.coordinator.stop_joystick()
 
         # start thread to run queue
         new_queue_type = self.page_type.get()

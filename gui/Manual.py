@@ -494,10 +494,7 @@ class Manual(tk.Toplevel,):
         rest_position = self.coordinator.myModules.myStages[self.selected_stage.get()].myLabware.get_syringe_rest()
         self.coordinator.myModules.myStages[self.selected_stage.get()].move_syringe_to(rest_position, speed)
 
-    def on_closing(self):
-        if self.thread.is_alive():
-            self.kill_joystick(self.coordinator)
-        self.destroy()
+
 
     def update_joystick(self, case="none"):
 
@@ -532,109 +529,6 @@ class Manual(tk.Toplevel,):
     def kill_joystick(self):
         self.coordinator.stop_joystick()
 
-
-
-
-
-
-
-
-
-    # def UpdateSelectedMotors(self, coordinator):
-    #     self.joyButton["state"] = "normal"
-    #     tk.Label(self.loaded_labware_bar, text="Select Type: ",justify=tk.LEFT).grid(row=1,column=0)
-    #     self.selected_labware_type = tk.StringVar(self)
-    #     if self.past_motor != None:
-    #         self.selected_labware_type_box.destroy()
-    #     self.selected_labware_type_box = ttk.Combobox(self.loaded_labware_bar, state='readonly')
-    #     self.selected_labware_type_box.grid(row=1,column=1)
-    #     if "Syringe_Only" not in coordinator.myModules.myStages[self.selected_stage.get()].stage_type:
-    #         self.selected_labware_type_box["values"] = ["Wellplate","Named Location"]
-    #     elif "Syringe_Only" in coordinator.myModules.myStages[self.selected_stage.get()].stage_type:
-    #         self.selected_labware_type_box["values"] = []
-    #     self.selected_labware_type_box.bind("<<ComboboxSelected>>", lambda x: self.UpdateSelectedType(coordinator))
-
-    #     if self.past_type != None:
-    #         self.selected_labware = tk.StringVar(self,None)
-    #         self.selected_labware_box.destroy()
-    #         self.selected_labware_label.destroy()
-    #         if self.past_type == "Wellplate":
-    #             self.wellName.destroy()
-    #             if self.past_labware != None:
-    #                 self.moveButton.destroy()
-    #                 self.wellLabel.destroy()
-
-        self.past_type = None
-        self.past_motor = self.selected_stage.get()
-        self.past_labware = None
-
-    def UpdateSelectedType(self, coordinator):
-        self.selected_labware_type = self.selected_labware_type_box.get()
-        
-        self.loaded_labware = []
-        if self.past_type != None:
-            self.selected_labware = tk.StringVar(self,None)
-            self.selected_labware_box.destroy()
-            self.selected_labware_label.destroy()
-            if self.past_type == "Wellplate":
-                if self.past_labware != None:
-                    self.moveButton.destroy()
-                    self.wellLabel.destroy()
-                    self.wellName.destroy()
-                
-        self.past_type = self.selected_labware_type
-        self.past_labware = None
-
-        self.PopulateLabware(coordinator)
-
-    def PopulateLabware(self, coordinator):
-        match self.selected_labware_type:
-            case "Wellplate":
-                i = 0
-                for eachWellplate in coordinator.myModules.myStages[self.selected_stage.get()].myLabware.plate_list:
-                    self.loaded_labware.append(str(i) + ": " + eachWellplate.model)
-                    i = i + 1
-                self.selected_labware_box = ttk.Combobox(self.loaded_labware_bar, state='readonly')
-                self.selected_labware_box.grid(row=2,column=1)
-                self.selected_labware_box["values"] = [*self.loaded_labware]
-                self.selected_labware_box.bind("<<ComboboxSelected>>", lambda x: self.UpdateSelectedLabware())
-                self.selected_labware_label = tk.Label(self.loaded_labware_bar, text="Select Wellplate Index: ",justify=tk.LEFT)
-                self.selected_labware_label.grid(row=2,column=0)
-            
-            case "Named Location":
-                for eachLocation in coordinator.myModules.myStages[self.selected_stage.get()].myLabware.custom_locations:
-                    self.loaded_labware.append(eachLocation)
-                self.selected_labware_box = ttk.Combobox(self.loaded_labware_bar, state='readonly')
-                self.selected_labware_box.grid(row=2,column=1)
-                self.selected_labware_box["values"] = [*self.loaded_labware]
-                self.selected_labware_box.bind("<<ComboboxSelected>>", lambda x: self.UpdateSelectedLabware())
-
-    def UpdateSelectedLabware(self, *args):
-        self.selected_labware = self.selected_labware_box.get()
-        self.past_labware = self.selected_labware
-        self.wellName =tk.Entry(self.loaded_labware_bar)
-        self.wellName.grid(row=1,column=4)
-        self.wellName.destroy()
-        match self.selected_labware_type:
-            case "Wellplate":
-                self.wellLabel = tk.Label(self.loaded_labware_bar, text="Well: ")
-                self.wellLabel.grid(row=3,column=0)
-                self.wellName = tk.Entry(self.loaded_labware_bar)
-                self.wellName.grid(row=3,column=1)
-                self.moveButton = tk.Button(self.loaded_labware_bar, text="Go To Well", command=lambda: self.GoToWell())
-                self.moveButton.grid(row=4,column=1)
-
-            case "Named Location":
-                # this isn't finished 
-                self.moveButton = tk.Button(self.loaded_labware_bar, text="Go To Location", command=lambda: self.GoToLocation())
-                self.moveButton.grid(row=1,column=3)
-    
-    def GoToWell(self):
-        match self.selected_labware_type:
-            case "Wellplate":
-                location = self.coordinator.myModules.myStages[self.selected_stage.get()].myLabware.get_well_location(int(self.selected_labware[0]), self.wellName.get())
-                self.coordinator.myModules.myStages[self.selected_stage.get()].move_to(location)           
-
-    def GoToLocation(self):
-        # this isn't finished
-        self.coordinator.actionOptions.move_to_location(self.selected_stage.get(), self.selected_labware)
+    def on_closing(self):
+        self.kill_joystick()
+        self.destroy()
