@@ -172,20 +172,26 @@ class Coordinator:
     def start_joystick(self, selected_stage):
         """ This method opens a secondary thread to listen to the input of the joystick and calls listen_to_joystick on the main thread on a loop
         """
-        my_stage = self.myModules.myStages[selected_stage]
+        try:
+            my_stage = self.myModules.myStages[selected_stage]
 
-        if not self.myModules.myJoysticks[0].pygame_running:
-            self.active_joystick_profile = self.myModules.myJoystickProfiles[selected_stage]
-            self.t1 = threading.Thread(target=self.myModules.myJoysticks[0].listening, args=(my_stage.stage_type,))
-            self.t1.start()
-            
-            self.t2 = threading.Thread(target=self.monitor_joystick_commands, args=(selected_stage,))
-            self.monitoring_joystick = True
-            self.t2.start()
+            if not self.myModules.myJoysticks[0].pygame_running:
+                self.active_joystick_profile = self.myModules.myJoystickProfiles[selected_stage]
+                self.t1 = threading.Thread(target=self.myModules.myJoysticks[0].listening, args=(my_stage.stage_type,))
+                self.t1.start()
+                
+                self.t2 = threading.Thread(target=self.monitor_joystick_commands, args=(selected_stage,))
+                self.monitoring_joystick = True
+                self.t2.start()
+        except:
+            pass
 
     # end threads started in start_joystick        
     def stop_joystick(self):
-        self.myModules.myJoysticks[0].stop_listening()
+        try:
+            self.myModules.myJoysticks[0].stop_listening()
+        except:
+            pass
         self.monitoring_joystick = False
 
         try:
