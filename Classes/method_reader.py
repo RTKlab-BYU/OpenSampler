@@ -38,6 +38,10 @@ class MethodReader:  # should call read from coordinator file
         self.scheduled_queue_changed = True
         self.update_pause_button = True
         self.error_during_run = False    
+
+        self.current_run_start_time = ""
+        self.runs_scheduled = 0
+
         
     def verify_wells(self, proposed_queue):  # checks all the wells in CSV to make sure they all exist
         if "Well" in proposed_queue:
@@ -222,31 +226,25 @@ class MethodReader:  # should call read from coordinator file
             
             self.current_run = self.scheduled_queue.iloc[0] # set the location of 'current_run' to the first row of the scheduled queue
             self.scheduled_queue = self.scheduled_queue.drop(self.scheduled_queue.index[0])
-            self.current_run_changed = True
-            self.scheduled_queue_changed = True
 
-            time.sleep(3)  # lets display update before continuing
-            
-
-            
             now_date = datetime.now().strftime("%m/%d/%Y")
             now_time = datetime.now().strftime("%I:%M %p")  # uses AM/PM time format
             sample_count += 1
 
-            logging.info(f"Running sample {sample_count} with {self.current_run['Method']} \nStarted at {now_time} on {now_date}.")
-            print("\n*****************************************************************\n")
-            print(f"Sample {sample_count} started at {now_time} on {now_date}.")  
-
-            print(f"\nSamples remaining in scheduled queue: {int(self.scheduled_queue.shape[0])}")
-            print("\n*****************************************************************\n")
+            logging.info(f"Running {self.current_run['Method']} \nStarted at {now_time} on {now_date}.")
+            self.current_run_start_time = f"Started at {now_time} on {now_date}."
+            self.runs_scheduled = int(self.scheduled_queue.shape[0])
+            self.current_run_changed = True
+            self.scheduled_queue_changed = True
+            time.sleep(3)  # lets display update before continuing
 
             run_completed = self.run_next_sample() # run self.current_run, return True if completed without stopping
 
             if self.error_during_run:
                 now_date = datetime.now().strftime("%m/%d/%Y")
                 now_time = datetime.now().strftime("%I:%M %p")  # uses AM/PM time format
-                logging.info(f"Run for sample {sample_count} !EXPERIENCED AN ERROR! at {now_time} on {now_date}.")
-                print(f"\nRun for sample {sample_count} !EXPERIENCED AN ERROR! at {now_time} on {now_date}.")
+                logging.info(f"Run !EXPERIENCED AN ERROR! at {now_time} on {now_date}. Method: {self.current_run['Method']}")
+                print(f"Run !EXPERIENCED AN ERROR! at {now_time} on {now_date}. Method: {self.current_run['Method']}")
                 self.pause_scheduled_queue()
             
             now_date = datetime.now().strftime("%m/%d/%Y")
@@ -254,13 +252,13 @@ class MethodReader:  # should call read from coordinator file
                 
             if run_completed:
                 print("\n*****************************************************************\n")
-                logging.info(f"Run for sample {sample_count} completed at {now_time} on {now_date}.")
-                print(f"Run for sample {sample_count} completed at {now_time} on {now_date}.")
+                logging.info(f"Run completed at {now_time} on {now_date}.")
+                print(f"Run completed at {now_time} on {now_date}.")
                 print("\n*****************************************************************\n")
             else:
                 print("\n*************************** Warning ******************************\n")
-                logging.info(f"Run for sample {sample_count} was interupted by user at {now_time} on {now_date}.")
-                print(f"Run for sample {sample_count} was interupted by user at {now_time} on {now_date}.")
+                logging.info(f"Run was interupted by user at {now_time} on {now_date}.")
+                print(f"Run was interupted by user at {now_time} on {now_date}.")
                 print("\n*****************************************************************\n")
                     
             

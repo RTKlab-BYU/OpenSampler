@@ -262,17 +262,14 @@ class ProtocolActions:
     def LC_contact_closure(self, Relay = LC_RELAY):
         if not self.myCoordinator.myReader.stop_run == True:
             self.myCoordinator.myLogger.info("THREAD: self.myCoordinator.LC_contact_closure()")  
-            self.myCoordinator.myModules.myRelays[int(Relay)].relay_on() # you need to pass in the number relay you want to switch
-                                            # in this case the LC is connected to relay 2
-            # time.sleep(2) # wait half second to make sure signal had time to start pump
-            self.myCoordinator.myModules.myRelays[int(Relay)].relay_off() # turn off so it can be turned on again in the next loop
-            # time.sleep(2) # wait half second to make sure signal had time to start pump
-            #try twice
-            self.myCoordinator.myModules.myRelays[int(Relay)].relay_on() # you need to pass in the number relay you want to switch
-                                            # in this case the LC is connected to relay 2
-            # time.sleep(2) # wait half second to make sure signal had time to start pump
-            self.myCoordinator.myModules.myRelays[int(Relay)].relay_off() # turn off so it can be turned on again in the next loop
-            # time.sleep(2) # wait half second to make sure signal had time to start pump
+            self.myCoordinator.myModules.myRelays[int(Relay)].relay_on()
+
+            self.myCoordinator.myModules.myRelays[int(Relay)].relay_off()
+
+            self.myCoordinator.myModules.myRelays[int(Relay)].relay_on() 
+
+            self.myCoordinator.myModules.myRelays[int(Relay)].relay_off() 
+
         else:
             print("Stopping")
 
