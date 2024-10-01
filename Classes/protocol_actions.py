@@ -91,31 +91,6 @@ class ProtocolActions:
         self.move_to_location(stage, location_name)
         self.dispense_in_place(stage, volume, speed)
 
-    '''
-    # def aspirate_from_well(self, stage, well_plate_index, well, volume, speed):
-
-    #     # get well xyz coordinates
-    #     location = self.myCoordinator.myModules.myStages[stage].myLabware.get_well_location(int(well_plate_index), well) 
-
-    #     self.myCoordinator.myLogger.info(f"Moving to wellplate '{well_plate_index}' at {location}")
-    #     self.myCoordinator.myModules.myStages[stage].move_to(location)
-
-    #     self.myCoordinator.myLogger.info(f"Aspirating {float(volume)} nL at speed {float(speed)} nL/min")
-    #     self.myCoordinator.myModules.myStages[stage].step_syringe_motor_up(volume=volume, speed=speed)
-
-    # def dispense_to_well(self, stage, well_plate_index, well, volume, speed):
-        
-    #     # get well xyz coordinates
-    #     location = self.myCoordinator.myModules.myStages[stage].myLabware.get_well_location(int(well_plate_index), well) # Tuple (x,y,z) 
-    #     self.myCoordinator.myLogger.info(f"Moving to wellplate '{well_plate_index}' at {location}")
-
-    #     self.myCoordinator.myModules.myStages[stage].move_to(location)
-
-    #     self.myCoordinator.myLogger.info(f"Aspirating {float(volume)} nL at speed {float(speed)} nL/min")
-
-    #     self.myCoordinator.myModules.myStages[stage].step_syringe_motor_down(volume=volume, speed=speed)
-    '''
-
 
     ## LC-MS Commands (specify target wells at run time)
 
@@ -287,17 +262,14 @@ class ProtocolActions:
     def LC_contact_closure(self, Relay = LC_RELAY):
         if not self.myCoordinator.myReader.stop_run == True:
             self.myCoordinator.myLogger.info("THREAD: self.myCoordinator.LC_contact_closure()")  
-            self.myCoordinator.myModules.myRelays[int(Relay)].relay_on() # you need to pass in the number relay you want to switch
-                                            # in this case the LC is connected to relay 2
-            # time.sleep(2) # wait half second to make sure signal had time to start pump
-            self.myCoordinator.myModules.myRelays[int(Relay)].relay_off() # turn off so it can be turned on again in the next loop
-            # time.sleep(2) # wait half second to make sure signal had time to start pump
-            #try twice
-            self.myCoordinator.myModules.myRelays[int(Relay)].relay_on() # you need to pass in the number relay you want to switch
-                                            # in this case the LC is connected to relay 2
-            # time.sleep(2) # wait half second to make sure signal had time to start pump
-            self.myCoordinator.myModules.myRelays[int(Relay)].relay_off() # turn off so it can be turned on again in the next loop
-            # time.sleep(2) # wait half second to make sure signal had time to start pump
+            self.myCoordinator.myModules.myRelays[int(Relay)].relay_on()
+
+            self.myCoordinator.myModules.myRelays[int(Relay)].relay_off()
+
+            self.myCoordinator.myModules.myRelays[int(Relay)].relay_on() 
+
+            self.myCoordinator.myModules.myRelays[int(Relay)].relay_off() 
+
         else:
             print("Stopping")
 
@@ -367,23 +339,27 @@ class ProtocolActions:
         # t = time.localtime()
         current_time = datetime.datetime.now().strftime("%I:%M %p")  # uses AM/PM time format
         seconds = int(seconds)
+        seconds_remainder = seconds
         minutes = 0
         hours = 0
         if seconds > 1:
-            if seconds > 60:
+            if seconds >= 60:
                 minutes = seconds//60
                 seconds_remainder = seconds%60
-            if minutes > 60:
+            if minutes >= 60:
                 hours = minutes//60
                 minutes = minutes%60
-            print(f"Wait called at {current_time}: Wait for {hours} h, {minutes} min, {seconds} s")
+            print(f"Wait called at {current_time}: Wait for {hours} h, {minutes} min, {seconds_remainder} s")
         seconds_waited = 0
         while seconds_waited < int(seconds) and not self.myCoordinator.myReader.stop_run == True:
             time.sleep(1)
             seconds_waited = seconds_waited + 1
 
     def set_tempdeck(self, tempdeck_name, temperature):
-        self.myCoordinator.myModules.myTempDecks[tempdeck_name].start_set_temperature(temperature)
+        try:
+            self.myCoordinator.myModules.myTempDecks[tempdeck_name].start_set_temperature(temperature)
+        except:
+            print("Tempdeck Not Responding")
 
     def run_sub_method(self, scriptName):
         # read file

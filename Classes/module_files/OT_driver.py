@@ -327,7 +327,7 @@ class OT2_nanotrons_driver(SM):
         self.safe_a = a
 
         print(f"\nHomed Coordinates: X - {x}, Y - {y}, Z - {z}, A - {a}")
-
+         
     def home_all(self, *args, **kwargs): # all non-syringe motors
         try:
             self.home('X Y Z A')
@@ -363,8 +363,8 @@ class OT2_nanotrons_driver(SM):
 
         if(self.check_for_valid_move(x_pos, 'X')): # if the future position is a valid move 
                 self.move({'X': x_pos}, speed=self.check_speed(self.xyz_step_size))  # move to the indicated position
-        else:
-            print("\nRequested move is not valid!\n")
+        # else:
+        #     print("\nRequested move is not valid!\n")
 
     def step_x_motor_right(self, *args, **kwargs):
 
@@ -374,8 +374,8 @@ class OT2_nanotrons_driver(SM):
 
         if(self.check_for_valid_move(x_pos, 'X')): # if the future position is a valid move 
                 self.move({'X': x_pos}, speed=self.check_speed(self.xyz_step_size)) # move to the indicated position
-        else:
-            print("\nRequested move is not valid!\n")
+        # else:
+        #     print("\nRequested move is not valid!\n")
 
     def step_y_motor_forward(self, *args, **kwargs):  
 
@@ -385,8 +385,8 @@ class OT2_nanotrons_driver(SM):
 
         if(self.check_for_valid_move(y_pos, 'Y')): # if the future position is a valid move 
                 self.move({'Y': y_pos}, speed=self.check_speed(self.xyz_step_size)) # move to the indicated position
-        else:
-            print("\nRequested move is not valid!\n") 
+        # else:
+        #     print("\nRequested move is not valid!\n") 
 
     def step_y_motor_back(self, *args, **kwargs):
 
@@ -396,8 +396,8 @@ class OT2_nanotrons_driver(SM):
 
         if(self.check_for_valid_move(y_pos, 'Y')): # if the future position is a valid move 
                 self.move({'Y': y_pos}, speed=self.check_speed(self.xyz_step_size)) # move to the indicated position
-        else:
-            print("\nRequested move is not valid!\n")
+        # else:
+        #     print("\nRequested move is not valid!\n")
 
     def step_z_motor_up(self, *args, **kwargs):
         self.update_position()
@@ -413,8 +413,8 @@ class OT2_nanotrons_driver(SM):
             a_pos += self.xyz_step_size # adds a step size to the current position
             if(self.check_for_valid_move(a_pos, 'A')): # if the future position is a valid move 
                     self.move({'A': a_pos}, speed=self.check_speed(self.xyz_step_size)) # move to the indicated position
-            else:
-                print("\nRequested move is not valid!\n")
+            # else:
+            #     print("\nRequested move is not valid!\n")
         else:
             print(f"Side ({self.side}) not recognized.")   
 
@@ -432,8 +432,8 @@ class OT2_nanotrons_driver(SM):
             a_pos -= self.xyz_step_size # adds a step size to the current position
             if(self.check_for_valid_move(a_pos, 'A')): # if the future position is a valid move 
                     self.move({'A': a_pos}, speed=self.check_speed(self.xyz_step_size)) # move to the indicated position
-            else:
-                print("\nRequested move is not valid!\n")
+            # else:
+                # print("\nRequested move is not valid!\n")
         else:
             print(f"Side ({self.side}) not recognized.")   
 

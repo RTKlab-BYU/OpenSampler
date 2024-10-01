@@ -593,8 +593,9 @@ class Active_Queue(tk.Frame,):
     This class contains and displays the inputs needed for each protocol in the queue.
     It assigns a row index to each instance in order to inform the affect those buttons have on the corresponding rows of inputs
     '''
-    def __init__(self, master_frame, coordinator):
+    def __init__(self, master_frame: Queue_Gui, coordinator):
         super().__init__(master_frame)
+        self.master_frame = master_frame
         self.queue_type_string = tk.StringVar(value="Nothing in the Active Queue")
         self.coordinator: Coordinator = coordinator
         self.my_reader = self.coordinator.myReader
@@ -616,7 +617,8 @@ class Active_Queue(tk.Frame,):
 
         # inside current run frame
         self.stop_button_frame = tk.Frame(self.current_run_frame, padx=5) #, highlightbackground="purple", highlightthickness=2)
-        self.current_run_label = tk.Label(self.current_run_frame, text="Currently Running")
+        self.current_run_text = tk.StringVar(value="Current Run:")
+        self.current_run_label = tk.Label(self.current_run_frame, textvariable=self.current_run_text)
         self.current_run_inner = tk.Frame(self.current_run_frame, highlightbackground="black", highlightthickness=2)
 
         self.stop_button_frame.pack(side="left", fill="y")
@@ -631,8 +633,9 @@ class Active_Queue(tk.Frame,):
         self.stop_button.pack()
 
         # inside scheduled runs frame
-        self.scheduled_runs_buttons = tk.Frame(self.scheduled_runs_frame, padx=5) 
-        self.scheduled_runs_label = tk.Label(self.scheduled_runs_frame, text="Scheduled Runs")
+        self.scheduled_runs_buttons = tk.Frame(self.scheduled_runs_frame, padx=5)
+        self.schedule_runs_text = tk.StringVar(value="Scheduled Runs: ") 
+        self.scheduled_runs_label = tk.Label(self.scheduled_runs_frame, textvariable=self.schedule_runs_text)
         self.scheduled_runs_inner = tk.Frame(self.scheduled_runs_frame, highlightbackground="black", highlightthickness=2)
 
         self.scheduled_runs_buttons.pack(side="left", fill="y")
@@ -644,11 +647,13 @@ class Active_Queue(tk.Frame,):
         self.pause_button = tk.Button(self.scheduled_runs_buttons, text="Pause", command=self.pause_resume_scheduled_queue, width=12)
         self.clear_selected_button = tk.Button(self.scheduled_runs_buttons, text="Clear Selected", command=self.clear_selected_runs)
         self.clear_all_button = tk.Button(self.scheduled_runs_buttons, text="Clear All", command=self.clear_all_runs)
+        self.reset_queue_button = tk.Button(self.scheduled_runs_buttons, text="Reset Queue", command=self.clear_all_runs, state="disabled")
 
         self.scheduled_buttons_spacer.pack()
         self.pause_button.pack(fill="x")
         # self.clear_selected_button.pack(fill="x") # README we have no way to select runs, so this doesn't work
         self.clear_all_button.pack(fill="x")
+        self.reset_queue_button.pack(fill="x")
 
         # sample prep header
         self.sp_current_headers = Sample_Prep_Inputs(self.current_run_inner, self.coordinator)
@@ -684,6 +689,7 @@ class Active_Queue(tk.Frame,):
         '''
 
         if self.active_queue_type == "Sample Prep":
+            self.queue_type_string.set("Sample Prep")
 
             try:
                 self.active_que_current_run.destroy()
@@ -709,6 +715,7 @@ class Active_Queue(tk.Frame,):
             self.active_que_current_run.pack(side="top", fill="x")
 
         elif self.active_queue_type == "Mass Spec":
+            self.queue_type_string.set("Mass Spec")
 
             try:
                 self.active_que_current_run.destroy()
@@ -733,6 +740,7 @@ class Active_Queue(tk.Frame,):
             self.scheduled_runs_frame.pack(fill="both", expand=True)
 
         elif self.active_queue_type == "Fractionation":
+            self.queue_type_string.set("Fractionation")
 
             try:
                 self.active_que_current_run.destroy()
@@ -756,6 +764,7 @@ class Active_Queue(tk.Frame,):
             self.scheduled_runs_frame.pack(fill="both", expand=True)
 
         else:
+            self.queue_type_string.set("Nothing in the Active Queue")
             self.sp_current_headers.pack_forget()
             self.ms_current_headers.pack_forget()
             self.frac_current_headers.pack_forget()
@@ -779,6 +788,7 @@ class Active_Queue(tk.Frame,):
         stores them in an appropriate frame class,
         and displays the frame inside the current run frame 
         '''
+
 
         if self.active_queue_type == "Sample Prep":
 
@@ -912,12 +922,23 @@ class Active_Queue(tk.Frame,):
         
         while self.my_reader.running:
             time.sleep(1)
+
+            # check if there is a current_run, value can be None or a pandas series
+            try: 
+                no_current_run = self.my_reader.current_run.empty()
+                if self.scheduled_queue_list == [] and no_current_run:
+                    self.reset_queue_button["state"] = "normal"
+            except:
+                pass            
+
             if self.my_reader.scheduled_queue_changed:
-                self.update_scheduled_queues_display()  # change this
+                self.update_scheduled_queues_display() 
                 self.my_reader.scheduled_queue_changed = False
 
             if self.my_reader.current_run_changed:
-                self.update_current_run_display()  # change this
+                self.current_run_text.set(f"Current Run: {self.my_reader.current_run_start_time}")
+                self.schedule_runs_text.set(f"Scheduled Runs: {str(self.my_reader.runs_scheduled)}")
+                self.update_current_run_display() 
                 self.my_reader.current_run_changed = False
 
             if self.my_reader.update_pause_button:
@@ -927,11 +948,21 @@ class Active_Queue(tk.Frame,):
                 elif not self.my_reader.queue_paused:
                     self.pause_button.config(text="Pause")
                     self.my_reader.update_pause_button = False
+
+        self.current_run_text.set(f"Current Run: ")
+        self.schedule_runs_text.set(f"Scheduled Runs: ")
+        self.pause_button.config(text="Pause")
             
     def stop_immediately(self):
         '''
         Pauses queue and interupts current run.
         '''
+        if not self.my_reader.running:
+            return
+
+        if not self.scheduled_queue_list == []:
+            self.my_reader.pause_scheduled_queue()
+
         self.my_reader.stop_current_run()
 
     def pause_resume_scheduled_queue(self):
@@ -939,12 +970,20 @@ class Active_Queue(tk.Frame,):
         Pauses queue after finishing current run. 
 
         '''
+        if not self.my_reader.running:
+            print("Currently No Runs Scheduled")
+            return
+        
+        if self.scheduled_queue_list == []:
+            self.my_reader.queue_paused = False
+            self.my_reader.update_pause_button = True
+            print("Currently No Runs Scheduled")
+            return
+        
         if self.my_reader.queue_paused:
             self.my_reader.resume_scheduled_queue()
-            # Change button color?
         elif not self.my_reader.queue_paused:
             self.my_reader.pause_scheduled_queue()
-            # Change button color?
 
     def clear_selected_runs(self):
         '''
@@ -959,12 +998,14 @@ class Active_Queue(tk.Frame,):
         '''
         Remove all future runs from scheduled queue. Does not affect current run.
         '''
-
+        if not self.my_reader.running:
+            return
         
-        self.my_reader.scheduled_queue = None  # overwrite any scheduled runs
-        self.my_reader.scheduled_queue_changed = True
-        self.my_reader.resume_scheduled_queue()  # if paused, resume
-        print("Clear all - This should be working now.")
+        if not self.scheduled_queue_list == []:
+            self.my_reader.scheduled_queue = None  # overwrite any scheduled runs
+            self.my_reader.scheduled_queue_changed = True
+            self.my_reader.resume_scheduled_queue()  # if paused, resume
+            print("Clearing scheduled queue. Current run will continue unless interupted.")
 
 
 class Sample_Prep_Inputs(tk.Frame,):

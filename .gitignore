@@ -9,3 +9,4 @@ queues/*
 methods/*
 settings/__pycache__/*
 models/*
+.venv*
