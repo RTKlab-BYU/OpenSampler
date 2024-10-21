@@ -113,8 +113,8 @@
     "selector_actuators": [
         {
             "port": 0,
-            "Move Out": "G33",
-            "Home Out": "G14",
+            "Home Out": "G33",
+            "Move Out": "G14",
             "Number of Ports": 8
         }
     ],
