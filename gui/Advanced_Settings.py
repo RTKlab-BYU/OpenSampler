@@ -409,15 +409,15 @@ class Valves(tk.Frame,):
     def PopulateValves(self, container):
         self.portsGrid = tk.Frame(self)
         self.portsGrid.pack(side=tk.TOP)
-        tk.Label(self.portsGrid, text="Valves", font="Helvetica 14",justify=tk.LEFT).grid(row=0,column=0)
+        tk.Label(self.portsGrid, text="2-Position Valves", font="Helvetica 14", justify=tk.LEFT).grid(row=0, column=0)
         self.myValves = []
         i = 2
 
-        tk.Label(self.portsGrid, text="Port", font="Helvetica 10",justify=tk.LEFT).grid(row=1,column=0)
-        tk.Label(self.portsGrid, text="Read Position A", font="Helvetica 10",justify=tk.LEFT).grid(row=1,column=1)
-        tk.Label(self.portsGrid, text="Go to A", font="Helvetica 10",justify=tk.LEFT).grid(row=1,column=2)
-        tk.Label(self.portsGrid, text="Read Position B", font="Helvetica 10",justify=tk.LEFT).grid(row=1,column=3)
-        tk.Label(self.portsGrid, text="Go to B", font="Helvetica 10",justify=tk.LEFT).grid(row=1,column=4)
+        tk.Label(self.portsGrid, text="Serial Port", font="Helvetica 10", justify=tk.LEFT).grid(row=1, column=0)
+        tk.Label(self.portsGrid, text="A Feedback", font="Helvetica 10", justify=tk.LEFT).grid(row=1, column=1)
+        tk.Label(self.portsGrid, text="Go to A", font="Helvetica 10", justify=tk.LEFT).grid(row=1, column=2)
+        tk.Label(self.portsGrid, text="B Feedback", font="Helvetica 10", justify=tk.LEFT).grid(row=1, column=3)
+        tk.Label(self.portsGrid, text="Go to B", font="Helvetica 10", justify=tk.LEFT).grid(row=1, column=4)
         portIndex = 0
         for eachOut in container.loaded_settings.get("2_position_actuators"):
             self.myValves.append(ValveRow(self, container, eachOut, portIndex, i))
@@ -485,8 +485,8 @@ class SelectorRow(tk.Frame,):
     def __init__(self, frame, container, eachOut, portIndex, rowNum):
         super().__init__(frame.portsGrid)
         SelectorPortNum(frame.portsGrid, container, eachOut["port"], portIndex).grid(row=rowNum,column=0)
-        MoveOutPin(frame.portsGrid, container, eachOut["Move Out"], portIndex).grid(row=rowNum,column=1)
-        HomeOutPin(frame.portsGrid, container, eachOut["Home Out"], portIndex).grid(row=rowNum,column=2)
+        HomeOutPin(frame.portsGrid, container, eachOut["Home Out"], portIndex).grid(row=rowNum,column=1)
+        MoveOutPin(frame.portsGrid, container, eachOut["Move Out"], portIndex).grid(row=rowNum,column=2)
         NumSelectorPorts(frame.portsGrid, container, eachOut["Number of Ports"], portIndex).grid(row=rowNum,column=3)
 
         tk.Button(frame.portsGrid,text="Remove Selector",command= lambda: self.RemoveSelector(container, portIndex, frame)).grid(row=rowNum,column=4)
@@ -509,7 +509,7 @@ class Selectors(tk.Frame,):
     def PopulateSelectors(self, container):
         self.portsGrid = tk.Frame(self)
         self.portsGrid.pack(side=tk.TOP)
-        tk.Label(self.portsGrid, text="Selectors", font="Helvetica 14",justify=tk.LEFT).grid(row=0,column=0)
+        tk.Label(self.portsGrid, text="Selector Valves", font="Helvetica 14",justify=tk.LEFT).grid(row=0,column=0)
         self.mySelectors = []
         i = 2
 
@@ -518,15 +518,15 @@ class Selectors(tk.Frame,):
         tk.Label(self.portsGrid, text="Step Valve", font="Helvetica 10",justify=tk.LEFT).grid(row=1,column=2)
         tk.Label(self.portsGrid, text="Number of Ports", font="Helvetica 10",justify=tk.LEFT).grid(row=1,column=3)
         portIndex = 0
-        for eachOut in container.loaded_settings.get("selector_actuators"):
-            self.mySelectors.append(SelectorRow(self, container, eachOut, portIndex, i))
+        for eachSelector in container.loaded_settings.get("selector_actuators"):
+            self.mySelectors.append(SelectorRow(self, container, eachSelector, portIndex, i))
             portIndex = portIndex + 1
             i = i + 1
         add_button = tk.Button(self.portsGrid,text="Add Selector",command= lambda: self.AddSelector(container))
         add_button.grid(row=i,column=4)
     
     def AddSelector(self, container):
-        container.loaded_settings["selector_actuators"].append({"port": "", "Move Out": "","Home Out": "", "Number of Ports": ""})
+        container.loaded_settings["selector_actuators"].append({"port": "", "Home Out": "","Move Out": "", "Number of Ports": ""})
         self.UpdateGUI(container)
 
     def UpdateGUI(self, container):
@@ -1088,14 +1088,14 @@ class Configuration(tk.Toplevel,):
         self.settings_filename_to_open = DEFAULT_SETTINGS
         
         # A Label widget to show in toplevel
-        self.connectButton = tk.Button(settingsBar,activebackground="yellow",text="Connect",command=lambda: self.Connect(coordinator),justify=tk.LEFT)
+        self.connectButton = tk.Button(settingsBar, activebackground="yellow",text="Connect", command=lambda: self.Connect(coordinator), justify=tk.LEFT)
         self.connectButton.grid(row=0,column=0)
         self.connectButton.configure(bg="gray")
-        self.disconnectButton = tk.Button(settingsBar,activebackground="red",text="Disconnect",command=lambda: self.Disconnect(coordinator),justify=tk.LEFT)
+        self.disconnectButton = tk.Button(settingsBar, activebackground="red", text="Disconnect", command=lambda: self.Disconnect(coordinator), justify=tk.LEFT)
         self.disconnectButton.grid(row=0,column=1)
-        tk.Button(settingsBar,text="Clear Settings",command=lambda: self.LoadDefaults(coordinator),justify=tk.LEFT).grid(row=0,column=2)
-        tk.Button(settingsBar, text='Import from a Settings File', command=lambda: self.LoadSettings(coordinator),justify=tk.LEFT).grid(row=0,column=3)
-        tk.Button(settingsBar,text="Save Settings to File",command=lambda: self.SaveSettings(),justify=tk.LEFT).grid(row=0,column=4)
+        tk.Button(settingsBar,text="Clear Settings",command=lambda: self.LoadDefaults(coordinator),justify=tk.LEFT).grid(row=0, column=2)
+        tk.Button(settingsBar, text='Import from a Settings File', command=lambda: self.LoadSettings(coordinator), justify=tk.LEFT).grid(row=0, column=3)
+        tk.Button(settingsBar,text="Save Settings to File", command=lambda: self.SaveSettings(), justify=tk.LEFT).grid(row=0, column=4)
         
         if coordinator.myModules.settings == None:
             self.popCanv.loaded_settings = coordinator.myModules.read_dictionary_from_file(DEFAULT_SETTINGS)
@@ -1111,21 +1111,21 @@ class Configuration(tk.Toplevel,):
         self.destroy()
 
     def initialize_frames(self, coordinator):
-        self.myPorts = Serial_Ports(self.popCanv)
+        self.myPorts = Serial_Ports(self.popCanv, highlightbackground="black", highlightthickness=2)
         self.myPorts.grid(row=0,column=0)
-        self.myIns = Inputs(self.popCanv)
+        self.myIns = Inputs(self.popCanv, highlightbackground="black", highlightthickness=2)
         self.myIns.grid(row=1,column=0)
-        self.myOuts = Outputs(self.popCanv)
+        self.myOuts = Outputs(self.popCanv, highlightbackground="black", highlightthickness=2)
         self.myOuts.grid(row=2,column=0)
-        self.Switches = Switches(self.popCanv)
+        self.Switches = Switches(self.popCanv, highlightbackground="black", highlightthickness=2)
         self.Switches.grid(row=3,column=0)
-        self.myValves = Valves(self.popCanv)
+        self.myValves = Valves(self.popCanv, highlightbackground="black", highlightthickness=2)
         self.myValves.grid(row=4,column=0)
-        self.mySelectors = Selectors(self.popCanv)
+        self.mySelectors = Selectors(self.popCanv, highlightbackground="black", highlightthickness=2)
         self.mySelectors.grid(row=5,column=0)
-        self.myMotors = Motor_Sets(self.popCanv, coordinator)
+        self.myMotors = Motor_Sets(self.popCanv, coordinator, highlightbackground="black", highlightthickness=2)
         self.myMotors.grid(row=6,column=0)
-        self.myTempDecks = Tempdecks(self.popCanv)
+        self.myTempDecks = Tempdecks(self.popCanv, highlightbackground="black", highlightthickness=2)
         self.myTempDecks.grid(row=7,column=0)
 
     def Disconnect(self, coordinator):
