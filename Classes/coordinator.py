@@ -72,7 +72,7 @@ class Coordinator:
         # --------------------- Log files namehead
         folder = "logs/" if os.name == 'posix' else "logs\\"
         now = datetime.now()
-        timestamp = now.strftime("%m-%d-%Y---%H-%M-%S")
+        timestamp = now.strftime("%m-%d-%Y___%I:%M_%p")
         log_file_name_head = folder + timestamp
         # ---------------------
         self.myModules = Modules()
@@ -95,7 +95,7 @@ class Coordinator:
 
         # initialize the logging info format
         self.myLogger = logging.getLogger(__name__)
-        self.myLogger.setLevel(logging.ERROR)
+        self.myLogger.setLevel(logging.INFO)
 
         formatter = logging.Formatter('%(asctime)s: %(levelname)s: %(name)s: %(message)s')
 

@@ -2,6 +2,7 @@ import datetime
 import json
 import time
 import threading
+from coordinator import Coordinator
 
 
 from Classes.module_files.labware import Labware
@@ -18,78 +19,88 @@ DEFAULT_OUTPUT = 0
 
 
 class ProtocolActions:
-    def __init__(self, coordinator):
+    def __init__(self, coordinator: Coordinator):
         self.myCoordinator = coordinator
 
     # Basic Commands
 
-    def move_to_well(self, stage, plate, well):
-
-        #find location in 
-        location: tuple = self.myCoordinator.myModules.myStages[stage].myLabware.get_well_location(int(plate), well)
-        self.myCoordinator.myLogger.info(f"Moving to '{well}' at '{location}'")
-
+    def move_to_well(self, stage, plate_index, well, report=True):
+        location: tuple = self.myCoordinator.myModules.myStages[stage].myLabware.get_well_location(int(plate_index), well)
+        plate_model = self.myCoordinator.myModules.myStages[stage].myLabware.plate_list[int(plate_index)].model
         self.myCoordinator.myModules.myStages[stage].move_to(location)
 
-    def move_to_location(self, stage, location_name):
+        if report:
+            message = f"Moving to '{well}' of well plate '{plate_model}' (plate index: {plate_index}). XYZ: {location}"
+            print(message)
+            self.myCoordinator.myLogger.info(message)
 
-        #find location in
-        labware: Labware = self.myCoordinator.myModules.myStages[stage].myLabware
-        self.myCoordinator.myLogger.info(f"Moving to '{location_name}' at '{labware.custom_locations[location_name]}'")
+    def move_to_location(self, stage, location_name, report=True):
         location = self.myCoordinator.myModules.myStages[stage].myLabware.custom_locations[location_name]
-
         self.myCoordinator.myModules.myStages[stage].move_to(location)
 
-    def aspirate_in_place(self, stage, volume, speed): 
-        self.myCoordinator.myLogger.info(f"Aspirating {float(volume)} nL at speed {float(speed)} nL/min")
+        if report:
+            message = f"Moving to '{location_name}'"
+            print(message)
+            self.myCoordinator.myLogger.info(message)
+
+    def aspirate_in_place(self, stage, volume, speed, report=True):
         self.myCoordinator.myModules.myStages[stage].step_syringe_motor_up(volume=volume, speed=speed)
+        if report:
+            message = f"Aspirating {float(volume)} nL at speed {float(speed)} nL/min"
+            print(message)
+            self.myCoordinator.myLogger.info(message)
     
-    def dispense_in_place(self, stage, volume, speed): 
-        self.myCoordinator.myLogger.info(f"Aspirating {float(volume)} nL at speed {float(speed)} nL/min")
+    def dispense_in_place(self, stage, volume, speed, report=True):
         self.myCoordinator.myModules.myStages[stage].step_syringe_motor_down(volume=volume, speed=speed)
+        if report:
+            message = f"Dispensing {float(volume)} nL at speed {float(speed)} nL/min"
+            print(message)
+            self.myCoordinator.myLogger.info(message)
 
 
     # Compounded Commands (convenient combinations of basic commands)
        
-    def aspirate_from_wells(self, stage, well_plate_index, wells, volume, speed):
-
+    def aspirate_from_wells(self, stage, plate_index, wells, volume, speed):
         wells = wells.replace(" ","")
         well_list = wells.split(",")
-        
+        plate_model = self.myCoordinator.myModules.myStages[stage].myLabware.plate_list[int(plate_index)].model
+
+        message = f"Aspirating {volume} nL each from well(s) {wells} of wellplate {plate_model} (index: {plate_index})."
+        print(message)
+        self.myCoordinator.myLogger.info(message)
+
         for well in well_list:
-
-            # get well xyz coordinates
-            location = self.myCoordinator.myModules.myStages[stage].myLabware.get_well_location(int(well_plate_index), well) 
-
-            self.myCoordinator.myLogger.info(f"Moving to wellplate '{well_plate_index}' at {location}")
-            self.myCoordinator.myModules.myStages[stage].move_to(location)
-
-            self.myCoordinator.myLogger.info(f"Aspirating {float(volume)} nL at speed {float(speed)} nL/min")
-            self.myCoordinator.myModules.myStages[stage].step_syringe_motor_up(volume=volume, speed=speed)
-
+            self.move_to_well(stage, plate_index, well, report=False)
+            self.aspirate_in_place(stage, volume, speed, report=False)
+        
     def aspirate_from_location(self, stage, location_name, volume, speed):
-        self.move_to_location(stage, location_name)
-        self.aspirate_in_place(stage, volume, speed)
+        self.move_to_location(stage, location_name, report=False)
+        self.aspirate_in_place(stage, volume, speed, report=False)
 
-    def dispense_to_wells(self, stage, well_plate_index, wells, volume, speed):
+        message = f"Aspirating {volume} nL from '{location_name}'."
+        print(message)
+        self.myCoordinator.myLogger.info(message)
 
+    def dispense_to_wells(self, stage, plate_index, wells, volume, speed):
         wells = wells.replace(" ","")
         well_list = wells.split(",")
-        
+        plate_model = self.myCoordinator.myModules.myStages[stage].myLabware.plate_list[int(plate_index)].model
+
+        message = f"Dispensing {volume} nL to each well(s) {wells} of wellplate {plate_model} (index: {plate_index})."
+        print(message)
+        self.myCoordinator.myLogger.info(message)
+
         for well in well_list:
-
-            # get well xyz coordinates
-            location = self.myCoordinator.myModules.myStages[stage].myLabware.get_well_location(int(well_plate_index), well) # Tuple (x,y,z) 
-            
-            self.myCoordinator.myLogger.info(f"Moving to wellplate '{well_plate_index}' at {location}")
-            self.myCoordinator.myModules.myStages[stage].move_to(location)
-
-            self.myCoordinator.myLogger.info(f"Aspirating {float(volume)} nL at speed {float(speed)} nL/min")
-            self.myCoordinator.myModules.myStages[stage].step_syringe_motor_down(volume=volume, speed=speed)
+            self.move_to_well(stage, plate_index, well, report=False)
+            self.dispense_in_place(stage, volume, speed, report=False)
 
     def dispense_to_location(self, stage, location_name, volume, speed):
-        self.move_to_location(stage, location_name)
-        self.dispense_in_place(stage, volume, speed)
+        self.move_to_location(stage, location_name, report=False)
+        self.dispense_in_place(stage, volume, speed, report=False)
+
+        message = f"Dispensing {volume} nL to {location_name}."
+        print(message)
+        self.myCoordinator.myLogger.info(message)
 
 
     ## LC-MS Commands (specify target wells at run time)
@@ -102,14 +113,20 @@ class ProtocolActions:
         '''
         # need stage, plate, well
         stage = self.myCoordinator.myReader.current_run["Stage"]
-        plate = int(self.myCoordinator.myReader.current_run["Wellplate"])  # uses index value for now...
+        plate_index = int(self.myCoordinator.myReader.current_run["Wellplate"])  # uses index value for now...
         wells: str = self.myCoordinator.myReader.current_run["Well"]
-        
-        wells.replace(" ", "")
+        plate_model = self.myCoordinator.myModules.myStages[stage].myLabware.plate_list[int(plate_index)].model
 
-        for well in wells.split(","):
-            self.move_to_well(stage, plate, well)
-            self.aspirate_in_place(stage, volume, speed)
+        wells.replace(" ", "")
+        well_list = wells.split(",")
+
+        message = f"Aspirating {volume} nL each from well(s) {wells} of wellplate {plate_model} (index: {plate_index})."
+        print(message)
+        self.myCoordinator.myLogger.info(message)
+
+        for well in well_list:
+            self.move_to_well(stage, plate_index, well, report=False)
+            self.aspirate_in_place(stage, volume, speed, report=False)
             if not wait_seconds==0:
                 self.wait(wait_seconds)
             
@@ -121,14 +138,20 @@ class ProtocolActions:
         '''
         # need stage, plate, well
         stage = self.myCoordinator.myReader.current_run["Stage"]
-        plate = int(self.myCoordinator.myReader.current_run["Wellplate"])  # uses index value for now...
+        plate_index = int(self.myCoordinator.myReader.current_run["Wellplate"])  # uses index value for now...
         wells: str = self.myCoordinator.myReader.current_run["Well"]
+        plate_model = self.myCoordinator.myModules.myStages[stage].myLabware.plate_list[int(plate_index)].model
         
         wells = wells.replace(" ", "")
+        well_list = wells.split(",")
 
-        for well in wells.split(","):
-            self.move_to_well(stage, plate, well)
-            self.dispense_in_place(stage, volume, speed)
+        message = f"Dispensing {volume} nL each to well(s) {wells} of wellplate {plate_model} (index: {plate_index})."
+        print(message)
+        self.myCoordinator.myLogger.info(message)
+
+        for well in well_list:
+            self.move_to_well(stage, plate_index, well, report=False)
+            self.dispense_in_place(stage, volume, speed, report=False)
             if not wait_seconds==0:
                 self.wait(wait_seconds)
 
@@ -191,40 +214,6 @@ class ProtocolActions:
             
             self.aspirate_in_place(stage, volume, speed)
             self.wait(wait_seconds)
-
-    '''
-    # def aspirate_sample(self, volume, speed, wait_seconds):
-    #     
-    #     # this is a mass spec method. 
-    #     # it retrieves the current sample specs from the method reader, and unpackages them.
-    #     # it moves to the well, waits for a specified time, aspirates the volume, waits again.
-    #     
-    #     # need stage, plate, well
-    #     stage = self.myCoordinator.myReader.current_run["Stage"] 
-    #     plate = int(self.myCoordinator.myReader.current_run["Wellplate"])  # uses index value for now...
-    #     well = self.myCoordinator.myReader.current_run["Well"]
-
-    #     self.move_to_well(stage, plate, well)
-    #     self.wait(wait_seconds)
-    #     self.aspirate_in_place(stage, volume, speed)
-    #     self.wait(wait_seconds)
-
-    # def dispense_to_sample(self, volume, speed, wait_seconds):
-    #     
-    #     # this is a mass spec method. 
-    #     # it retrieves the current sample specs from the method reader, and unpackages them.
-    #     # it moves to the well, waits for a specified time, aspirates the volume, waits again.
-    #     
-    #     # need stage, plate, well
-    #     stage = self.myCoordinator.myReader.current_run["Stage"] 
-    #     plate = int(self.myCoordinator.myReader.current_run["Wellplate"])  # uses index value for now...
-    #     well = self.myCoordinator.myReader.current_run["Well"]
-
-    #     self.move_to_well(stage, plate, well)
-    #     self.wait(wait_seconds)
-    #     self.dispense_in_place(stage, volume, speed)
-    #     self.wait(wait_seconds)
-    '''
     
 
     ## Syringe Commands
@@ -234,44 +223,65 @@ class ProtocolActions:
         max_position = self.myCoordinator.myModules.myStages[stage].myLabware.get_syringe_max()
         self.myCoordinator.myModules.myStages[stage].move_syringe_to(max_position, speed)
 
+        message = f"Moving syringe to max position"
+        print(message)
+        self.myCoordinator.myLogger.info(message)
+
     def syringe_to_min(self, stage, nL_min_speed):
         speed = float(nL_min_speed) # pre min to per sec
         min_position = self.myCoordinator.myModules.myStages[stage].myLabware.get_syringe_min()
         self.myCoordinator.myModules.myStages[stage].move_syringe_to(min_position, speed)
+
+        message = f"Moving syringe to min position"
+        print(message)
+        self.myCoordinator.myLogger.info(message)
     
     def syringe_to_rest(self, stage, nL_min_speed):
         speed = float(nL_min_speed) # pre min to per sec
         rest_position = self.myCoordinator.myModules.myStages[stage].myLabware.get_syringe_rest()
         self.myCoordinator.myModules.myStages[stage].move_syringe_to(rest_position, speed)
 
+        message = f"Moving syringe to rest position"
+        print(message)
+        self.myCoordinator.myLogger.info(message)
+
     
     # Valve Commands
 
     def valve_to_run(self, valve_index): 
-        self.myCoordinator.myModules.my2PosValves[int(valve_index)].to_runPosition()
+        self.myCoordinator.myModules.my2PosValves[int(valve_index)].to_position_A()
+
+        message = "Sending valve to position A"
+        print(message)
+        self.myCoordinator.myLogger.info(message)
 
     def valve_to_load(self, valve_index): 
-        self.myCoordinator.myModules.my2PosValves[int(valve_index)].to_loadPosition()
+        self.myCoordinator.myModules.my2PosValves[int(valve_index)].to_position_B()
+
+        message = "Sending valve to position B"
+        print(message)
+        self.myCoordinator.myLogger.info(message)
     
     def move_selector(self, valve_index, position):
         self.myCoordinator.myModules.mySelectors[int(valve_index)].move_to_position(int(position))
+
+        message = f"Moving selector valve to position {position}."
+        print(message)
+        self.myCoordinator.myLogger.info(message)
 
 
     # Relay Commands
 
     def LC_contact_closure(self, Relay = LC_RELAY):
-        if not self.myCoordinator.myReader.stop_run == True:
-            self.myCoordinator.myLogger.info("THREAD: self.myCoordinator.LC_contact_closure()")  
-            self.myCoordinator.myModules.myRelays[int(Relay)].relay_on()
 
-            self.myCoordinator.myModules.myRelays[int(Relay)].relay_off()
+        message = "Sending signal to start LC"
+        print(message)
+        self.myCoordinator.myLogger.info(message)
 
-            self.myCoordinator.myModules.myRelays[int(Relay)].relay_on() 
-
-            self.myCoordinator.myModules.myRelays[int(Relay)].relay_off() 
-
-        else:
-            print("Stopping")
+        self.myCoordinator.myModules.myRelays[int(Relay)].relay_on()
+        self.myCoordinator.myModules.myRelays[int(Relay)].relay_off()
+        self.myCoordinator.myModules.myRelays[int(Relay)].relay_on() 
+        self.myCoordinator.myModules.myRelays[int(Relay)].relay_off() 
 
     def MS_contact_closure(self, Relay = MS_RELAY, Input = MS_INPUT, Port = MS_INPUT_PORT): 
         wait_to_analyze_timer = 0
@@ -319,18 +329,24 @@ class ProtocolActions:
             self.myCoordinator.myLogger.info("Skipping MS Contact Closure")
           #  return "Skipped MS Trigger"
 
-    def Wait_Contact_Closure(self, Logic, Input = MS_INPUT, Port = MS_INPUT_PORT):
-        Logic = Logic == "True"
+    def Wait_Contact_Closure(self, Logic, Input, Port=0):
+        logic = Logic == "True" # definded by user based on expected input state
         pin_state = self.myCoordinator.myModules.myPorts[int(Port)].getPinState(Input)
-        #print((Logic))
-        while (pin_state != Logic):
-            time.sleep(1.5)
-            pin_state = self.myCoordinator.myModules.myPorts[int(Port)].getPinState(Input)            
-            # print(pin_state)
+
+        message = "Awaiting Contact Closure"
+        print(message)
+        self.myCoordinator.myLogger.info(message)
+
+        while (pin_state != logic):
+            time.sleep(1)
+            pin_state = self.myCoordinator.myModules.myPorts[int(Port)].getPinState(Input)
+
             if self.myCoordinator.myReader.stop_run == True:
                 break
-        #print("Contact Closure")
 
+        message = "Contact Closure Recieved"
+        print(message)
+        self.myCoordinator.myLogger.info(message)
 
     # Other Commands
 
@@ -349,7 +365,11 @@ class ProtocolActions:
             if minutes >= 60:
                 hours = minutes//60
                 minutes = minutes%60
-            print(f"Wait called at {current_time}: Wait for {hours} h, {minutes} min, {seconds_remainder} s")
+
+            message = f"Wait called at {current_time}: Wait for {hours} h, {minutes} min, {seconds_remainder} s"
+            print(message)
+            self.myCoordinator.myLogger.info(message)
+
         seconds_waited = 0
         while seconds_waited < int(seconds) and not self.myCoordinator.myReader.stop_run == True:
             time.sleep(1)
@@ -358,10 +378,17 @@ class ProtocolActions:
     def set_tempdeck(self, tempdeck_name, temperature):
         try:
             self.myCoordinator.myModules.myTempDecks[tempdeck_name].start_set_temperature(temperature)
+            message = f"Setting tempdeck to {temperature} C"
+            print(message)
+            self.myCoordinator.myLogger.info(message)
         except:
             print("Tempdeck Not Responding")
 
     def run_sub_method(self, scriptName):
+        message = f"Running Submethod: {scriptName}"
+        print(message)
+        self.myCoordinator.myLogger.info(message)
+
         # read file
         with open(scriptName, 'r') as myfile:
             data = myfile.read()

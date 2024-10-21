@@ -1,7 +1,7 @@
 
 
 from datetime import datetime 
-import logging
+from coordinator import Coordinator 
 import json
 import pandas as pd
 import time
@@ -23,7 +23,7 @@ class MethodReader:  # should call read from coordinator file
     These controls are operated from the Queue_Gui.
     '''
 
-    def __init__(self, myCoordinator): # initialize all variables and store needed data
+    def __init__(self, myCoordinator: Coordinator): # initialize all variables and store needed data
 
         self.myCoordinator = myCoordinator # this has the functions that move the motors
         
@@ -231,7 +231,10 @@ class MethodReader:  # should call read from coordinator file
             now_time = datetime.now().strftime("%I:%M %p")  # uses AM/PM time format
             sample_count += 1
 
-            logging.info(f"Running {self.current_run['Method']} \nStarted at {now_time} on {now_date}.")
+            self.myCoordinator.myLogger.info(f"Running {self.current_run['Method']} \nStarted at {now_time} on {now_date}.")
+            print("\n*****************************************************************\n")
+            print(f"Running {self.current_run['Method']} \nStarted at {now_time} on {now_date}.")
+            print("\n*****************************************************************\n")
             self.current_run_start_time = f"Started at {now_time} on {now_date}."
             self.runs_scheduled = int(self.scheduled_queue.shape[0])
             self.current_run_changed = True
@@ -243,7 +246,7 @@ class MethodReader:  # should call read from coordinator file
             if self.error_during_run:
                 now_date = datetime.now().strftime("%m/%d/%Y")
                 now_time = datetime.now().strftime("%I:%M %p")  # uses AM/PM time format
-                logging.info(f"Run !EXPERIENCED AN ERROR! at {now_time} on {now_date}. Method: {self.current_run['Method']}")
+                self.myCoordinator.myLogger.info(f"Run !EXPERIENCED AN ERROR! at {now_time} on {now_date}. Method: {self.current_run['Method']}")
                 print(f"Run !EXPERIENCED AN ERROR! at {now_time} on {now_date}. Method: {self.current_run['Method']}")
                 self.pause_scheduled_queue()
             
@@ -252,12 +255,12 @@ class MethodReader:  # should call read from coordinator file
                 
             if run_completed:
                 print("\n*****************************************************************\n")
-                logging.info(f"Run completed at {now_time} on {now_date}.")
+                self.myCoordinator.myLogger.info(f"Run completed at {now_time} on {now_date}.")
                 print(f"Run completed at {now_time} on {now_date}.")
                 print("\n*****************************************************************\n")
             else:
                 print("\n*************************** Warning ******************************\n")
-                logging.info(f"Run was interupted by user at {now_time} on {now_date}.")
+                self.myCoordinator.myLogger.error(f"Run was interupted by user at {now_time} on {now_date}.")
                 print(f"Run was interupted by user at {now_time} on {now_date}.")
                 print("\n*****************************************************************\n")
                     
