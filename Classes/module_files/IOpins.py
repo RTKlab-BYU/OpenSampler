@@ -79,63 +79,23 @@ class SerialPort:
         for each_pin in self.outputs:
             if each_pin == this_pin:
                 self.ser.write(str("turn_on "+this_pin).encode())
-                # print(self.port)
-                # print(self.ser)
-                # print(this_pin)
                 return "Success"
 
             else:
                 pass
-                # print(each_pin.pin_number)
         return "ERROR: no pin named " + this_pin
 
     def deactivatePin (self, this_pin):
         for each_pin in self.outputs:
             if each_pin == this_pin:
                 self.ser.write(str("turn_off "+this_pin).encode())
-                # print(self.port)
-                # print(self.ser)
-                # print(this_pin)
                 return "Success"
             else:
                 pass
-                # print(each_pin.pin_number)
         return "ERROR: no pin named " + this_pin
 
     def killPins(self):
         self.outputs = []
         self.inputs = []
                 
-                
-if __name__ == "__main__":
-    comPorts = ["COM5","COM6"]   
-    myPorts = []
-    for port in comPorts:
-        myPorts.append(SerialPort(port))
-    print("**")
-    myPorts[1].addOutputPin("D19")
-    myPorts[0].addOutputPin("D17") 
-    myPorts[1].addOutputPin("D23")
-    myPorts[1].addInputPin("D27")
-    print("^^")
-    print(myPorts[1].activatePin("D19"))
-    time.sleep(2)
-    print(myPorts[1].deactivatePin("D19") )
-    time.sleep(10)  
-    myPorts[0].activatePin("D17")
-    time.sleep(0.2)
-    myPorts[0].deactivatePin("D17")
-    time.sleep(5)
-
-    time.sleep(1)
-    myPorts[1].activatePin("D23")
-    time.sleep(20)
-    myPorts[1].deactivatePin("D23")
-
-    
-    time.sleep(1)
-    print(myPorts[1].getPinState("D27"))
-    time.sleep(10)
-    for eachPort in myPorts:
-        eachPort.ser.close()
 
