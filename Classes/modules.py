@@ -8,7 +8,6 @@ from Classes.module_files.OT_driver import OT2_nanotrons_driver
 from Classes.module_files.zaber_independent_syringe import ZaberIndependentSyringe
 from Classes.module_files.joystick import XboxJoystick
 from Classes.module_files.profile import Profile
-from Classes.module_files.hiVoltSwitch import HiVoltageSwitch
 from Classes.module_files.tempdeck_driver import TempDeck
 from settings.default_controller_profile import default_controller_profile
 
@@ -106,10 +105,6 @@ class Modules:
             print("\nAdding Relay")
             self.myRelays.append(Relays(self, eachRelay["port"], eachRelay["pin"]))
 
-        for eachSwitch in settingsObj["switches"]:
-            print("\nAdding High Voltage Switch")
-            self.mySwitches.append(HiVoltageSwitch(self, eachSwitch["port"],eachSwitch["pin_left"],eachSwitch["pin_right"]))
-
         for eachInput in settingsObj["feedbacks"]:
             print("\nAdding generic Input")
             self.myFeedbacks.append(eachInput)
@@ -126,7 +121,7 @@ class Modules:
                 print("\nAdding Zaber Syringe")
                 self.myStages[eachMotorSeries] = ZaberIndependentSyringe(self, settingsObj["motors_configurations"][eachMotorSeries], log_file_name_head, )   
             self.myJoystickProfiles[eachMotorSeries] = Profile(settingsObj["motors_configurations"][eachMotorSeries]["joystick"])     
-            
+
         for eachTempDeck in settingsObj["temp_decks"].keys():
             print("\nAdding Temp Deck")
             self.myTempDecks[eachTempDeck] = TempDeck(settingsObj["temp_decks"][eachTempDeck]["com"])
