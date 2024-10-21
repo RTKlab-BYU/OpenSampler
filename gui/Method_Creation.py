@@ -202,7 +202,6 @@ class Method_Command_Row():
         new_type = self.type_box.get()
         
         if not self.main_frame.commands_list[self.row_index]["type"].__eq__(str(new_type)):
-            #print("different")
             self.main_frame.commands_list[self.row_index]["type"] = new_type
             self.main_frame.commands_list[self.row_index]["parameters"] = list(ACTION_DEFAULTS.get(new_type))
         self.main_frame.update_command_grid()
