@@ -72,7 +72,7 @@ class Coordinator:
         # --------------------- Log files namehead
         folder = "logs/" if os.name == 'posix' else "logs\\"
         now = datetime.now()
-        timestamp = now.strftime("%m-%d-%Y___%I:%M_%p")
+        timestamp = now.strftime("%m-%d-%Y___%I-%M_%p")
         log_file_name_head = folder + timestamp
         # ---------------------
         self.myModules = Modules()

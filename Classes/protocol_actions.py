@@ -2,11 +2,8 @@ import datetime
 import json
 import time
 import threading
-from coordinator import Coordinator
 
-
-from Classes.module_files.labware import Labware
-import datetime
+# from Classes.module_files.labware import Labware
 
 MS_WAIT_TIMEOUT = 20 # Time allowed before ignoring he triggering of the MS
 MS_ANALYZE_TIMEOUT = 40 # Time we allow for the MS to stop analyzing the previous cycle and going back to waiting so that it can start analyzing the current sample
@@ -19,7 +16,7 @@ DEFAULT_OUTPUT = 0
 
 
 class ProtocolActions:
-    def __init__(self, coordinator: Coordinator):
+    def __init__(self, coordinator):
         self.myCoordinator = coordinator
 
     # Basic Commands
