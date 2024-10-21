@@ -1,7 +1,4 @@
-
-
 from datetime import datetime 
-from coordinator import Coordinator 
 import json
 import pandas as pd
 import time
@@ -23,7 +20,7 @@ class MethodReader:  # should call read from coordinator file
     These controls are operated from the Queue_Gui.
     '''
 
-    def __init__(self, myCoordinator: Coordinator): # initialize all variables and store needed data
+    def __init__(self, myCoordinator): # initialize all variables and store needed data
 
         self.myCoordinator = myCoordinator # this has the functions that move the motors
         

@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import filedialog as fd
 from tkinter import ttk
 import json
+
 from Classes.coordinator import Coordinator
 
 '''
