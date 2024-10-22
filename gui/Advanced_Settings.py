@@ -89,8 +89,6 @@ class OutPin(tk.Entry,):
     def __init__(self, frame, container, string, OutputIndex):
         super().__init__(frame)
         self.insert(tk.END,string)
-        self.parameter_var.trace_add("write", self.update_parameter)
-
         self.bind('<FocusOut>',lambda x: self.UpdatePinPattern(container, OutputIndex, self.get()))
 
     def UpdatePinPattern(self, container, OutputIndex, new_value):
@@ -1068,6 +1066,8 @@ class Configuration(tk.Toplevel,):
         self.grab_set()
         self.title("Settings and Configuration")
 
+        self.coordinator = coordinator
+
         # sets the geometry of toplevel
         self.geometry("1000x1800")
         self.state("zoomed")
@@ -1123,7 +1123,7 @@ class Configuration(tk.Toplevel,):
         self.myValves.grid(row=4,column=0)
         self.mySelectors = Selectors(self.popCanv)
         self.mySelectors.grid(row=5,column=0)
-        self.myMotors = Motor_Sets(self.popCanv)
+        self.myMotors = Motor_Sets(self.popCanv, self.coordinator)
         self.myMotors.grid(row=6,column=0)
         self.myTempDecks = Tempdecks(self.popCanv)
         self.myTempDecks.grid(row=7,column=0)
@@ -1172,7 +1172,7 @@ class Configuration(tk.Toplevel,):
         self.popCanv.loaded_settings = coordinator.myModules.read_dictionary_from_file(filename)
         print(self.popCanv.loaded_settings["temp_decks"])
         
-        self.initialize_frames())
+        self.initialize_frames()
         
     def AddConfigurations(self, coordinator, new_dict):
         old_dict = self.popCanv.loaded_settings

@@ -95,7 +95,7 @@ class Coordinator:
 
         # initialize the logging info format
         self.myLogger = logging.getLogger(__name__)
-        self.myLogger.setLevel(logging.INFO)
+        self.myLogger.setLevel(logging.ERROR)
 
         formatter = logging.Formatter('%(asctime)s: %(levelname)s: %(name)s: %(message)s')
 

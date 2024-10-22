@@ -78,6 +78,7 @@ class SerialPort:
     def activatePin (self, this_pin):
         for each_pin in self.outputs:
             if each_pin == this_pin:
+                print("Sending signal to ESP to turn on pin")
                 self.ser.write(str("turn_on "+this_pin).encode())
                 return "Success"
 
@@ -88,6 +89,7 @@ class SerialPort:
     def deactivatePin (self, this_pin):
         for each_pin in self.outputs:
             if each_pin == this_pin:
+                print("Sending signal to ESP to turn off pin")
                 self.ser.write(str("turn_off "+this_pin).encode())
                 return "Success"
             else:

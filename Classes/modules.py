@@ -96,10 +96,11 @@ class Modules:
         for eachSelector in settingsObj["selector_actuators"]:
             print("\nAdding Selector Valve")
             print(eachSelector)
-            self.mySelectors.append(SelectorActuator(self, eachSelector["port"],
-             eachSelector["Move Out"],
-             eachSelector["Home Out"],
-             eachSelector["Number of Ports"]))
+            self.mySelectors.append(SelectorActuator(self, 
+                eachSelector["port"],
+                eachSelector["Move Out"],
+                eachSelector["Home Out"],
+                eachSelector["Number of Ports"]))
             
         for eachRelay in settingsObj["relays"]:
             print("\nAdding Relay")
