@@ -89,8 +89,6 @@ class OutPin(tk.Entry,):
     def __init__(self, frame, container, string, OutputIndex):
         super().__init__(frame)
         self.insert(tk.END,string)
-        self.parameter_var.trace_add("write", self.update_parameter)
-
         self.bind('<FocusOut>',lambda x: self.UpdatePinPattern(container, OutputIndex, self.get()))
 
     def UpdatePinPattern(self, container, OutputIndex, new_value):
