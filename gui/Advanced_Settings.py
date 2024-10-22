@@ -1066,6 +1066,8 @@ class Configuration(tk.Toplevel,):
         self.grab_set()
         self.title("Settings and Configuration")
 
+        self.coordinator = coordinator
+
         # sets the geometry of toplevel
         self.geometry("1000x1800")
         self.state("zoomed")
@@ -1121,7 +1123,7 @@ class Configuration(tk.Toplevel,):
         self.myValves.grid(row=4,column=0)
         self.mySelectors = Selectors(self.popCanv)
         self.mySelectors.grid(row=5,column=0)
-        self.myMotors = Motor_Sets(self.popCanv)
+        self.myMotors = Motor_Sets(self.popCanv, self.coordinator)
         self.myMotors.grid(row=6,column=0)
         self.myTempDecks = Tempdecks(self.popCanv)
         self.myTempDecks.grid(row=7,column=0)

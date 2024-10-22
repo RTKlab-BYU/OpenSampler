@@ -31,7 +31,7 @@ class SelectorActuator:
     
     def home_actuator(self):
         self.myModules.myPorts[self.port].deactivatePin(self.home_out_pin) # sets home pin to low/ground
-        print(f"Setting pin {self.home_out_pin} to ground.")
+        print(f"Homing. Setting pin {self.home_out_pin} to ground.")
         time.sleep(SIGNAL_HOLD)
         self.myModules.myPorts[self.port].activatePin(self.home_out_pin) # sets home pin to high
         self.current_position = 1
