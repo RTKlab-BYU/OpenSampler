@@ -28,20 +28,44 @@ class SelectorActuator:
         self.myModules.myPorts[self.port].addOutputPin(self.home_out_pin)
         self.home_actuator()
         self.max_position = maxPosition
-    
+
+    # original methods
+
     def home_actuator(self):
-        self.myModules.myPorts[self.port].deactivatePin(self.home_out_pin) # sets home pin to low/ground
-        print(f"Setting pin {self.home_out_pin} to ground.")
+        self.myModules.myPorts[self.port].activatePin(self.home_out_pin) 
         time.sleep(SIGNAL_HOLD)
-        self.myModules.myPorts[self.port].activatePin(self.home_out_pin) # sets home pin to high
+        self.myModules.myPorts[self.port].deactivatePin(self.home_out_pin) 
+        time.sleep(SIGNAL_HOLD)
+        self.myModules.myPorts[self.port].activatePin(self.home_out_pin) 
+        time.sleep(SIGNAL_HOLD)
+        
         self.current_position = 1
 
     def step_actuator(self):
-        self.myModules.myPorts[self.port].deactivatePin(self.move_out_pin) # sets move pin to low/ground
-        print(f"Setting pin {self.move_out_pin} to ground.")
+        #NO TEST FOR ACTUALLY MOVING
+        self.myModules.myPorts[self.port].activatePin(self.move_out_pin) 
         time.sleep(SIGNAL_HOLD)
-        self.myModules.myPorts[self.port].activatePin(self.move_out_pin) # sets move pin to high
-        self.current_position += 1
+        self.myModules.myPorts[self.port].deactivatePin(self.move_out_pin) 
+        time.sleep(SIGNAL_HOLD)
+        self.myModules.myPorts[self.port].activatePin(self.move_out_pin) 
+        time.sleep(SIGNAL_HOLD)
+        self.current_position = self.current_position + 1
+
+    # new methods
+    
+    # def home_actuator(self):
+    #     self.myModules.myPorts[self.port].deactivatePin(self.home_out_pin) # sets home pin to low/ground
+    #     print(f"Setting pin {self.home_out_pin} to ground.")
+    #     time.sleep(SIGNAL_HOLD)
+    #     self.myModules.myPorts[self.port].activatePin(self.home_out_pin) # sets home pin to high
+    #     self.current_position = 1
+
+    # def step_actuator(self):
+    #     self.myModules.myPorts[self.port].deactivatePin(self.move_out_pin) # sets move pin to low/ground
+    #     print(f"Setting pin {self.move_out_pin} to ground.")
+    #     time.sleep(SIGNAL_HOLD)
+    #     self.myModules.myPorts[self.port].activatePin(self.move_out_pin) # sets move pin to high
+    #     self.current_position += 1
 
     def move_to_position(self, targetPosition):
         if (targetPosition > self.max_position):
