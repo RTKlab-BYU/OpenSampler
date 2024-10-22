@@ -1172,7 +1172,7 @@ class Configuration(tk.Toplevel,):
         self.popCanv.loaded_settings = coordinator.myModules.read_dictionary_from_file(filename)
         print(self.popCanv.loaded_settings["temp_decks"])
         
-        self.initialize_frames())
+        self.initialize_frames()
         
     def AddConfigurations(self, coordinator, new_dict):
         old_dict = self.popCanv.loaded_settings
