@@ -83,16 +83,19 @@ class Actuator:
         
     #-------------Move to position A-------------------------
     def to_position_A(self):
-        self.modules.myPorts[self.port].deactivatePin(self.to_A_out) #16 is connected to the first actuator
+        self.modules.myPorts[self.port].activatePin(self.to_A_out) 
         time.sleep(SIGNAL_HOLD)
-        self.modules.myPorts[self.port].activatePin(self.to_A_out) #16 is connected to the first actuator
+        self.modules.myPorts[self.port].deactivatePin(self.to_A_out) 
+        time.sleep(SIGNAL_HOLD)
+        self.modules.myPorts[self.port].activatePin(self.to_A_out) 
         time.sleep(SIGNAL_HOLD)
 
     #---------------------------------Move to position B----------------------- 
     def to_position_B(self):
-        self.modules.myPorts[self.port].deactivatePin(self.to_B_out) #21 is connected to the first actuator
+        self.modules.myPorts[self.port].deactivatePin(self.to_B_out) 
         time.sleep(SIGNAL_HOLD)
-        self.modules.myPorts[self.port].activatePin(self.to_B_out) #21 is connected to the first actuator
+        self.modules.myPorts[self.port].activatePin(self.to_B_out) 
+        time.sleep(SIGNAL_HOLD)
         
     
 
