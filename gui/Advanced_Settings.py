@@ -1103,14 +1103,14 @@ class Configuration(tk.Toplevel,):
             self.popCanv.loaded_settings = coordinator.myModules.settings
             self.connectButton.configure(bg="green")
 
-        self.initialize_frames(coordinator)
+        self.initialize_frames()
 
         self.protocol("WM_DELETE_WINDOW", lambda: self.on_closing(coordinator))
 
     def on_closing(self, coordinator):
         self.destroy()
 
-    def initialize_frames(self, coordinator):
+    def initialize_frames(self):
         self.myPorts = Serial_Ports(self.popCanv)
         self.myPorts.grid(row=0,column=0)
         self.myIns = Inputs(self.popCanv)
@@ -1155,7 +1155,7 @@ class Configuration(tk.Toplevel,):
         interior_id = self.Canv.create_window(0, 0, window=self.popCanv, anchor=tk.NW)
         self.popCanv.loaded_settings = coordinator.myModules.read_dictionary_from_file(DEFAULT_SETTINGS)
         
-        self.initialize_frames(coordinator)
+        self.initialize_frames()
             
     def LoadConfigurations(self, coordinator, filename):
         self.Canv.destroy()
@@ -1172,7 +1172,7 @@ class Configuration(tk.Toplevel,):
         self.popCanv.loaded_settings = coordinator.myModules.read_dictionary_from_file(filename)
         print(self.popCanv.loaded_settings["temp_decks"])
         
-        self.initialize_frames(coordinator)
+        self.initialize_frames())
         
     def AddConfigurations(self, coordinator, new_dict):
         old_dict = self.popCanv.loaded_settings
@@ -1192,7 +1192,7 @@ class Configuration(tk.Toplevel,):
 
         self.popCanv.loaded_settings = self.addToDict(old_dict, new_dict)
                                                                                                                                                               
-        self.initialize_frames(coordinator)
+        self.initialize_frames()
     
     def addToDict(self, old_dictionary, new_dictionary):
         for eachName in DEFAULT_LIST_NAMES:
