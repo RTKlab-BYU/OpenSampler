@@ -25,10 +25,10 @@ void loop() {
       pinMode(pinIn, INPUT_PULLUP);
      // Serial.println("configured");
   } else if (input_string.substring(0,5) == "input"){
-    String pin_string = "D" + input_string.substring(7,9);
-    input_string = input_string.substring(6,9);
-    String output_string = formatName(pin_string);
-    uint8_t inPin =  atoi (output_string.c_str ());
+     String pin_string = "D" + input_string.substring(7,9);
+     input_string = input_string.substring(6,9);
+     String output_string = formatName(pin_string);
+     uint8_t inPin =  atoi (output_string.c_str ());
     //pinMode(inPin, INPUT_PULLDOWN);
     int pin_state = digitalRead(inPin);
     output_string = "pin" + input_string + " logic";
@@ -45,21 +45,23 @@ void loop() {
      output_string = formatName(output_string);
      uint8_t outPin =  atoi (output_string.c_str ());
      pinMode(outPin, OUTPUT);
-     //Serial.println("configured");
+    // Serial.println("configured");
   } else if (input_string.substring(0,7) == "turn_on") {
      String output_string = "D" + input_string.substring(9, 11);
      output_string = formatName(output_string);
      uint8_t pinOut =  atoi (output_string.c_str ());
     // pinMode(pinOut, OUTPUT);
      digitalWrite(pinOut, HIGH);  
-    // Serial.println("on");
+     Serial.println("input string: "+input_string);
+     Serial.println("output string: "+output_string);
   } else if (input_string.substring(0,8) == "turn_off") {
      String output_string = "D" + input_string.substring(10, 12);
      output_string = formatName(output_string);
      uint8_t pinOut = atoi (output_string.c_str());
     // pinMode(pinOut, OUTPUT);
      digitalWrite(pinOut, LOW); 
-    // Serial.println("off");
+     Serial.println("input string: "+input_string);
+     Serial.println("output string: "+output_string);
   }
-  delay(100);                                              
+  // delay(100);                                              
 }
