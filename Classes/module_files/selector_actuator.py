@@ -12,7 +12,7 @@ from Classes.module_files.IOpins import SerialPort
 
 import time
 
-SIGNAL_HOLD = 2
+SIGNAL_HOLD = 5
 
 class Coordinator(): #test class
     def __init__(self):
