@@ -47,6 +47,7 @@ ACTION_TYPES = {
 "LC_contact_closure": ["Relay (Starts at zero)"],
 "MS_contact_closure": ["Relay", "Input", "Serial Port (Starts at zero)"],
 "Wait_Contact_Closure": ["State of Pin", "Input", "Serial Port (Starts at zero"],
+"set_pin": ["Pin", "High/Low", "Port"],
 
 "--": [],
 
@@ -92,6 +93,7 @@ ACTION_DEFAULTS = {
 "LC_contact_closure": ["0"],
 "MS_contact_closure": ["1", "D14", "0"],
 "Wait_Contact_Closure": ["True","D14","0"],
+"set_pin": ["", "High", "0"],
 
 "--": [],
 

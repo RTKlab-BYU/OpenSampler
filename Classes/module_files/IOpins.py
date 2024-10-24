@@ -11,6 +11,9 @@ from serial import Serial, STOPBITS_ONE
 from serial.tools import list_ports
 
 
+SIGNAL_DELAY = 1 # Gives ESP time to carry out command, currently no feedback
+
+
 class SerialPort:
 
     def  __init__(self, portNamePattern):
@@ -23,7 +26,7 @@ class SerialPort:
             self.ser = None
             print("No GPIO board")
         else:
-            self.ser = Serial(port=self.port, baudrate=9600,
+            self.ser = Serial(port=self.port, baudrate=115200,
                                     bytesize=8, timeout=1, stopbits=STOPBITS_ONE)
             # print(self.ser)
 
@@ -47,6 +50,7 @@ class SerialPort:
     
     def addInputPin (self, this_pin):
         self.ser.write(str(f"config_input {this_pin}").encode('utf-8'))
+        time.sleep(SIGNAL_DELAY) 
         self.inputs.append(this_pin)
 
     def getPinState (self, this_pin):
@@ -56,8 +60,8 @@ class SerialPort:
                 self.ser.flushOutput()
 
                 self.ser.write(str(f"input {this_pin}").encode('utf-8'))
-                #print("read output")
-                time.sleep(0.2)
+                time.sleep(SIGNAL_DELAY) 
+
                 readout = self.ser.readline().decode('ascii',errors="replace")
                 readout = readout.lstrip("pin"+this_pin+" ").rstrip("\r\n").rstrip("\n")
                 if "on" in readout:  
@@ -70,9 +74,10 @@ class SerialPort:
 
     def addOutputPin (self, this_pin):
         self.ser.write(str(f"config_output {this_pin}").encode('utf-8'))
-        time.sleep(2)
+        time.sleep(SIGNAL_DELAY) 
+        print(f"Configuring pin {this_pin}, setting to High")
         self.ser.write(str("turn_on "+this_pin).encode('utf-8'))
-        time.sleep(1)
+        time.sleep(SIGNAL_DELAY) 
         self.outputs.append(this_pin)
 
     def activatePin (self, this_pin):
@@ -80,6 +85,7 @@ class SerialPort:
             if each_pin == this_pin:
                 print(f"Sending signal to ESP to turn on pin '{this_pin}'")
                 self.ser.write(str(f"turn_on {this_pin}").encode('utf-8'))
+                time.sleep(SIGNAL_DELAY) 
                 return "Success"
 
             else:
@@ -91,7 +97,8 @@ class SerialPort:
             if each_pin == this_pin:
                 print(f"Sending signal to ESP to turn off pin '{this_pin}'")
                 self.ser.write(str(f"turn_off {this_pin}").encode('utf-8'))
-                return "Success"
+                time.sleep(SIGNAL_DELAY) 
+                return "Success"        
             else:
                 pass
         return "ERROR: no pin named " + this_pin

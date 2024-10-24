@@ -12,7 +12,7 @@ from Classes.module_files.IOpins import SerialPort
 
 import time
 
-SIGNAL_HOLD = 5
+
 
 class Coordinator(): #test class
     def __init__(self):
@@ -24,8 +24,8 @@ class SelectorActuator:
         self.myModules = myModules
         self.move_out_pin = moveout
         self.home_out_pin = homeout
-        self.myModules.myPorts[self.port].addOutputPin(self.move_out_pin)
         self.myModules.myPorts[self.port].addOutputPin(self.home_out_pin)
+        self.myModules.myPorts[self.port].addOutputPin(self.move_out_pin)
         self.home_actuator()
         self.max_position = maxPosition
 
@@ -33,12 +33,8 @@ class SelectorActuator:
 
     def home_actuator(self):
         print(f"Homing. Setting pin {self.home_out_pin} to ground.")
-        self.myModules.myPorts[self.port].activatePin(self.home_out_pin) 
-        time.sleep(SIGNAL_HOLD)
         self.myModules.myPorts[self.port].deactivatePin(self.home_out_pin) 
-        time.sleep(SIGNAL_HOLD)
         self.myModules.myPorts[self.port].activatePin(self.home_out_pin) 
-        time.sleep(SIGNAL_HOLD)
         
         self.current_position = 1
 
@@ -46,12 +42,8 @@ class SelectorActuator:
         print(f"Setting pin {self.move_out_pin} to ground.")
 
         #NO TEST FOR ACTUALLY MOVING
-        self.myModules.myPorts[self.port].activatePin(self.move_out_pin)
-        time.sleep(SIGNAL_HOLD)
         self.myModules.myPorts[self.port].deactivatePin(self.move_out_pin)
-        time.sleep(SIGNAL_HOLD)
         self.myModules.myPorts[self.port].activatePin(self.move_out_pin)
-        time.sleep(SIGNAL_HOLD)
         self.current_position = self.current_position + 1
 
     # new methods

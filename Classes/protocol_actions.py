@@ -345,6 +345,15 @@ class ProtocolActions:
         print(message)
         self.myCoordinator.myLogger.info(message)
 
+    def set_pin(self, pin, logic: str, port=0):
+        print(f"Setting pin {pin} {logic.upper()}")
+        if logic.upper() == "HIGH":
+            self.myCoordinator.myModules.myPorts[int(port)].activatePin(pin)
+
+        elif logic.upper() == "LOW":
+            self.myCoordinator.myModules.myPorts[int(port)].deactivatePin(pin)
+
+
     # Other Commands
 
     def wait(self, seconds):
