@@ -98,8 +98,8 @@ class Modules:
             print(eachSelector)
             self.mySelectors.append(SelectorActuator(self, 
                 eachSelector["port"],
-                eachSelector["Move Out"],
                 eachSelector["Home Out"],
+                eachSelector["Move Out"],
                 eachSelector["Number of Ports"]))
             
         for eachRelay in settingsObj["relays"]:

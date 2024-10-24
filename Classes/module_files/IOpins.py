@@ -23,7 +23,7 @@ class SerialPort:
             self.ser = None
             print("No GPIO board")
         else:
-            self.ser = Serial(port=self.port, baudrate=115200,
+            self.ser = Serial(port=self.port, baudrate=9600,
                                     bytesize=8, timeout=1, stopbits=STOPBITS_ONE)
             # print(self.ser)
 
@@ -46,7 +46,7 @@ class SerialPort:
 
     
     def addInputPin (self, this_pin):
-        self.ser.write(str("config_input "+this_pin).encode())
+        self.ser.write(str(f"config_input {this_pin}").encode('utf-8'))
         self.inputs.append(this_pin)
 
     def getPinState (self, this_pin):
@@ -55,7 +55,7 @@ class SerialPort:
                 self.ser.flushInput()
                 self.ser.flushOutput()
 
-                self.ser.write(str("input "+this_pin).encode())
+                self.ser.write(str(f"input {this_pin}").encode('utf-8'))
                 #print("read output")
                 time.sleep(0.2)
                 readout = self.ser.readline().decode('ascii',errors="replace")
@@ -69,17 +69,17 @@ class SerialPort:
         return "ERROR: no pin named " + this_pin
 
     def addOutputPin (self, this_pin):
-        self.ser.write(str("config_output "+this_pin).encode())
+        self.ser.write(str(f"config_output {this_pin}").encode('utf-8'))
         time.sleep(2)
-        self.ser.write(str("turn_on "+this_pin).encode())
+        self.ser.write(str("turn_on "+this_pin).encode('utf-8'))
         time.sleep(1)
         self.outputs.append(this_pin)
 
     def activatePin (self, this_pin):
         for each_pin in self.outputs:
             if each_pin == this_pin:
-                print("Sending signal to ESP to turn on pin")
-                self.ser.write(str("turn_on "+this_pin).encode())
+                print(f"Sending signal to ESP to turn on pin '{this_pin}'")
+                self.ser.write(str(f"turn_on {this_pin}").encode('utf-8'))
                 return "Success"
 
             else:
@@ -89,8 +89,8 @@ class SerialPort:
     def deactivatePin (self, this_pin):
         for each_pin in self.outputs:
             if each_pin == this_pin:
-                print("Sending signal to ESP to turn off pin")
-                self.ser.write(str("turn_off "+this_pin).encode())
+                print(f"Sending signal to ESP to turn off pin '{this_pin}'")
+                self.ser.write(str(f"turn_off {this_pin}").encode('utf-8'))
                 return "Success"
             else:
                 pass
