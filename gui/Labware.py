@@ -7,7 +7,8 @@ from tkinter import ttk, filedialog
 
 class WellPlate_Row(tk.Frame,):
     def __init__(self, frame, coordinator, stage, labware_name, row):
-        self.row= row
+        super().__init__(frame)
+        self.row = row
         tk.Label(frame.wellplateBox, text=labware_name).grid(row=self.row,column=1)
         tk.Button(frame.wellplateBox, text="Delete", command=lambda: self.DeleteRow(frame, coordinator, stage)).grid(row=self.row, column=0)
 
@@ -19,7 +20,8 @@ class WellPlate_Row(tk.Frame,):
 
 class Nickname_Row(tk.Frame,):
     def __init__(self, frame, coordinator, stage, nickname_name, row):
-        self.row= row
+        super().__init__(frame)
+        self.row = row
         tk.Label(frame.nicknameBox, text=nickname_name).grid(row=self.row,column=1)
         x, y, z = coordinator.myModules.myStages[stage].myLabware.custom_locations[nickname_name]
         location_string = f"{x}, {y}, {z}"
@@ -27,12 +29,13 @@ class Nickname_Row(tk.Frame,):
         tk.Button(frame.nicknameBox, text="Delete", command=lambda: self.DeleteRow(frame, coordinator, stage, nickname_name)).grid(row=self.row, column=0)
 
     def DeleteRow(self, frame, coordinator, stage, nickname_name):
-        coordinator.myModules.myStages[stage].myLabware.custom_locations.pop(nickname_name) # does this work on a dictionary?
+        coordinator.myModules.myStages[stage].myLabware.custom_locations.pop(nickname_name) 
         frame.UpdateLabware(coordinator)
 
 class Syringe_Row(tk.Frame,):
     def __init__(self, frame, coordinator, stage, nickname_name, row):
-        self.row= row
+        super().__init__(frame)
+        self.row = row
         tk.Label(frame.syringeBox, text=nickname_name).grid(row=self.row,column=1)
         tk.Button(frame.syringeBox, text="Reset", command=lambda: self.ResetSyringe(frame, coordinator, stage)).grid(row=self.row, column=0)
 
@@ -71,7 +74,6 @@ class Labware(tk.Toplevel,):
         self.createButton.grid(row=0,column=3)
         
         # stage selection
-        stageOptions = list(coordinator.myModules.myStages.keys())
         self.loaded_stage_bar = tk.Frame(self)
         self.loaded_stage_bar.pack(side=tk.TOP)
         self.settingsFileLabel = tk.Label(self.loaded_stage_bar, text="Select Stage: ",justify=tk.LEFT)
@@ -89,23 +91,26 @@ class Labware(tk.Toplevel,):
         self.syringeBox.pack(side=tk.TOP)
         tk.Label(self.syringeBox,font="Helvetica 24",text="Syringe").grid(row = 0, column = 1)
 
-        self.cow = []
-    
+        self.wellplate_list = []
+        self.nickname_list = []
+        self.syringe_list = []
 
-        if(len(stageOptions)>0):
-            self.loadedMotorSeries = ttk.Combobox(self.loaded_stage_bar, state='readonly')
-            self.loadedMotorSeries.grid(row=0,column=1)
-            self.loadedMotorSeries["values"] = stageOptions
-            if "Left_OT" in stageOptions:
-                self.loadedMotorSeries.current(stageOptions.index("Left_OT"))
-            else:
-                self.loadedMotorSeries.current(0)
-            self.loadedMotorSeries.bind("<<ComboboxSelected>>", lambda x: self.UpdateSelectedMotors(self.coordinator))
+        stageOptions = list(coordinator.myModules.myStages.keys())
+        stageOptions.insert(0,"")
+        self.selected_stage = tk.StringVar(value="")
+        self.loadedMotorSeries = ttk.Combobox(self.loaded_stage_bar, values=stageOptions, textvariable=self.selected_stage, state='readonly')
+        self.loadedMotorSeries.grid(row=0,column=1)
+        if "Left_OT" in stageOptions:
+            self.loadedMotorSeries.current(stageOptions.index("Left_OT"))
+        else:
+            self.loadedMotorSeries.current(0)
+        self.loadedMotorSeries.bind("<<ComboboxSelected>>", lambda x: self.UpdateSelectedMotors(self.coordinator))
         self.UpdateSelectedMotors(self.coordinator)
+
 
     def open_labware_selection_page(self):
         if not self.labware_selection_page or not self.labware_selection_page.winfo_exists():
-            self.labware_selection_page = Labware_Selection(self.coordinator, self.selected_stage)
+            self.labware_selection_page = Labware_Selection(self.coordinator, self.selected_stage.get())
         else:
             self.labware_selection_page.deiconify()
 
@@ -117,9 +122,8 @@ class Labware(tk.Toplevel,):
 
     def open_syringe_selection_page(self):
         if not self.syringe_selection_page or not self.syringe_selection_page.winfo_exists():
-            self.syringe_selection_page = Syringe_Selection(self.coordinator, self.selected_stage)
+            self.syringe_selection_page = Syringe_Selection(self.coordinator, self.selected_stage.get())
             self.syringe_selection_page.deiconify()
-
 
     def LoadLabware(self, coordinator):
         filetypes = (
@@ -132,29 +136,27 @@ class Labware(tk.Toplevel,):
         if file_path == "":  # in the event of a cancel 
             return
         
-        coordinator.load_labware_setup(file_path, self.selected_stage)
+        coordinator.load_labware_setup(file_path, self.selected_stage.get())
 
         self.UpdateLabware(coordinator)
-        
-        
 
     def UpdateSelectedMotors(self, coordinator):
-        self.selected_stage = self.loadedMotorSeries.get()
-        stage_type = coordinator.myModules.myStages[self.selected_stage].stage_type 
-        if stage_type == "Zaber_XYZ" or stage_type == "Opentrons":
-            self.stage_type = "XYZ_Stage"
-            self.addButton["state"] = "normal"
-        elif stage_type == "Zaber_Syringe_Only":
-            self.stage_type = "Zaber_Syringe_Only"
-            self.addButton["state"] = "normal"
-        else:
-            self.stage_type = "None"
 
+        if not self.selected_stage.get() == "":
+            self.stage_type = coordinator.myModules.myStages[self.selected_stage.get()].stage_type
+        else:
+            self.stage_type = "None" 
+        if self.stage_type == "Zaber_XYZ" or self.stage_type == "Opentrons":
+            self.stage_type = "XYZ_Stage"
         
         if self.stage_type == "XYZ_Stage":
+            self.addButton.config(text="Add Labware", command=self.open_labware_selection_page)
+            self.addButton["state"] = "normal"
             self.saveButton["state"] =  "normal"
             self.loadButton["state"] =  "normal"
         elif self.stage_type == "Zaber_Syringe_Only":
+            self.addButton.config(text="Calibrate Syringe", command=self.open_syringe_selection_page)
+            self.addButton["state"] = "normal"
             self.saveButton["state"] =  "disable"
             self.loadButton["state"] =  "disable"
 
@@ -177,54 +179,44 @@ class Labware(tk.Toplevel,):
         else:
             new_file = new_file.name + ".json"
         
-        
-        if (len(coordinator.myModules.myStages[self.selected_stage].myLabware.plate_list)+len(coordinator.myModules.myStages[self.selected_stage].myLabware.custom_locations)>0):
+        if (len(coordinator.myModules.myStages[self.selected_stage.get()].myLabware.plate_list)+len(coordinator.myModules.myStages[self.selected_stage.get()].myLabware.custom_locations)>0):
             
-            coordinator.save_labware_setup(self.selected_stage, new_file)
+            coordinator.save_labware_setup(self.selected_stage.get(), new_file)
             
     def UpdateLabware(self, coordinator):
-        self.wellplateBox.destroy()
-
-        self.nicknameBox.destroy()
-        self.cow = []
-
-        self.syringeBox.destroy()
+        for wellplate in self.wellplate_list:
+            wellplate.destroy()
+        self.wellplate_list = []
+        for nickname in self.nickname_list:
+            nickname.destroy()
+        self.nickname_list = []
+        for syringe in self.syringe_list:
+            syringe.destroy()
+        self.syringe_list = []
 
         self.PopulateLabware(coordinator)
 
     def PopulateLabware(self, coordinator):
         if self.stage_type == "XYZ_Stage":
-            self.wellplateBox = tk.Frame(self)
-            self.wellplateBox.pack(side=tk.TOP)
-            tk.Label(self.wellplateBox,font="Helvetica 20", text="Loaded Wellplates").grid(row = 0, column = 1)
             
-            self.addButton.config(text="Add Labware", command=self.open_labware_selection_page)
-            self.nicknameBox = tk.Frame(self)
-            self.nicknameBox.pack(side=tk.TOP)
+            row = 1 # row 0 is the label
+            for eachWellplate in coordinator.myModules.myStages[self.selected_stage.get()].myLabware.plate_list:
+                self.wellplate_list.append(WellPlate_Row(self, coordinator, self.selected_stage.get(), eachWellplate.model, row))
+                row += 1
 
-            tk.Label(self.nicknameBox,font="Helvetica 24",text="Custom Locations").grid(row = 0, column = 1)
-            i = 1 #0 is the label
-            for eachWellplate in coordinator.myModules.myStages[self.selected_stage].myLabware.plate_list:
-                self.cow.append(WellPlate_Row(self, coordinator, self.selected_stage, eachWellplate.model, i))
-                i = i + 1
-            
+            row = 1 # row 0 is the label
+            for eachLocation in coordinator.myModules.myStages[self.selected_stage.get()].myLabware.custom_locations.keys():
+                self.nickname_list.append(Nickname_Row(self, coordinator, self.selected_stage.get(), eachLocation, row))
+                row += 1
+                
+            my_syringe = coordinator.myModules.myStages[self.selected_stage.get()].myLabware.syringe_model
+            self.syringe_list = [Syringe_Row(self, coordinator, self.selected_stage.get(), my_syringe, row=1)]
 
-            mySyringe = coordinator.myModules.myStages[self.selected_stage].myLabware.syringe_model
-            i = 1
-            for eachLocation in coordinator.myModules.myStages[self.selected_stage].myLabware.custom_locations.keys():
-                self.cow.append(Nickname_Row(self, coordinator, self.selected_stage, eachLocation, i))
-                i = i + 1
+
         elif self.stage_type == "Zaber_Syringe_Only":
-            self.addButton.config(text="Calibrate Syringe", command=self.open_syringe_selection_page)#
-            mySyringe = coordinator.myModules.myStages[self.selected_stage].myLabware.syringe_model
-        else:
-            print(self.stage_type)
-            
-        
-        self.syringeBox = tk.Frame(self)
-        self.syringeBox.pack(side=tk.TOP)
-        tk.Label(self.syringeBox,font="Helvetica 24",text="Syringe").grid(row = 0, column = 1)
+            my_syringe = coordinator.myModules.myStages[self.selected_stage.get()].myLabware.syringe_model
+            self.syringe_list = [Syringe_Row(self, coordinator, self.selected_stage.get(), my_syringe, row=1)]
+
        
-        self.cow.append(Syringe_Row(self, coordinator, self.selected_stage, mySyringe, row=1))
         
 

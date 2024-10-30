@@ -25,12 +25,14 @@ class Labware_Selection(tk.Toplevel,):
         self.type_bar.pack(side=tk.TOP)
 
         self.option_selected = tk.StringVar(self.type_bar)
-        self.option_selected.set(0)
-        self.option_selected.trace("w", lambda x,y,z: self.update_options())
+        self.option_selected.set(1)
+        self.option_selected.trace_add("write", self.update_options())
         
-        self.selected_model = ttk.Combobox(self, state='readonly')
-        self.selected_model.pack(side=tk.TOP)
-        self.selected_model["values"] = []
+        self.selected_model = tk.StringVar()
+        self.selected_model_dropbox = ttk.Combobox(self, state='readonly', textvariable=self.selected_model)
+        self.selected_model_dropbox.pack(side=tk.TOP)
+        self.selected_model_dropbox["values"] = [""]
+        self.selected_model.set(self.selected_model_dropbox["values"][0])
 
         self.start_calibration = tk.Button(self, text="Calibrate", command= self.open_sub_window,justify=tk.LEFT)
         self.start_calibration.pack(side=tk.TOP)
@@ -59,7 +61,7 @@ class Labware_Selection(tk.Toplevel,):
         else:
             self.syringe_calibration_page.deiconify()
         
-    def update_options(self):
+    def update_options(self, *args):
         
         if self.option_selected.get() == "wellplate":
             self.selected_model.set("")
@@ -69,11 +71,11 @@ class Labware_Selection(tk.Toplevel,):
         elif self.option_selected.get() == "custom":
             self.selected_model.set("")
             self.enable_submit()
-            self.selected_model["values"] = []
+            self.selected_model["values"] = [""]
         
         elif self.option_selected.get() == "syringe":
             self.selected_model.set("HAMILTON_1701")
-            self.disable_submit()
+            self.enable_submit()
             self.selected_model["values"] = self.coordinator.myModules.myStages[self.selected_stage].myModelsManager.get_stored_models()["syringes"]
         else:
             print("Error, invalid labware type: " + str(self.option_selected.get()))

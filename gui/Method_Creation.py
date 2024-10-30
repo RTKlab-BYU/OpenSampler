@@ -104,6 +104,14 @@ ACTION_DEFAULTS = {
 
 }
 
+# These list groups are used to verify correct method entries
+# They are also used in Queue_Page.py. 
+# If the names of the these actions are changed, 
+# they must be updated in these lists in both files
+LOCATION_ACTIONS = ["move_to_location", "aspirate_from_location", "dispense_to_location"]
+WELL_ACTIONS = ["move_to_well", "aspirate_from_wells", "dispense_to_wells"]
+
+
 class Command_Parameter():
 
     def __init__(self, master_frame, parameter, parameter_value, parameter_index, coordinator, toplevel_frame, command_row):
@@ -124,12 +132,10 @@ class Command_Parameter():
             stage_options = list(self.coordinator.myModules.myStages.keys())
             self.parameter_entry = ttk.Combobox(self.command_grid, values=stage_options, textvariable=self.parameter_var)
             self.command_row.selected_stage = self.parameter_var.get()
+            self.parameter_entry.bind("<<ComboboxSelected>>", lambda x: self.command_row.update_dependent_parameters())
                       
         elif self.parameter == "Location Name":
-            try:
-                location_options = list(self.coordinator.myModules.myStages[self.command_row.selected_stage].myLabware.custom_locations.keys())
-            except:
-                location_options = []
+            location_options = []
             self.parameter_entry = ttk.Combobox(self.command_grid, values=location_options, textvariable=self.parameter_var)
             
         elif parameter == "Tempdeck Name":
@@ -144,6 +150,15 @@ class Command_Parameter():
 
         if parameter == ACTION_TYPES["run_sub_method"][0]:
             self.parameter_entry.bind('<Double-Button-1>', lambda x: self.select_method(x))
+
+    def update_parameter_options(self):
+        if self.parameter == "Location Name":
+            try:
+                location_options = list(self.coordinator.myModules.myStages[self.command_row.selected_stage].myLabware.custom_locations.keys())
+                self.parameter_entry["values"] = location_options
+            except:
+                pass
+            
 
     def update_parameter(self, *args):
         if self.parameter == "Stage Name":
@@ -172,6 +187,7 @@ class Method_Command_Row():
         self.main_frame: Method_Creator = toplevel_frame
         self.coordinator = coordinator
         self.selected_stage = ""
+        self.command = command
         self.insert_button = tk.Button(self.command_grid, text="Insert", command= self.InsertRow)
         self.insert_button.grid(row=self.row_index, column=0)
         self.delete_button = tk.Button(self.command_grid, text="Delete", command=self.DeleteRow)
@@ -193,12 +209,20 @@ class Method_Command_Row():
 
         if len(ACTION_TYPES[command["type"]]) == len(command["parameters"]):
             parameter_index = 0
+            self.parameters_list = []
             for parameter in ACTION_TYPES[command["type"]]:
 
-                Command_Parameter(self.command_grid, parameter, command["parameters"][parameter_index], parameter_index, self.coordinator, self.main_frame, self)
+                new_parameter = Command_Parameter(self.command_grid, parameter, command["parameters"][parameter_index], parameter_index, self.coordinator, self.main_frame, self)
+                self.parameters_list.append(new_parameter)
                 parameter_index += 1  # 2 columns are used for each command parameter
         else:
             print("Invalid Command! Command Parameters")
+
+    def update_dependent_parameters(self):
+        if "Location Name" in ACTION_TYPES[self.command["type"]]:
+            index = ACTION_TYPES[self.command["type"]].index("Location Name")
+            parameter: Command_Parameter = self.parameters_list[index]
+            parameter.update_parameter_options()
 
     def update_command_grid(self):
         new_type = self.type_box.get()
@@ -358,6 +382,20 @@ class Method_Creator(tk.Toplevel,):
 
     def save_method(self):
         my_dict = {}
+        # replace old commands with current ones
+        for command in self.commands_list:
+            if command["type"] == "move_to_custom_location":
+                command["type"] = "move_to_location"
+            elif command["type"] == "aspirate_from_well":
+                command["type"] = "aspirate_from_wells"
+            elif command["type"] == "dispense_to_well":
+                command["type"] = "dispense_to_wells"
+            elif command["type"] == "collect_sample":
+                command["type"] = "aspirate_samples"
+            elif command["type"] == "aspirate_sample":
+                command["type"] = "aspirate_samples"
+            else:
+                pass
         my_dict["commands"] = self.commands_list
 
         filetypes = (
