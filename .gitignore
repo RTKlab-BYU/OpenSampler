@@ -1,4 +1,5 @@
 settings/*
+!settings/default_settings
 Calibrations/*
 logs/*
 Classes/__pycache__/*
@@ -6,7 +7,6 @@ Classes/module_files/__pycache__/*
 gui/__pycache__/*
 queues/*
 methods/*
-settings/__pycache__/*
 models/*
 .venv*
 
