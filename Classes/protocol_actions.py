@@ -28,7 +28,6 @@ class ProtocolActions:
 
         if report:
             message = f"Moving to '{well}' of well plate '{plate_model}' (plate index: {plate_index}). XYZ: {location}"
-            print(message)
             self.myCoordinator.myLogger.info(message)
 
     def move_to_location(self, stage, location_name, report=True):
@@ -37,21 +36,18 @@ class ProtocolActions:
 
         if report:
             message = f"Moving to '{location_name}'"
-            print(message)
             self.myCoordinator.myLogger.info(message)
 
     def aspirate_in_place(self, stage, volume, speed, report=True):
         self.myCoordinator.myModules.myStages[stage].step_syringe_motor_up(volume=volume, speed=speed)
         if report:
             message = f"Aspirating {float(volume)} nL at speed {float(speed)} nL/min"
-            print(message)
             self.myCoordinator.myLogger.info(message)
     
     def dispense_in_place(self, stage, volume, speed, report=True):
         self.myCoordinator.myModules.myStages[stage].step_syringe_motor_down(volume=volume, speed=speed)
         if report:
             message = f"Dispensing {float(volume)} nL at speed {float(speed)} nL/min"
-            print(message)
             self.myCoordinator.myLogger.info(message)
 
 
@@ -63,7 +59,6 @@ class ProtocolActions:
         plate_model = self.myCoordinator.myModules.myStages[stage].myLabware.plate_list[int(plate_index)].model
 
         message = f"Aspirating {volume} nL each from well(s) {wells} of wellplate {plate_model} (index: {plate_index})."
-        print(message)
         self.myCoordinator.myLogger.info(message)
 
         for well in well_list:
@@ -75,7 +70,6 @@ class ProtocolActions:
         self.aspirate_in_place(stage, volume, speed, report=False)
 
         message = f"Aspirating {volume} nL from '{location_name}'."
-        print(message)
         self.myCoordinator.myLogger.info(message)
 
     def dispense_to_wells(self, stage, plate_index, wells, volume, speed):
@@ -84,7 +78,6 @@ class ProtocolActions:
         plate_model = self.myCoordinator.myModules.myStages[stage].myLabware.plate_list[int(plate_index)].model
 
         message = f"Dispensing {volume} nL to each well(s) {wells} of wellplate {plate_model} (index: {plate_index})."
-        print(message)
         self.myCoordinator.myLogger.info(message)
 
         for well in well_list:
@@ -96,7 +89,6 @@ class ProtocolActions:
         self.dispense_in_place(stage, volume, speed, report=False)
 
         message = f"Dispensing {volume} nL to {location_name}."
-        print(message)
         self.myCoordinator.myLogger.info(message)
 
 
@@ -118,7 +110,6 @@ class ProtocolActions:
         well_list = wells.split(",")
 
         message = f"Aspirating {volume} nL each from well(s) {wells} of wellplate {plate_model} (index: {plate_index})."
-        print(message)
         self.myCoordinator.myLogger.info(message)
 
         for well in well_list:
@@ -143,7 +134,6 @@ class ProtocolActions:
         well_list = wells.split(",")
 
         message = f"Dispensing {volume} nL each to well(s) {wells} of wellplate {plate_model} (index: {plate_index})."
-        print(message)
         self.myCoordinator.myLogger.info(message)
 
         for well in well_list:
@@ -221,7 +211,6 @@ class ProtocolActions:
         self.myCoordinator.myModules.myStages[stage].move_syringe_to(max_position, speed)
 
         message = f"Moving syringe to max position"
-        print(message)
         self.myCoordinator.myLogger.info(message)
 
     def syringe_to_min(self, stage, nL_min_speed):
@@ -230,7 +219,6 @@ class ProtocolActions:
         self.myCoordinator.myModules.myStages[stage].move_syringe_to(min_position, speed)
 
         message = f"Moving syringe to min position"
-        print(message)
         self.myCoordinator.myLogger.info(message)
     
     def syringe_to_rest(self, stage, nL_min_speed):
@@ -239,7 +227,6 @@ class ProtocolActions:
         self.myCoordinator.myModules.myStages[stage].move_syringe_to(rest_position, speed)
 
         message = f"Moving syringe to rest position"
-        print(message)
         self.myCoordinator.myLogger.info(message)
 
     
@@ -249,21 +236,18 @@ class ProtocolActions:
         self.myCoordinator.myModules.my2PosValves[int(valve_index)].to_position_A()
 
         message = "Sending valve to position A"
-        print(message)
         self.myCoordinator.myLogger.info(message)
 
     def valve_to_load(self, valve_index): 
         self.myCoordinator.myModules.my2PosValves[int(valve_index)].to_position_B()
 
         message = "Sending valve to position B"
-        print(message)
         self.myCoordinator.myLogger.info(message)
     
     def move_selector(self, valve_index, position):
         self.myCoordinator.myModules.mySelectors[int(valve_index)].move_to_position(int(position))
 
         message = f"Moving selector valve to position {position}."
-        print(message)
         self.myCoordinator.myLogger.info(message)
 
 
@@ -272,7 +256,6 @@ class ProtocolActions:
     def LC_contact_closure(self, Relay = LC_RELAY):
 
         message = "Sending signal to start LC"
-        print(message)
         self.myCoordinator.myLogger.info(message)
 
         self.myCoordinator.myModules.myRelays[int(Relay)].relay_on()
@@ -298,7 +281,6 @@ class ProtocolActions:
                     MS_Ready = False
                     break
                 
-                # print(pin_state)
                 if self.myCoordinator.myReader.stop_run == True:
                     break
                 self.myCoordinator.myLogger.info("MS just triggered!")
@@ -312,7 +294,6 @@ class ProtocolActions:
                 # time.sleep(2) # wait half second to make sure signal had time to start pump
                 self.myCoordinator.myModules.myRelays[int(Relay)].relay_off() # turn off so it can be turned on again in the next loop
                 # time.sleep(2) # wait half second to make sure signal had time to start pump
-                # print(pin_state)
                 if (wait_to_analyze_timer >= MS_WAIT_TIMEOUT):
                     self.myCoordinator.myLogger.error(f"MS TIMEOUT: MS did not trigger after {MS_WAIT_TIMEOUT} seconds")
                     return "Not triggerd"
@@ -331,7 +312,6 @@ class ProtocolActions:
         pin_state = self.myCoordinator.myModules.myPorts[int(Port)].getPinState(Input)
 
         message = "Awaiting Contact Closure"
-        print(message)
         self.myCoordinator.myLogger.info(message)
 
         while (pin_state != logic):
@@ -342,11 +322,9 @@ class ProtocolActions:
                 break
 
         message = "Contact Closure Recieved"
-        print(message)
         self.myCoordinator.myLogger.info(message)
 
     def set_pin(self, pin, logic: str, port=0):
-        print(f"Setting pin {pin} {logic.upper()}")
         if logic.upper() == "HIGH":
             self.myCoordinator.myModules.myPorts[int(port)].activatePin(pin)
 
@@ -373,7 +351,6 @@ class ProtocolActions:
                 minutes = minutes%60
 
             message = f"Wait called at {current_time}: Wait for {hours} h, {minutes} min, {seconds_remainder} s"
-            print(message)
             self.myCoordinator.myLogger.info(message)
 
         seconds_waited = 0
@@ -385,14 +362,12 @@ class ProtocolActions:
         try:
             self.myCoordinator.myModules.myTempDecks[tempdeck_name].start_set_temperature(temperature)
             message = f"Setting tempdeck to {temperature} C"
-            print(message)
             self.myCoordinator.myLogger.info(message)
         except:
             print("Tempdeck Not Responding")
 
     def run_sub_method(self, scriptName):
         message = f"Running Submethod: {scriptName}"
-        print(message)
         self.myCoordinator.myLogger.info(message)
 
         # read file

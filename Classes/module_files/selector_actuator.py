@@ -30,14 +30,14 @@ class SelectorActuator:
         self.max_position = maxPosition
 
     def home_actuator(self):
-        print(f"Homing. Setting pin {self.home_out_pin} to ground.")
+        # print(f"Homing. Setting pin {self.home_out_pin} to ground.")
         self.myModules.myPorts[self.port].deactivatePin(self.home_out_pin) 
         self.myModules.myPorts[self.port].activatePin(self.home_out_pin) 
         
         self.current_position = 1
 
     def step_actuator(self):
-        print(f"Setting pin {self.move_out_pin} to ground.")
+        # print(f"Setting pin {self.move_out_pin} to ground.")
         self.myModules.myPorts[self.port].deactivatePin(self.move_out_pin)
         self.myModules.myPorts[self.port].activatePin(self.move_out_pin)
 
