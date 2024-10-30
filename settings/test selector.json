@@ -1,0 +1,1 @@
+{"ports": [{"pattern": "COM4"}], "motors_configurations": {}, "2_position_actuators": [], "selector_actuators": [{"port": 0, "Move Out": "G25", "Home Out": "G33", "Number of Ports": 8}], "relays": [], "switches": [], "temp_decks": {}, "feedbacks": []}

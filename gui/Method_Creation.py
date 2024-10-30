@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import filedialog as fd
 from tkinter import ttk
 import json
+
 from Classes.coordinator import Coordinator
 
 '''
@@ -15,15 +16,21 @@ Command_Parameter_is used inside Method_Command Row.
 
 ACTION_TYPES = {
 
+"aspirate_samples": ["Amount (nL)", "Speed (nL/min)", "Delay (s)"],
+"dispense_to_samples": ["Amount (nL)", "Speed (nL/min)", "Delay (s)"],
+"pool_samples": ["Amount (nL)", "Speed (nL/min)", "Spread (mm)" , "Delay (s)"],
+
+"aspirate_from_wells": ["Stage Name", "Wellplate Index", "Well", "Amount (nL)", "Speed (nL/min)"],
+"dispense_to_wells": ["Stage Name", "Wellplate Index", "Wells (CS)", "Amount (nL)", "Speed (nL/min)"],
+"aspirate_from_location": ["Stage Name", "Location Name", "Amount (nL)", "Speed (nL/min)"],
+"dispense_to_location": ["Stage Name", "Location Name", "Amount (nL)", "Speed (nL/min)"],
+
 "move_to_well": ["Stage Name", "Wellplate", "Well"],
 "move_to_location": ["Stage Name", "Location Name"],
 "aspirate_in_place": ["Stage Name", "Amount (nL)", "Speed (nL/min)"],
 "dispense_in_place": ["Stage Name", "Amount (nL)", "Speed (nL/min)"],
 
-"aspirate_from_wells": ["Stage Name", "Wellplate Index", "Well", "Amount (nL)", "Speed (nL/min)"],
-"aspirate_from_location": ["Stage Name", "Location Name", "Amount (nL)", "Speed (nL/min)"],
-"dispense_to_wells": ["Stage Name", "Wellplate Index", "Wells (CS)", "Amount (nL)", "Speed (nL/min)"],
-"dispense_to_location": ["Stage Name", "Location Name", "Amount (nL)", "Speed (nL/min)"],
+"-": [],
 
 "syringe_to_min": ["Stage Name","Speed (nL/min)"],
 "syringe_to_max": ["Stage Name","Speed (nL/min)"],
@@ -33,19 +40,17 @@ ACTION_TYPES = {
 "valve_to_load": ["Valve Index (Starts at zero)"],
 "move_selector": ["Valve Index (Starts at zero)", "Port (Valve Position)"],
 
-"LC_contact_closure": ["Relay (Starts at zero)"],
-"MS_contact_closure": ["Relay", "Input", "Serial Port (Starts at zero)"],
-
 "wait": ["Time (s)"],
 "run_sub_method": ["Method to Run (file path)"],
 "set_tempdeck": ["Tempdeck Name", "Set Temperature"],
 
-"aspirate_sample": ["Amount (nL)", "Speed (nL/min)", "Delay (s)"],
-"aspirate_samples": ["Amount (nL)", "Speed (nL/min)", "Delay (s)"],
-"dispense_to_sample": ["Amount (nL)", "Speed (nL/min)", "Delay (s)"],
-"dispense_to_samples": ["Amount (nL)", "Speed (nL/min)", "Delay (s)"],
-
+"LC_contact_closure": ["Relay (Starts at zero)"],
+"MS_contact_closure": ["Relay", "Input", "Serial Port (Starts at zero)"],
 "Wait_Contact_Closure": ["State of Pin", "Input", "Serial Port (Starts at zero"],
+"set_pin": ["Pin", "High/Low", "Port"],
+
+"--": [],
+
 "set_relay_side": ["Relay (Starts at zero)","Left or Right"],
 "run_sub_method_simultaneously": ["Method to Run (include folder)"],
 "start_sub_method": ["Method to Run (include folder)","Thread Index (starts with 0)"],
@@ -57,15 +62,21 @@ default_stage = ""
 
 ACTION_DEFAULTS = {
 
+"aspirate_samples": ["", "3000", "1"],
+"dispense_to_samples": ["", "3000", "1"],
+"pool_samples": ["3000", "3000", "0.7" , "1"],
+
+"aspirate_from_wells": [default_stage, "", "", "", "3000"],
+"dispense_to_wells": [default_stage, "", "", "", "3000"],
+"aspirate_from_location": [default_stage, "", "", "3000"],
+"dispense_to_location": [default_stage, "", "", "3000"],
+
 "move_to_well": [default_stage, "0", ""],
 "move_to_location": [default_stage, ""],
 "aspirate_in_place": [default_stage, "", "3000"],
 "dispense_in_place": [default_stage, "", "3000"],
 
-"aspirate_from_wells": [default_stage, "", "", "", "3000"],
-"aspirate_from_location": [default_stage, "", "", "3000"],
-"dispense_to_wells": [default_stage, "", "", "", "3000"],
-"dispense_to_location": [default_stage, "", "", "3000"],
+"-": [],
 
 "syringe_to_min": [default_stage,"3000"],
 "syringe_to_max": [default_stage,"3000"],
@@ -75,19 +86,17 @@ ACTION_DEFAULTS = {
 "valve_to_load": ["0"],
 "move_selector": ["0", ""],
 
-"LC_contact_closure": ["0"],
-"MS_contact_closure": ["1", "D14", "0"],
-
 "wait": [""],
 "run_sub_method": [""],
 "set_tempdeck": ["", ""],
 
-"dispense_to_sample": ["", "3000", "1"],
-"dispense_to_samples": ["", "3000", "1"],
-"aspirate_sample": ["", "3000", "1"],
-"aspirate_samples": ["", "3000", "1"],
-
+"LC_contact_closure": ["0"],
+"MS_contact_closure": ["1", "D14", "0"],
 "Wait_Contact_Closure": ["True","D14","0"],
+"set_pin": ["", "High", "0"],
+
+"--": [],
+
 "set_relay_side": ["0","Left"],
 "run_sub_method_simultaneously": ["methods/"],
 "start_sub_method": ["methods/","0"],
@@ -219,7 +228,6 @@ class Method_Command_Row():
         new_type = self.type_box.get()
         
         if not self.main_frame.commands_list[self.row_index]["type"].__eq__(str(new_type)):
-            #print("different")
             self.main_frame.commands_list[self.row_index]["type"] = new_type
             self.main_frame.commands_list[self.row_index]["parameters"] = list(ACTION_DEFAULTS.get(new_type))
         self.main_frame.update_command_grid()

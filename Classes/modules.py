@@ -8,7 +8,6 @@ from Classes.module_files.OT_driver import OT2_nanotrons_driver
 from Classes.module_files.zaber_independent_syringe import ZaberIndependentSyringe
 from Classes.module_files.joystick import XboxJoystick
 from Classes.module_files.profile import Profile
-from Classes.module_files.hiVoltSwitch import HiVoltageSwitch
 from Classes.module_files.tempdeck_driver import TempDeck
 from settings.default_controller_profile import default_controller_profile
 
@@ -85,7 +84,6 @@ class Modules:
             print("\nAdding Serial Port " + eachPort["pattern"])
             self.myPorts.append(SerialPort(eachPort["pattern"])) 
         
-        i = 0
         for each2PositionActuator in settingsObj["2_position_actuators"]:
             print("\nAdding 2-Position Valve")
             print(each2PositionActuator)
@@ -94,28 +92,25 @@ class Modules:
                 each2PositionActuator["Position B Out"],
                 each2PositionActuator["Position A In"],
                 each2PositionActuator["Position B In"]))
-            self.my2PosValves[i].to_runPosition()
-            i = i + 1
-        i = 0
+            
         for eachSelector in settingsObj["selector_actuators"]:
             print("\nAdding Selector Valve")
             print(eachSelector)
-            self.mySelectors.append(SelectorActuator(self, eachSelector["port"],
-             eachSelector["Move Out"],
-             eachSelector["Home Out"],
-             eachSelector["Number of Ports"]))
-            self.mySelectors[i].home_actuator()
-            i = i + 1
+            self.mySelectors.append(SelectorActuator(self, 
+                eachSelector["port"],
+                eachSelector["Home Out"],
+                eachSelector["Move Out"],
+                eachSelector["Number of Ports"]))
+            
         for eachRelay in settingsObj["relays"]:
             print("\nAdding Relay")
             self.myRelays.append(Relays(self, eachRelay["port"], eachRelay["pin"]))
-        for eachSwitch in settingsObj["switches"]:
-            print("\nAdding High Voltage Switch")
-            self.mySwitches.append(HiVoltageSwitch(self, eachSwitch["port"],eachSwitch["pin_left"],eachSwitch["pin_right"]))
+
         for eachInput in settingsObj["feedbacks"]:
             print("\nAdding generic Input")
             self.myFeedbacks.append(eachInput)
             self.myPorts[eachInput["port"]].addInputPin(eachInput["pin"])
+
         for eachMotorSeries in settingsObj["motors_configurations"].keys():
             if settingsObj["motors_configurations"][eachMotorSeries]["type"] == "Zaber":
                 print("\nAdding Zaber Stage")
@@ -127,6 +122,7 @@ class Modules:
                 print("\nAdding Zaber Syringe")
                 self.myStages[eachMotorSeries] = ZaberIndependentSyringe(self, settingsObj["motors_configurations"][eachMotorSeries], log_file_name_head, )   
             self.myJoystickProfiles[eachMotorSeries] = Profile(settingsObj["motors_configurations"][eachMotorSeries]["joystick"])     
+
         for eachTempDeck in settingsObj["temp_decks"].keys():
             print("\nAdding Temp Deck")
             self.myTempDecks[eachTempDeck] = TempDeck(settingsObj["temp_decks"][eachTempDeck]["com"])

@@ -1,7 +1,4 @@
-
-
 from datetime import datetime 
-import logging
 import json
 import pandas as pd
 import time
@@ -39,6 +36,92 @@ class MethodReader:  # should call read from coordinator file
         self.update_pause_button = True
         self.error_during_run = False    
 
+        self.current_run_start_time = ""
+        self.runs_scheduled = 0
+
+        
+    def verify_wells(self, proposed_queue):  # checks all the wells in CSV to make sure they all exist
+        if "Well" in proposed_queue:
+            for index, row in proposed_queue.iterrows():
+                if row["Well"] == '':
+                    print(F"\n----- Well not specified in row {index} of proposed queue. -----")
+                    return False
+
+                row["Well"] = row["Well"].replace(" ", "")
+                for well in row["Well"].split(","):
+                    
+                    well_exists = self.myCoordinator.myModules.myStages[row["Stage"]].myLabware.check_well_exists(int(row["Wellplate"]), well)
+
+                    if not well_exists:
+                        print(f"ERROR: {well} does not exist. Verify that the queue file contains only existing wells", "\n")
+                        return False
+
+        return True
+    
+    def verify_method(self, path_to_method):
+        dictionary = {}
+        try:
+            with open(path_to_method, 'r') as myfile: # open file
+                data = myfile.read()
+        except:
+            print(f"\n------- Method {path_to_method} not found on the record. -------\n")
+            return False
+        else:
+            dictionary = json.loads(data)
+            for command in dictionary["commands"]:
+                if command["type"] == "move_to_location":  # why this specifically?
+                    stage = command["parameters"][0]
+                    location_name = command["parameters"][1]
+                    stage_exists = stage in self.myCoordinator.myModules.myStages.keys()
+                    if stage_exists:
+                        location_exists = self.myCoordinator.myModules.myStages[stage].myLabware.check_custom_location_exists(location_name)
+                        if location_exists:
+                            pass
+                        else:
+                            print(f"Cannot find location named: {location_name}")
+                            return False
+                    else:
+                        print(f"Cannot find stage named: {stage}")
+                        return False
+            return True
+                    
+    def verify_methods(self, proposed_queue: pd.DataFrame): # checks all the json files in CSV to make sure they all exist
+
+        for index, row in proposed_queue.iterrows(): # open and close each json file, if one is missing it will throw error
+
+            if row['Method'] == '':
+                    print(F"\n----- Method not specified in row {index} of proposed que. -----")
+                    return False
+            if self.verify_method(row["Method"]):
+                pass
+            else:
+                print(f"Cannot verify method for row {index}")
+                print(f"Method: {row['Method']}")
+                return False
+
+        return True
+
+    def verify(self, proposed_queue):  # check compiled runs to make sure its format is valid, sets first gradient, estimate end time
+        
+        if (len(proposed_queue) == 0):
+            print("ERROR EMPTY BATCH")
+            return False
+        
+        # check all cells make sure none are empty & make sure size of each array is same
+        
+        if not self.verify_wells(proposed_queue): 
+            print ("\n------- WELL VERIFICATION FAILED. CANNOT RUN THE PROVIDED QUEUE. -------\n")
+            return False  # stops code from running
+        
+        if not self.verify_methods(proposed_queue):
+            print ("\n------- METHOD VERIFICATION FAILED. CANNOT RUN THE PROVIDED QUEUE. -------\n")
+            return False  # stops code from running
+        
+        else:
+            
+            return True #allows code to continue
+
+
     def reset(self):
         self.stop_run = False
         self.queue_paused = False
@@ -48,8 +131,10 @@ class MethodReader:  # should call read from coordinator file
 
     def stop_current_run(self):
         print("\n------- Stopping current run. -------\n")
+        self.current_run = None
+        self.current_run_changed = True
         self.stop_run = True
-        self.pause_scheduled_queue()
+        
 
     def pause_scheduled_queue(self):
         self.queue_paused = True
@@ -139,31 +224,28 @@ class MethodReader:  # should call read from coordinator file
             
             self.current_run = self.scheduled_queue.iloc[0] # set the location of 'current_run' to the first row of the scheduled queue
             self.scheduled_queue = self.scheduled_queue.drop(self.scheduled_queue.index[0])
-            self.current_run_changed = True
-            self.scheduled_queue_changed = True
 
-            time.sleep(3)  # lets display update before continuing
-            
-
-            
             now_date = datetime.now().strftime("%m/%d/%Y")
             now_time = datetime.now().strftime("%I:%M %p")  # uses AM/PM time format
             sample_count += 1
 
-            logging.info(f"Running sample {sample_count} with {self.current_run['Method']} \nStarted at {now_time} on {now_date}.")
+            self.myCoordinator.myLogger.info(f"Running {self.current_run['Method']} \nStarted at {now_time} on {now_date}.")
             print("\n*****************************************************************\n")
-            print(f"Sample {sample_count} started at {now_time} on {now_date}.")  
-
-            print(f"\nSamples remaining in scheduled queue: {int(self.scheduled_queue.shape[0])}")
+            print(f"Running {self.current_run['Method']} \nStarted at {now_time} on {now_date}.")
             print("\n*****************************************************************\n")
+            self.current_run_start_time = f"Started at {now_time} on {now_date}."
+            self.runs_scheduled = int(self.scheduled_queue.shape[0])
+            self.current_run_changed = True
+            self.scheduled_queue_changed = True
+            time.sleep(3)  # lets display update before continuing
 
             run_completed = self.run_next_sample() # run self.current_run, return True if completed without stopping
 
             if self.error_during_run:
                 now_date = datetime.now().strftime("%m/%d/%Y")
                 now_time = datetime.now().strftime("%I:%M %p")  # uses AM/PM time format
-                logging.info(f"Run for sample {sample_count} !EXPERIENCED AN ERROR! at {now_time} on {now_date}.")
-                print(f"\nRun for sample {sample_count} !EXPERIENCED AN ERROR! at {now_time} on {now_date}.")
+                self.myCoordinator.myLogger.info(f"Run !EXPERIENCED AN ERROR! at {now_time} on {now_date}. Method: {self.current_run['Method']}")
+                print(f"Run !EXPERIENCED AN ERROR! at {now_time} on {now_date}. Method: {self.current_run['Method']}")
                 self.pause_scheduled_queue()
             
             now_date = datetime.now().strftime("%m/%d/%Y")
@@ -171,13 +253,13 @@ class MethodReader:  # should call read from coordinator file
                 
             if run_completed:
                 print("\n*****************************************************************\n")
-                logging.info(f"Run for sample {sample_count} completed at {now_time} on {now_date}.")
-                print(f"Run for sample {sample_count} completed at {now_time} on {now_date}.")
+                self.myCoordinator.myLogger.info(f"Run completed at {now_time} on {now_date}.")
+                print(f"Run completed at {now_time} on {now_date}.")
                 print("\n*****************************************************************\n")
             else:
                 print("\n*************************** Warning ******************************\n")
-                logging.info(f"Run for sample {sample_count} was interupted by user at {now_time} on {now_date}.")
-                print(f"Run for sample {sample_count} was interupted by user at {now_time} on {now_date}.")
+                self.myCoordinator.myLogger.error(f"Run was interupted by user at {now_time} on {now_date}.")
+                print(f"Run was interupted by user at {now_time} on {now_date}.")
                 print("\n*****************************************************************\n")
                     
             

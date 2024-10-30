@@ -11,6 +11,9 @@ from serial import Serial, STOPBITS_ONE
 from serial.tools import list_ports
 
 
+SIGNAL_DELAY = 1 # Gives ESP time to carry out command, currently no feedback
+
+
 class SerialPort:
 
     def  __init__(self, portNamePattern):
@@ -25,7 +28,7 @@ class SerialPort:
         else:
             self.ser = Serial(port=self.port, baudrate=115200,
                                     bytesize=8, timeout=1, stopbits=STOPBITS_ONE)
-            print(self.ser)
+            # print(self.ser)
 
     def find_port(self, name):
         """Find the serial port with specific name
@@ -46,7 +49,8 @@ class SerialPort:
 
     
     def addInputPin (self, this_pin):
-        self.ser.write(str("config_input "+this_pin).encode())
+        self.ser.write(str(f"config_input {this_pin}").encode('utf-8'))
+        time.sleep(SIGNAL_DELAY) 
         self.inputs.append(this_pin)
 
     def getPinState (self, this_pin):
@@ -55,9 +59,9 @@ class SerialPort:
                 self.ser.flushInput()
                 self.ser.flushOutput()
 
-                self.ser.write(str("input "+this_pin).encode())
-                #print("read output")
-                time.sleep(0.2)
+                self.ser.write(str(f"input {this_pin}").encode('utf-8'))
+                time.sleep(SIGNAL_DELAY) 
+
                 readout = self.ser.readline().decode('ascii',errors="replace")
                 readout = readout.lstrip("pin"+this_pin+" ").rstrip("\r\n").rstrip("\n")
                 if "on" in readout:  
@@ -69,73 +73,38 @@ class SerialPort:
         return "ERROR: no pin named " + this_pin
 
     def addOutputPin (self, this_pin):
-        self.ser.write(str("config_output "+this_pin).encode())
-        time.sleep(2)
-        self.ser.write(str("turn_on "+this_pin).encode())
-        time.sleep(1)
+        self.ser.write(str(f"config_output {this_pin}").encode('utf-8'))
+        time.sleep(SIGNAL_DELAY) 
+        print(f"Configuring pin {this_pin}, setting to High")
+        self.ser.write(str("turn_on "+this_pin).encode('utf-8'))
+        time.sleep(SIGNAL_DELAY) 
         self.outputs.append(this_pin)
 
     def activatePin (self, this_pin):
         for each_pin in self.outputs:
             if each_pin == this_pin:
-                self.ser.write(str("turn_on "+this_pin).encode())
-                # print(self.port)
-                # print(self.ser)
-                # print(this_pin)
+                # print(f"Sending signal to ESP to turn on pin '{this_pin}'")
+                self.ser.write(str(f"turn_on {this_pin}").encode('utf-8'))
+                time.sleep(SIGNAL_DELAY) 
                 return "Success"
 
             else:
                 pass
-                # print(each_pin.pin_number)
         return "ERROR: no pin named " + this_pin
 
     def deactivatePin (self, this_pin):
         for each_pin in self.outputs:
             if each_pin == this_pin:
-                self.ser.write(str("turn_off "+this_pin).encode())
-                # print(self.port)
-                # print(self.ser)
-                # print(this_pin)
-                return "Success"
+                # print(f"Sending signal to ESP to turn off pin '{this_pin}'")
+                self.ser.write(str(f"turn_off {this_pin}").encode('utf-8'))
+                time.sleep(SIGNAL_DELAY) 
+                return "Success"        
             else:
                 pass
-                # print(each_pin.pin_number)
         return "ERROR: no pin named " + this_pin
 
     def killPins(self):
         self.outputs = []
         self.inputs = []
                 
-                
-if __name__ == "__main__":
-    comPorts = ["COM5","COM6"]   
-    myPorts = []
-    for port in comPorts:
-        myPorts.append(SerialPort(port))
-    print("**")
-    myPorts[1].addOutputPin("D19")
-    myPorts[0].addOutputPin("D17") 
-    myPorts[1].addOutputPin("D23")
-    myPorts[1].addInputPin("D27")
-    print("^^")
-    print(myPorts[1].activatePin("D19"))
-    time.sleep(2)
-    print(myPorts[1].deactivatePin("D19") )
-    time.sleep(10)  
-    myPorts[0].activatePin("D17")
-    time.sleep(0.2)
-    myPorts[0].deactivatePin("D17")
-    time.sleep(5)
-
-    time.sleep(1)
-    myPorts[1].activatePin("D23")
-    time.sleep(20)
-    myPorts[1].deactivatePin("D23")
-
-    
-    time.sleep(1)
-    print(myPorts[1].getPinState("D27"))
-    time.sleep(10)
-    for eachPort in myPorts:
-        eachPort.ser.close()
 

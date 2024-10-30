@@ -5,6 +5,6 @@
     "selector_actuators": [],
     "relays": [],
     "switches": [],
-    "temp_decks":{},
+    "temp_decks": {},
     "feedbacks": []
 }
