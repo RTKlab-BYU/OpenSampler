@@ -77,7 +77,7 @@ class Manual(tk.Toplevel,):
         self.step_speed_label = tk.Label(self.xyz_settings, text="Speed (mm/s)")
 
         self.joy_on_off = tk.StringVar(self.xyz_settings, value="Off")
-        self.joy_button = tk.Button(self.xyz_settings, state="disabled", textvariable=self.joy_on_off)
+        self.joy_button = tk.Button(self.xyz_settings, state="disabled", textvariable=self.joy_on_off, command=self.update_joystick)
 
         self.step_size = tk.StringVar(value=10)
         self.step_size_dropbox = ttk.Combobox(self.xyz_settings, textvariable=self.step_size)
@@ -101,12 +101,12 @@ class Manual(tk.Toplevel,):
         self.xyz_move_buttons.columnconfigure(0, weight=4)
         self.xyz_move_buttons.columnconfigure(1, weight=3)
 
-        self.x_left = tk.Button(self.xy_buttons, text="X Left")
-        self.x_right = tk.Button(self.xy_buttons, text="X Right")
-        self.y_back = tk.Button(self.xy_buttons, text="Y Back")
-        self.y_front = tk.Button(self.xy_buttons, text="Y Front")
-        self.z_up = tk.Button(self.z_buttons, text="Z Up")
-        self.z_down = tk.Button(self.z_buttons, text="Z Down")
+        self.x_left = tk.Button(self.xy_buttons, text="X Left", command=self.move_x_left)
+        self.x_right = tk.Button(self.xy_buttons, text="X Right", command=self.move_x_right)
+        self.y_back = tk.Button(self.xy_buttons, text="Y Back", command=self.move_y_back)
+        self.y_front = tk.Button(self.xy_buttons, text="Y Front", command=self.move_y_forward)
+        self.z_up = tk.Button(self.z_buttons, text="Z Up", command=self.move_z_up)
+        self.z_down = tk.Button(self.z_buttons, text="Z Down", command=self.move_z_down)
 
         self.x_left.grid(row=1, column=0, padx=5, pady=5)
         self.x_right.grid(row=1, column=2, padx=5, pady=5)
@@ -138,8 +138,8 @@ class Manual(tk.Toplevel,):
         self.syringe_rest_button.grid(row=0, column=1)
         self.syringe_min_button.grid(row=0, column=2, sticky="W")
         
-        self.aspirate_button = tk.Button(self.asp_disp_control, text="Aspirate")
-        self.dispense_button = tk.Button(self.asp_disp_control, text="Dispense")
+        self.aspirate_button = tk.Button(self.asp_disp_control, text="Aspirate", command=self.aspirate)
+        self.dispense_button = tk.Button(self.asp_disp_control, text="Dispense", command=self.dispense)
 
         self.syringe_volume_label = tk.Label(self.asp_disp_control, text="Vol. (nL)")
         self.syringe_speed_label = tk.Label(self.asp_disp_control, text="Speed (nL/s)")
@@ -254,7 +254,8 @@ class Manual(tk.Toplevel,):
         self.tempdeck_dropbox = ttk.Combobox(self.temp_deck_control, textvariable=self.selected_tempdeck)
         self.temperature_label = tk.Label(self.temp_deck_control, text="Temperature (C)")
         self.temperature_entry = tk.Entry(self.temp_deck_control)
-        self.set_temp_button = tk.Button(self.temp_deck_control, text="Set", padx=10)
+        self.set_temp_button = tk.Button(self.temp_deck_control, text="Set", padx=10, command=self.set_tempdeck)
+        self.tempdeck_off_button = tk.Button(self.temp_deck_control, text="Deactivate", command=self.tempdeck_off)
 
         self.temperature_entry.insert(tk.END, "15")
 
@@ -263,6 +264,7 @@ class Manual(tk.Toplevel,):
         self.temperature_label.pack(side="left")
         self.temperature_entry.pack(side="left")
         self.set_temp_button.pack(side="left")
+        self.tempdeck_off_button.pack(side="left")
 
         self.updating_positions = False
         self.position_thread = threading.Thread(target=self.enable_coordinates)
@@ -403,8 +405,24 @@ class Manual(tk.Toplevel,):
             self.move_options_list = [""]
             self.wellplate_dict = {} # used to look up plate index from model name
             for index, plate in enumerate(self.coordinator.myModules.myStages[self.selected_stage].myLabware.plate_list):
-                        self.move_options_list.append(str(plate.model))
-                        self.wellplate_dict[plate.model] = index 
+                self.move_options_list.append(str(plate.model))
+                self.wellplate_dict[plate.model] = index 
+        
+            self.my_2_pos_valves = []
+            for index, valve in enumerate(self.myCoordinator.myModules.my2PosValves):
+                self.my_2_pos_valves.append(valve)
+                option = f"{index}, 2-Position"  # first character is valve index within valve group
+                self.move_options_list.append(option)
+
+            self.my_selector_valves = []
+            for index, valve in enumerate(self.myCoordinator.myModules.mySelectors):
+                self.my_selector_valves.append(valve)
+                option = f"{index}, Selector"  # first character is valve index within valve group
+                self.move_options_list.append(option)
+
+
+                self.move_options_list.append(option)
+
             self.move_options_list.insert("Named Location", 0)
 
         else: # reset
@@ -414,18 +432,30 @@ class Manual(tk.Toplevel,):
 
         self.move_dropbox_1["values"] = self.move_options_list
 
-
     def update_sub_options(self):
         if not self.selected_stage.get() == "":
 
             if self.move_string_1.get() == "Named Location":
-                sub_options_list = list(self.coordinator.myModules.myStages[self.selected_stage.get()].myLabware.custom_locations.keys())
+                self.sub_options_list = list(self.coordinator.myModules.myStages[self.selected_stage.get()].myLabware.custom_locations.keys())
+
+            elif "2-Position" in self.move_string_1.get():
+                self.sub_options_list = ["Position A", "Position B"]   
+
+            elif "Selector" in self.move_string_1.get():
+                valve = self.my_selector_valves[self.move_string_1.get()[0]]  # retrieve valve from local list based on index
+                max_position = valve.max_position  # get number of ports on selector valve
+
+                self.sub_options_list = []   
+                for index in range(0, max_position):
+                    option = f"Position {index+1}"
+                    self.sub_options_list.append(option)
 
             else:
                 plate_index = self.wellplate_dict[self.move_string_1]
-                sub_options_list = self.coordinator.myModules.myStages[self.selected_stage.get()].myLabware.plate_list[plate_index].nicknames
-            sub_options_list.insert("", 0)
-            self.move_dropbox_2["values"] = sub_options_list
+                self.sub_options_list = self.coordinator.myModules.myStages[self.selected_stage.get()].myLabware.plate_list[plate_index].nicknames
+
+            self.sub_options_list.insert("", 0)
+            self.move_dropbox_2["values"] = self.sub_options_list
         else:
             self.sub_options_list = [""]
             
@@ -438,6 +468,21 @@ class Manual(tk.Toplevel,):
     def go_to_location(self):
         if self.move_string_1.get() == "Named Location":
             location = self.coordinator.myModules.myStages[self.selected_stage.get()].myLabware.custom_locations[self.move_string_2.get()]
+
+        elif "2-Position" in self.move_string_1.get():
+            valve = self.my_2_pos_valves[self.move_string_1.get()[0]]  # retrieve valve from local list based on index
+            position = self.move_string_2.get()[-1]
+
+            if position == "A":
+                valve.to_runPosition()
+            elif position == "B":
+                valve.to_loadPosition()
+
+        elif "Selector" in self.move_string_1.get():
+            valve = self.my_selector_valves[self.move_string_1.get()[0]]  # retrieve valve from local list based on index
+            position = self.move_string_2.get()[-1]
+            
+            valve.move_to_position(position)
 
         else:
             plate_index = self.wellplate_dict[self.move_string_1]
@@ -470,13 +515,13 @@ class Manual(tk.Toplevel,):
     def aspirate(self):
         volume = float(self.syringe_volume_entry.get())
         speed = float(self.syringe_speed_entry.get())
-        # self.coordinator.myLogger.info(f"Aspirating {volume} nL at speed {speed} nL/min")
+        self.coordinator.myLogger.info(f"Aspirating {volume} nL at speed {speed} nL/min")
         self.coordinator.myModules.myStages[self.selected_stage.get()].step_syringe_motor_up(volume, speed)
 
     def dispense(self):
         volume = float(self.syringe_volume_entry.get())
         speed = float(self.syringe_speed_entry.get())
-        # self.coordinator.myLogger.info(f"Dispensing {volume} nL at speed {speed} nL/min")
+        self.coordinator.myLogger.info(f"Dispensing {volume} nL at speed {speed} nL/min")
         self.coordinator.myModules.myStages[self.selected_stage.get()].step_syringe_motor_down(volume, speed)
 
     def syringe_to_max(self):
@@ -494,8 +539,7 @@ class Manual(tk.Toplevel,):
         rest_position = self.coordinator.myModules.myStages[self.selected_stage.get()].myLabware.get_syringe_rest()
         self.coordinator.myModules.myStages[self.selected_stage.get()].move_syringe_to(rest_position, speed)
 
-
-
+    # Joystick Methods
     def update_joystick(self, case="none"):
 
         if case == "reset":
@@ -522,12 +566,22 @@ class Manual(tk.Toplevel,):
             self.joy_on_off.set("Turn Off")
 
     def start_joystick(self):
-        # self.selected_joystick = self.joystick.get()
         self.thread = threading.Thread(target=self.coordinator.start_joystick,args=(self.selected_stage.get()))
         self.thread.start()
 
     def kill_joystick(self):
         self.coordinator.stop_joystick()
+
+    # Tempdeck Methods
+    def set_tempdeck(self):
+        temperature = self.temperature_entry.get()
+        self.myCoordinator.myModules.myTempDecks[self.selected_tempdeck].start_set_temperature(temperature)
+        self.tempdeck_off_button["state"] = "normal"
+
+    def tempdeck_off(self):
+        self.myCoordinator.myModules.myTempDecks[self.selected_tempdeck].deactivate()
+        self.tempdeck_off_button["state"] = "disabled"
+
 
     def on_closing(self):
         self.kill_joystick()

@@ -1,4 +1,4 @@
-settings/last_settings.json
+settings/*
 !settings/default_settings.json
 Calibrations/*
 logs/*
@@ -7,5 +7,4 @@ Classes/module_files/__pycache__/*
 gui/__pycache__/*
 queues/*
 methods/*
-settings/__pycache__/*
 .venv/*
