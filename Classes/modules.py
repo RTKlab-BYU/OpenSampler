@@ -103,11 +103,11 @@ class Modules:
                 eachSelector["Number of Ports"]))
             
         for eachRelay in settingsObj["relays"]:
-            print("\nAdding Relay")
+            print(f"\nAdding a relay controlled by pin {str(eachRelay["pin"])}")
             self.myRelays.append(Relays(self, eachRelay["port"], eachRelay["pin"]))
 
         for eachInput in settingsObj["feedbacks"]:
-            print("\nAdding generic Input")
+            print(f"\nSetting up pin {str(eachInput["pin"])} as an input.")
             self.myFeedbacks.append(eachInput)
             self.myPorts[eachInput["port"]].addInputPin(eachInput["pin"])
 

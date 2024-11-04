@@ -307,16 +307,16 @@ class ProtocolActions:
             self.myCoordinator.myLogger.info("Skipping MS Contact Closure")
           #  return "Skipped MS Trigger"
 
-    def Wait_Contact_Closure(self, Logic, Input, Port=0):
+    def Wait_Contact_Closure(self, Logic, pin, Port=0):
         logic = Logic == "True" # definded by user based on expected input state
-        pin_state = self.myCoordinator.myModules.myPorts[int(Port)].getPinState(Input)
+        pin_state = self.myCoordinator.myModules.myPorts[int(Port)].getPinState(pin)
 
-        message = "Awaiting Contact Closure"
+        message = f"Awaiting Contact Closure from pin {pin}. Expecting {str(logic)}"
         self.myCoordinator.myLogger.info(message)
 
         while (pin_state != logic):
             time.sleep(1)
-            pin_state = self.myCoordinator.myModules.myPorts[int(Port)].getPinState(Input)
+            pin_state = self.myCoordinator.myModules.myPorts[int(Port)].getPinState(pin)
 
             if self.myCoordinator.myReader.stop_run == True:
                 break
