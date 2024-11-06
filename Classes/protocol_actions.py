@@ -156,7 +156,7 @@ class ProtocolActions:
         z = location[2] 
 
         # move downward to punch foil
-        z = z - spread
+        z = z - 2
         new_location = (x,y,z)
         self.myCoordinator.myModules.myStages[stage].small_move_xy(new_location)
 

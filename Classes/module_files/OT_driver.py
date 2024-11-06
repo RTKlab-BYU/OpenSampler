@@ -525,16 +525,14 @@ class OT2_nanotrons_driver(SM):
                         self.move_safe_az(z)
                         self.move({'Y': y}, speed= MEDIUM_SPEED)
                         self.move({'X': x}, speed= MEDIUM_SPEED)
-                        if (current_z_pos + 5) < self.z_max:
-                            self.move({'Z': z + 5}, speed= MEDIUM_SPEED)
+                        self.move({'Z': z + 5}, speed= MEDIUM_SPEED)
                         self.move({'Z': z}, speed= SLOW_SPEED)
                 elif self.side == RIGHT:
                     if(self.check_for_valid_move(z, 'A')):
                         self.move_safe_az(z)
                         self.move({'Y': y}, speed= MEDIUM_SPEED)
                         self.move({'X': x}, speed= MEDIUM_SPEED)
-                        if (current_a_pos + 5) < self.a_max:
-                            self.move({'A': z + 5}, speed= MEDIUM_SPEED)
+                        self.move({'A': z + 5}, speed= MEDIUM_SPEED)
                         self.move({'A': z}, speed= SLOW_SPEED)
 
     def small_move_xy(self, location, move_speed=SLOW_SPEED):
