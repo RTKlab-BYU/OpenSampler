@@ -314,6 +314,11 @@ class ProtocolActions:
         message = f"Awaiting Contact Closure from pin {pin}. Expecting {str(logic)}"
         self.myCoordinator.myLogger.info(message)
 
+        # pin_string = "Input Pins: "
+        # for pin in self.myCoordinator.myModules.myPorts[int(Port)].inputs:
+        #     pin_string += (str(pin) + ", ")
+        # self.myCoordinator.myLogger.info(pin_string)
+
         while (pin_state != logic):
             time.sleep(1)
             pin_state = self.myCoordinator.myModules.myPorts[int(Port)].getPinState(pin)

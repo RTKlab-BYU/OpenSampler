@@ -63,12 +63,12 @@ class SerialPort:
                 time.sleep(SIGNAL_DELAY) 
 
                 readout = self.ser.readline().decode('ascii',errors="replace")
-                readout = readout.lstrip("pin"+this_pin+" ").rstrip("\r\n").rstrip("\n")
+                # readout = readout.lstrip("pin"+this_pin+" ").rstrip("\r\n").rstrip("\n")
                 if "on" in readout:  
-                    print(f"Message from ESP: {readout}")
+                    # print(f"Message from ESP: {readout}")
                     return True
                 elif "off" in readout:
-                    print(f"Message from ESP: {readout}")
+                    # print(f"Message from ESP: {readout}")
                     return False
                 else:
                     print(f"Message from ESP: {readout}")
