@@ -183,13 +183,13 @@ class ProtocolActions:
         new_location = (x,y,z)
         self.myCoordinator.myModules.myStages[stage].small_move_xy(new_location)
 
-        # move to "right side" of well
+        # return to "back" of well
         y = y + spread
         x = x - spread
         new_location = (x,y,z)
         self.myCoordinator.myModules.myStages[stage].small_move_xy(new_location)
 
-        # move to "right side" of well
+        # return to "center" of well
         y = y - spread
         new_location = (x,y,z)
         self.myCoordinator.myModules.myStages[stage].small_move_xy(new_location)
