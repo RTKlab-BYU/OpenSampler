@@ -547,11 +547,12 @@ class OT2_nanotrons_driver(SM):
         '''
 
         x = location[0] 
-        y = location[1] 
+        y = location[1]
+        z = location[2]
 
         self.update_position()
 
-        self.move({'Y': y, 'X': x}, speed=move_speed)
+        self.move({'X': x, 'Y': y, 'Z': z}, speed=move_speed)
         # self.move({'X': x}, speed=move_speed)
                 
     def move_syringe_to(self, location, vol_speed=3000): #nL/min
