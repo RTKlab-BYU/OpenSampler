@@ -183,6 +183,17 @@ class ProtocolActions:
         new_location = (x,y,z)
         self.myCoordinator.myModules.myStages[stage].small_move_xy(new_location)
 
+        # move to "right side" of well
+        y = y + spread
+        x = x - spread
+        new_location = (x,y,z)
+        self.myCoordinator.myModules.myStages[stage].small_move_xy(new_location)
+
+        # move to "right side" of well
+        y = y - spread
+        new_location = (x,y,z)
+        self.myCoordinator.myModules.myStages[stage].small_move_xy(new_location)
+
         # move axis up out of the way after punching
         self.myCoordinator.myModules.myStages[stage].move_current_axis_safe_az()
 

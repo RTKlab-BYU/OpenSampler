@@ -6,6 +6,6 @@ Classes/module_files/__pycache__/*
 gui/__pycache__/*
 queues/*
 methods/*
-settings/__pycache__/*
+!settings/default_settings.json
 models/*
 .venv*
