@@ -274,9 +274,9 @@ class OT2_nanotrons_driver(SM):
             self.move({'A': self.safe_a}, speed= MEDIUM_SPEED)
 
             current_z = self._position['Z']
-            if target < current_z and current_z + 30 < self.safe_z:
+            if target <= current_z and current_z + 30 < self.safe_z:
                 self.move({'Z': current_z + 30}, speed= MEDIUM_SPEED)
-            elif target > current_z and target + 30  < self.safe_z:
+            elif target >= current_z and target + 30  < self.safe_z:
                 self.move({'Z': target  + 30}, speed= MEDIUM_SPEED)
             else:
                 self.move({'Z': self.safe_z}, speed= MEDIUM_SPEED)
@@ -285,12 +285,18 @@ class OT2_nanotrons_driver(SM):
             self.move({'Z': self.safe_z}, speed= MEDIUM_SPEED)
 
             current_a = self._position['A']
-            if target < current_a and current_a + 30 < self.safe_a:
+            if target <= current_a and current_a + 30 < self.safe_a:
                 self.move({'A': current_a + 30}, speed= MEDIUM_SPEED)
-            elif target > current_a and target + 30  < self.safe_a:
+            elif target >= current_a and target + 30  < self.safe_a:
                 self.move({'A': self.safe_a}, speed= MEDIUM_SPEED)
             else:
                 self.move({'A': self.safe_a}, speed= MEDIUM_SPEED)
+
+    def move_current_axis_safe_az(self):
+        if self.side == LEFT:
+            self.move({'Z': self.safe_z}, speed=MEDIUM_SPEED)
+        elif self.side == RIGHT:
+            self.move({'A': self.safe_a}, speed=MEDIUM_SPEED)
 
     def get_motor_coordinates(self):  
         self.update_position()
@@ -531,7 +537,7 @@ class OT2_nanotrons_driver(SM):
                             self.move({'A': z + 5}, speed= MEDIUM_SPEED)
                         self.move({'A': z}, speed= SLOW_SPEED)
 
-    def small_move_xy(self, location, move_speed):
+    def small_move_xy(self, location, move_speed=SLOW_SPEED):
         '''
         This function breaks a location tuple into its respective pieces. 
         Then it checks with the motors for a real position update.
@@ -545,8 +551,8 @@ class OT2_nanotrons_driver(SM):
 
         self.update_position()
 
-        self.move({'Y': y}, speed= move_speed)
-        self.move({'X': x}, speed= move_speed)
+        self.move({'Y': y, 'X': x}, speed=move_speed)
+        # self.move({'X': x}, speed=move_speed)
                 
     def move_syringe_to(self, location, vol_speed=3000): #nL/min
         mm_speed = self.uL_to_mm(vol_speed/1000)/60 #nL to uL

@@ -19,6 +19,8 @@ ACTION_TYPES = {
 "aspirate_samples": ["Amount (nL)", "Speed (nL/min)", "Delay (s)"],
 "dispense_to_samples": ["Amount (nL)", "Speed (nL/min)", "Delay (s)"],
 "pool_samples": ["Amount (nL)", "Speed (nL/min)", "Spread (mm)" , "Delay (s)"],
+"puncture_foil": ["Stage Name", "Wellplate Index", "Well", "Spread (mm)"],
+
 
 "aspirate_from_wells": ["Stage Name", "Wellplate Index", "Well", "Amount (nL)", "Speed (nL/min)"],
 "dispense_to_wells": ["Stage Name", "Wellplate Index", "Wells (CS)", "Amount (nL)", "Speed (nL/min)"],
@@ -65,6 +67,7 @@ ACTION_DEFAULTS = {
 "aspirate_samples": ["", "3000", "1"],
 "dispense_to_samples": ["", "3000", "1"],
 "pool_samples": ["3000", "3000", "0.7" , "1"],
+"puncture_foil": [default_stage, "", "", "2"],
 
 "aspirate_from_wells": [default_stage, "", "", "", "3000"],
 "dispense_to_wells": [default_stage, "", "", "", "3000"],
@@ -106,9 +109,9 @@ ACTION_DEFAULTS = {
 
 class Command_Parameter():
 
-    def __init__(self, master_frame, parameter, parameter_value, parameter_index, coordinator, toplevel_frame, command_row):
+    def __init__(self, command_grid_frame, parameter, parameter_value, parameter_index, coordinator, toplevel_frame, command_row):
         self.command_row: Method_Command_Row = command_row
-        self.command_grid: tk.Frame = master_frame
+        self.command_grid: tk.Frame = command_grid_frame
         self.coordinator: Coordinator = coordinator
         self.main_frame: Method_Creator = toplevel_frame
         self.parameter_index = parameter_index
@@ -124,6 +127,7 @@ class Command_Parameter():
             stage_options = list(self.coordinator.myModules.myStages.keys())
             self.parameter_entry = ttk.Combobox(self.command_grid, values=stage_options, textvariable=self.parameter_var)
             self.command_row.selected_stage = self.parameter_var.get()
+            self.parameter_entry.bind("<<ComboboxSelected>>", lambda x: self.update_parameter_options())
                       
         elif self.parameter == "Location Name":
             try:
@@ -131,24 +135,29 @@ class Command_Parameter():
             except:
                 location_options = []
             self.parameter_entry = ttk.Combobox(self.command_grid, values=location_options, textvariable=self.parameter_var)
+            self.parameter_entry.bind("<<ComboboxSelected>>", lambda x: self.update_parameter())
             
         elif parameter == "Tempdeck Name":
             tempdeck_options = list(self.coordinator.myModules.myTempDecks.keys())
             self.parameter_entry = ttk.Combobox(self.command_grid, values=tempdeck_options, textvariable=self.parameter_var)
+            self.parameter_entry.bind("<<ComboboxSelected>>", lambda x: self.update_parameter())
 
         else:
             self.parameter_entry = tk.Entry(self.command_grid, textvariable=self.parameter_var)
-        
+            self.parameter_var.trace_add("write", self.update_parameter)
+
         self.parameter_entry.grid(row=self.row_index, column=parameter_index*2+self.static_columns+1)
-        self.parameter_var.trace_add("write", self.update_parameter)
 
         if parameter == ACTION_TYPES["run_sub_method"][0]:
             self.parameter_entry.bind('<Double-Button-1>', lambda x: self.select_method(x))
 
     def update_parameter(self, *args):
-        if self.parameter == "Stage Name":
-            self.command_row.selected_stage = self.parameter_var.get()
         self.main_frame.commands_list[self.row_index]["parameters"][self.parameter_index] = self.parameter_var.get()
+
+    def update_parameter_options(self, *args):
+        self.update_parameter()
+        self.command_row.update_command_grid
+
 
     def select_method(self, event):
         filetypes = (
@@ -166,9 +175,9 @@ class Command_Parameter():
 
 class Method_Command_Row():
 
-    def __init__(self, master_frame, row_index, command, coordinator, toplevel_frame):
+    def __init__(self, command_grid_frame, row_index, command, coordinator, toplevel_frame):
         self.row_index = row_index
-        self.command_grid = master_frame
+        self.command_grid = command_grid_frame
         self.main_frame: Method_Creator = toplevel_frame
         self.coordinator = coordinator
         self.selected_stage = ""

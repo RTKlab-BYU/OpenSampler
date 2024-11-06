@@ -142,6 +142,52 @@ class ProtocolActions:
             if not wait_seconds==0:
                 self.wait(wait_seconds)
 
+    def puncture_foil(self, stage, plate_index, well, spread):
+        location: tuple = self.myCoordinator.myModules.myStages[stage].myLabware.get_well_location(int(plate_index), well)
+        plate_model = self.myCoordinator.myModules.myStages[stage].myLabware.plate_list[int(plate_index)].model
+        self.myCoordinator.myModules.myStages[stage].move_to(location)
+        
+        message = f"Punching foil at '{well}' of well plate '{plate_model}' (plate index: {plate_index}). XYZ: {location}"
+        self.myCoordinator.myLogger.info(message)
+
+        x = location[0] 
+        y = location[1]
+        z = location[2] 
+
+        # move downward to punch foil
+        z = z - spread
+        new_location = (x,y,z)
+        self.myCoordinator.myModules.myStages[stage].small_move_xy(new_location)
+
+        # move to "back" of well
+        y = y + spread
+        new_location = (x,y,z)
+        self.myCoordinator.myModules.myStages[stage].small_move_xy(new_location)
+
+        # move to "left side" of well
+        y = y - spread
+        x = x - spread
+        new_location = (x,y,z)
+        self.myCoordinator.myModules.myStages[stage].small_move_xy(new_location)
+
+        # move to "front" of well
+        y = y - spread
+        x = x + spread
+        new_location = (x,y,z)
+        self.myCoordinator.myModules.myStages[stage].small_move_xy(new_location)
+
+        # move to "right side" of well
+        y = y + spread
+        x = x + spread
+        new_location = (x,y,z)
+        self.myCoordinator.myModules.myStages[stage].small_move_xy(new_location)
+
+        # move axis up out of the way after punching
+        self.myCoordinator.myModules.myStages[stage].move_current_axis_safe_az()
+
+
+
+
     def pool_samples(self, volume, speed, spread, wait_seconds):
         '''
         this is a mass spec method for pooling labeled samples. 
@@ -168,7 +214,7 @@ class ProtocolActions:
             y = location[1]
             z = location[2] 
             
-            # move "up" by spread distance (mm)
+            # move "back" by spread distance (mm)
             y = y + spread
             new_location = (x,y,z)
             
@@ -179,7 +225,7 @@ class ProtocolActions:
             new_location = (x,y,z)
             self.myCoordinator.myModules.myStages[stage].small_move_xy(new_location, move_speed=spread)
 
-            # move "down" by 2x spread distance (mm)
+            # move "forward" by 2x spread distance (mm)
             y = y - (2*spread)
             new_location = (x,y,z)
             self.myCoordinator.myModules.myStages[stage].small_move_xy(new_location, move_speed=spread)
