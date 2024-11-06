@@ -146,6 +146,7 @@ class ProtocolActions:
         location: tuple = self.myCoordinator.myModules.myStages[stage].myLabware.get_well_location(int(plate_index), well)
         plate_model = self.myCoordinator.myModules.myStages[stage].myLabware.plate_list[int(plate_index)].model
         self.myCoordinator.myModules.myStages[stage].move_to(location)
+        spread = float(spread)
         
         message = f"Punching foil at '{well}' of well plate '{plate_model}' (plate index: {plate_index}). XYZ: {location}"
         self.myCoordinator.myLogger.info(message)
