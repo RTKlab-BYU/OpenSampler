@@ -67,7 +67,7 @@ ACTION_DEFAULTS = {
 "aspirate_samples": ["", "3000", "1"],
 "dispense_to_samples": ["", "3000", "1"],
 "pool_samples": ["3000", "3000", "0.7" , "1"],
-"puncture_foil": [default_stage, "", "", "2"],
+"puncture_foil": [default_stage, "", "", "1"],
 
 "aspirate_from_wells": [default_stage, "", "", "", "3000"],
 "dispense_to_wells": [default_stage, "", "", "", "3000"],
