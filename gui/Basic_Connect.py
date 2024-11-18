@@ -236,6 +236,7 @@ class Connect(tk.Toplevel,):
         coordinator.myModules.status = "connected"
         output_file = open(LAST_SETTINGS, "w")
         json.dump(self.popCanv.loaded_settings, output_file)
+        output_file.close()
 
         self.connectButton.configure(bg="green")
         
