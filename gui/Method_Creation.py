@@ -19,7 +19,7 @@ ACTION_TYPES = {
 "aspirate_samples": ["Amount (nL)", "Speed (nL/min)", "Delay (s)"],
 "dispense_to_samples": ["Amount (nL)", "Speed (nL/min)", "Delay (s)"],
 "pool_samples": ["Amount (nL)", "Speed (nL/min)", "Spread (mm)" , "Delay (s)"],
-"puncture_foil": ["Stage Name", "Wellplate Index", "Well", "Spread (mm)"],
+"puncture_foil": ["Spread (mm)"],
 
 
 "aspirate_from_wells": ["Stage Name", "Wellplate Index", "Well", "Amount (nL)", "Speed (nL/min)"],
@@ -67,7 +67,7 @@ ACTION_DEFAULTS = {
 "aspirate_samples": ["", "3000", "1"],
 "dispense_to_samples": ["", "3000", "1"],
 "pool_samples": ["3000", "3000", "0.7" , "1"],
-"puncture_foil": [default_stage, "", "", "1"],
+"puncture_foil": ["1"],
 
 "aspirate_from_wells": [default_stage, "", "", "", "3000"],
 "dispense_to_wells": [default_stage, "", "", "", "3000"],
