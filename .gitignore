@@ -9,3 +9,4 @@ methods/*
 !settings/default_settings.json
 models/*
 .venv*
+methods/Test methods.json
