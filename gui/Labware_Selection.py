@@ -41,7 +41,7 @@ class Labware_Selection(tk.Toplevel,):
         tk.Radiobutton(self.type_bar, text="Custom", padx = 20, variable=self.option_selected, value="custom", command=self.update_options).grid(row=0,column=1)
         tk.Radiobutton(self.type_bar, text="Syringe", padx = 20, variable=self.option_selected, value="syringe", command=self.update_options).grid(row=0,column=2)
         self.option_selected.set("syringe")
-        self.selected_model.set(self.selected_model_dropbox["values"][0])
+        self.update_options()
 
     def open_wellplate_calibration_page(self):
         if not self.wellplate_calibration_page or not self.wellplate_calibration_page.winfo_exists():
@@ -96,3 +96,4 @@ class Labware_Selection(tk.Toplevel,):
             self.open_custom_location_page()
         elif self.option_selected.get() == "syringe":
             self.open_syringe_calibration_page()
+        self.destroy()
