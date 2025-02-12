@@ -120,9 +120,11 @@ class Manual(tk.Toplevel,):
         # inside syringe controls
         self.max_rest_min_buttons = tk.Frame(self.syringe_controls, pady=5)
         self.asp_disp_control = tk.Frame(self.syringe_controls, padx=5)
+        self.syringe_model_box = tk.Frame(self.syringe_controls, pady=5)
 
         self.max_rest_min_buttons.grid(row=0, column=0)
         self.asp_disp_control.grid(row=1, column=0)
+        self.syringe_model_box.grid(row=2, column=0)
 
         self.max_frame = tk.Frame(self.max_rest_min_buttons)
         self.rest_frame = tk.Frame(self.max_rest_min_buttons, padx=10)
@@ -156,6 +158,12 @@ class Manual(tk.Toplevel,):
         self.syringe_speed_label.grid(row=1, column=1)
         self.syringe_volume_entry.grid(row=2, column=0)
         self.syringe_speed_entry.grid(row=2, column=1)
+
+        current_model = self.coordinator.myModules.myStages[self.selected_stage.get()].myLabware.get_syringe_model()
+        self.syringe_model = tk.StringVar(value= "Syringe Model: " + current_model)
+        self.syringe_model_label = tk.Label(self.syringe_model_box, textvariable=self.syringe_model)
+
+        self.syringe_model_label.pack()
 
 
         # inside coordinates_box
@@ -252,7 +260,8 @@ class Manual(tk.Toplevel,):
 
         self.tempdeck_label = tk.Label(self.temp_deck_control, text="Tempdeck")
         self.selected_tempdeck = tk.StringVar(self.temp_deck_control, value="")
-        self.tempdeck_dropbox = ttk.Combobox(self.temp_deck_control, textvariable=self.selected_tempdeck)
+        tempdeck_options = list(self.coordinator.myModules.myTempDecks.keys())
+        self.tempdeck_dropbox = ttk.Combobox(self.temp_deck_control, textvariable=self.selected_tempdeck, values=tempdeck_options)
         self.temperature_label = tk.Label(self.temp_deck_control, text="Temperature (C)")
         self.temperature_entry = tk.Entry(self.temp_deck_control)
         self.set_temp_button = tk.Button(self.temp_deck_control, text="Set", padx=10, command=self.set_tempdeck)
@@ -348,6 +357,10 @@ class Manual(tk.Toplevel,):
 
             # Also check for change in driver step size
             self.check_step_size()
+
+            # Also checck for change in syringe model
+            current_syringe_model = self.coordinator.myModules.myStages[self.selected_stage.get()].myLabware.get_syringe_model()
+            self.syringe_model.set("Syringe Model: " + current_syringe_model)
             
             if self.updating_positions == False:
                 break
@@ -400,6 +413,8 @@ class Manual(tk.Toplevel,):
             self.syringe_rest_button["state"] = "normal"
             self.aspirate_button["state"] = "normal"
             self.dispense_button["state"] = "normal"
+        else:
+            print("No Syringe Selected. Add to Labware!")
 
     def disable_syringe(self):
         # enable syringe buttons
@@ -464,7 +479,7 @@ class Manual(tk.Toplevel,):
                     self.sub_options_list.append(option)
 
             else:
-                plate_index = self.wellplate_dict[self.move_string_1]
+                plate_index = self.wellplate_dict[self.move_string_1.get()]
                 self.sub_options_list = self.coordinator.myModules.myStages[self.selected_stage.get()].myLabware.plate_list[plate_index].nicknames
 
             self.sub_options_list.insert(0, "")
@@ -529,13 +544,13 @@ class Manual(tk.Toplevel,):
         volume = float(self.syringe_volume_entry.get())
         speed = float(self.syringe_speed_entry.get())
         self.coordinator.myLogger.info(f"Aspirating {volume} nL at speed {speed} nL/min")
-        self.coordinator.myModules.myStages[self.selected_stage.get()].step_syringe_motor_up(volume, speed)
+        self.coordinator.myModules.myStages[self.selected_stage.get()].step_syringe_motor_up(volume=volume, speed=speed)
 
     def dispense(self):
         volume = float(self.syringe_volume_entry.get())
         speed = float(self.syringe_speed_entry.get())
         self.coordinator.myLogger.info(f"Dispensing {volume} nL at speed {speed} nL/min")
-        self.coordinator.myModules.myStages[self.selected_stage.get()].step_syringe_motor_down(volume, speed)
+        self.coordinator.myModules.myStages[self.selected_stage.get()].step_syringe_motor_down(volume=volume, speed=speed)
 
     def syringe_to_max(self):
         speed = float(self.syringe_speed_entry.get())
@@ -586,13 +601,17 @@ class Manual(tk.Toplevel,):
 
     # Tempdeck Methods
     def set_tempdeck(self):
-        temperature = self.temperature_entry.get()
-        self.coordinator.myModules.myTempDecks[self.selected_tempdeck].start_set_temperature(temperature)
-        self.tempdeck_off_button["state"] = "normal"
+        try:
+            temperature = self.temperature_entry.get()
+            self.coordinator.myModules.myTempDecks[self.selected_tempdeck.get()].start_set_temperature(temperature)
+        except:
+            print("Tempdeck Not Responding")
 
     def tempdeck_off(self):
-        self.coordinator.myModules.myTempDecks[self.selected_tempdeck].deactivate()
-        self.tempdeck_off_button["state"] = "disabled"
+        try:
+            self.coordinator.myModules.myTempDecks[self.selected_tempdeck.get()].deactivate()
+        except:
+            print("Tempdeck Not Responding")
 
 
     def on_closing(self):

@@ -40,6 +40,7 @@ class Labware_Selection(tk.Toplevel,):
         tk.Radiobutton(self.type_bar, text="Wellplate", padx = 20, variable=self.option_selected, value="wellplate", command=self.update_options).grid(row=0,column=0)
         tk.Radiobutton(self.type_bar, text="Custom", padx = 20, variable=self.option_selected, value="custom", command=self.update_options).grid(row=0,column=1)
         tk.Radiobutton(self.type_bar, text="Syringe", padx = 20, variable=self.option_selected, value="syringe", command=self.update_options).grid(row=0,column=2)
+        self.option_selected.set("syringe")
         self.selected_model.set(self.selected_model_dropbox["values"][0])
 
     def open_wellplate_calibration_page(self):

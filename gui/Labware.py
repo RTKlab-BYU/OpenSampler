@@ -107,6 +107,8 @@ class Labware(tk.Toplevel,):
         self.loadedMotorSeries.bind("<<ComboboxSelected>>", lambda x: self.UpdateSelectedMotors(self.coordinator))
         self.UpdateSelectedMotors(self.coordinator)
 
+        self.bind('<FocusIn>',lambda x: self.UpdateLabware(self.coordinator))
+
 
     def open_labware_selection_page(self):
         if not self.labware_selection_page or not self.labware_selection_page.winfo_exists():
@@ -138,12 +140,12 @@ class Labware(tk.Toplevel,):
         
         coordinator.load_labware_setup(file_path, self.selected_stage.get())
 
-        self.UpdateLabware(coordinator)
+        self.UpdateLabware(self.coordinator)
 
     def UpdateSelectedMotors(self, coordinator):
 
         if not self.selected_stage.get() == "":
-            self.stage_type = coordinator.myModules.myStages[self.selected_stage.get()].stage_type
+            self.stage_type = self.coordinator.myModules.myStages[self.selected_stage.get()].stage_type
         else:
             self.stage_type = "None" 
         if self.stage_type == "Zaber_XYZ" or self.stage_type == "Opentrons":
@@ -160,10 +162,10 @@ class Labware(tk.Toplevel,):
             self.saveButton["state"] =  "disable"
             self.loadButton["state"] =  "disable"
 
-        self.UpdateLabware(coordinator)
+        self.UpdateLabware(self.coordinator)
 
     def SaveLabware(self, coordinator):
-        self.UpdateSelectedMotors(coordinator)
+        self.UpdateSelectedMotors(self.coordinator)
         filetypes = (
             ('json files', '*.json'),
             ( 'All files', '*')
@@ -179,9 +181,12 @@ class Labware(tk.Toplevel,):
         else:
             new_file = new_file.name + ".json"
         
-        if (len(coordinator.myModules.myStages[self.selected_stage.get()].myLabware.plate_list)+len(coordinator.myModules.myStages[self.selected_stage.get()].myLabware.custom_locations)>0):
+
+        num_plates = len(self.coordinator.myModules.myStages[self.selected_stage.get()].myLabware.plate_list)
+        num_locations = len(self.coordinator.myModules.myStages[self.selected_stage.get()].myLabware.custom_locations)
+        if (num_plates + num_locations > 0):
             
-            coordinator.save_labware_setup(self.selected_stage.get(), new_file)
+            self.coordinator.save_labware_setup(self.selected_stage.get(), new_file)
             
     def UpdateLabware(self, coordinator):
         for wellplate in self.wellplate_list:
@@ -194,7 +199,7 @@ class Labware(tk.Toplevel,):
             syringe.destroy()
         self.syringe_list = []
 
-        self.PopulateLabware(coordinator)
+        self.PopulateLabware(self.coordinator)
 
     def PopulateLabware(self, coordinator):
         if self.stage_type == "XYZ_Stage":
