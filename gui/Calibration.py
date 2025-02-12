@@ -99,9 +99,9 @@ class Calibration(tk.Toplevel,):
         # buttons to start and stop joystick
         self.joyBar = tk.Frame(self)
         self.joyBar.pack(side=tk.TOP)
-        self.joyButton = tk.Button(self.joyBar,text="Start Joystick",command=lambda: self.start_joystick(),justify=tk.LEFT)
+        self.joyButton = tk.Button(self.joyBar, text="Start Joystick", command=lambda: self.start_joystick(), justify=tk.LEFT)
         self.joyButton.grid(row=0,column=1)
-        self.killButton = tk.Button(self.joyBar,text="Kill Joystick",command=lambda: self.kill_joystick(),justify=tk.LEFT)
+        self.killButton = tk.Button(self.joyBar, text="Kill Joystick", command=lambda: self.kill_joystick(), justify=tk.LEFT)
         self.killButton.grid(row=0,column=2)
         self.killButton["state"] = "disabled"
 

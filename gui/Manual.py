@@ -76,16 +76,17 @@ class Manual(tk.Toplevel,):
         self.step_size_label = tk.Label(self.xyz_settings, text="Step Size (mm)")
         self.step_speed_label = tk.Label(self.xyz_settings, text="Speed (mm/s)")
 
-        self.joy_on_off = tk.StringVar(self.xyz_settings, value="Off")
+        self.joystick_running = False
+        self.joy_on_off = tk.StringVar(self.xyz_settings, value="Turn On")
         self.joy_button = tk.Button(self.xyz_settings, state="disabled", textvariable=self.joy_on_off, command=self.update_joystick)
 
         self.step_size = tk.StringVar(value=10)
         self.step_size_dropbox = ttk.Combobox(self.xyz_settings, textvariable=self.step_size)
         self.step_size_dropbox["values"] = [0.01, 0.1, 1, 5, 10, 25, 50]
+        self.step_size_dropbox.bind("<<ComboboxSelected>>", self.update_step_size)
 
         self.step_speed = tk.StringVar(self.xyz_settings, value=9001)
-        self.step_speed_dropbox = ttk.Combobox(self.xyz_settings, textvariable=self.step_speed, state="readonly")
-        self.step_speed_dropbox["values"] = [100, 500, 9001]
+        self.step_speed_dropbox = tk.Entry(self.xyz_settings, textvariable=self.step_speed, state="readonly")
 
         self.joy_label.grid(row=0, column=0)
         self.step_size_label.grid(row=0, column=1)
@@ -103,8 +104,8 @@ class Manual(tk.Toplevel,):
 
         self.x_left = tk.Button(self.xy_buttons, text="X Left", command=self.move_x_left)
         self.x_right = tk.Button(self.xy_buttons, text="X Right", command=self.move_x_right)
-        self.y_back = tk.Button(self.xy_buttons, text="Y Back", command=self.move_y_back)
-        self.y_front = tk.Button(self.xy_buttons, text="Y Front", command=self.move_y_forward)
+        self.y_back = tk.Button(self.xy_buttons, text="Y Back", command=self.move_y_forward)
+        self.y_front = tk.Button(self.xy_buttons, text="Y Front", command=self.move_y_back)
         self.z_up = tk.Button(self.z_buttons, text="Z Up", command=self.move_z_up)
         self.z_down = tk.Button(self.z_buttons, text="Z Down", command=self.move_z_down)
 
@@ -275,10 +276,19 @@ class Manual(tk.Toplevel,):
 
 
 
+    def update_step_speed(self, step_size):
+        speed = self.coordinator.myModules.myStages[self.selected_stage.get()].check_speed(step_size)
+        self.step_speed.set(str(speed))
 
+    def check_step_size(self):
+        step_size = self.coordinator.myModules.myStages[self.selected_stage.get()].xyz_step_size
+        self.step_size.set(str(step_size))
+        self.update_step_speed(step_size)
 
-
-
+    def update_step_size(self, *args):
+        step_size = int(self.step_size.get())
+        self.coordinator.myModules.myStages[self.selected_stage.get()].xyz_step_size = step_size
+        self.update_step_speed(step_size)
 
     def update_options(self):
         if self.selected_stage.get() != self.previous_selected_stage:
@@ -335,6 +345,9 @@ class Manual(tk.Toplevel,):
             self.syringe_current.set(str(round(s, 2)))
 
             time.sleep(1)
+
+            # Also check for change in driver step size
+            self.check_step_size()
             
             if self.updating_positions == False:
                 break
@@ -404,18 +417,18 @@ class Manual(tk.Toplevel,):
         if not self.selected_stage.get() == "":
             self.move_options_list = [""]
             self.wellplate_dict = {} # used to look up plate index from model name
-            for index, plate in enumerate(self.coordinator.myModules.myStages[self.selected_stage].myLabware.plate_list):
+            for index, plate in enumerate(self.coordinator.myModules.myStages[self.selected_stage.get()].myLabware.plate_list):
                 self.move_options_list.append(str(plate.model))
                 self.wellplate_dict[plate.model] = index 
         
             self.my_2_pos_valves = []
-            for index, valve in enumerate(self.myCoordinator.myModules.my2PosValves):
+            for index, valve in enumerate(self.coordinator.myModules.my2PosValves):
                 self.my_2_pos_valves.append(valve)
                 option = f"{index}, 2-Position"  # first character is valve index within valve group
                 self.move_options_list.append(option)
 
             self.my_selector_valves = []
-            for index, valve in enumerate(self.myCoordinator.myModules.mySelectors):
+            for index, valve in enumerate(self.coordinator.myModules.mySelectors):
                 self.my_selector_valves.append(valve)
                 option = f"{index}, Selector"  # first character is valve index within valve group
                 self.move_options_list.append(option)
@@ -423,7 +436,7 @@ class Manual(tk.Toplevel,):
 
                 self.move_options_list.append(option)
 
-            self.move_options_list.insert("Named Location", 0)
+            self.move_options_list.insert(0, "Named Location")
 
         else: # reset
             self.move_options_list = [""]
@@ -432,7 +445,7 @@ class Manual(tk.Toplevel,):
 
         self.move_dropbox_1["values"] = self.move_options_list
 
-    def update_sub_options(self):
+    def update_sub_options(self, *args):
         if not self.selected_stage.get() == "":
 
             if self.move_string_1.get() == "Named Location":
@@ -454,14 +467,14 @@ class Manual(tk.Toplevel,):
                 plate_index = self.wellplate_dict[self.move_string_1]
                 self.sub_options_list = self.coordinator.myModules.myStages[self.selected_stage.get()].myLabware.plate_list[plate_index].nicknames
 
-            self.sub_options_list.insert("", 0)
+            self.sub_options_list.insert(0, "")
             self.move_dropbox_2["values"] = self.sub_options_list
         else:
             self.sub_options_list = [""]
             
         self.move_string_2.set("")
 
-    def enable_go_button(self): # gets enabled on selection of second dropbox
+    def enable_go_button(self, *args): # gets enabled on selection of second dropbox
         if not self.move_string_2.get() == "":
             self.go_button["state"] = "normal"
 
@@ -566,8 +579,7 @@ class Manual(tk.Toplevel,):
             self.joy_on_off.set("Turn Off")
 
     def start_joystick(self):
-        self.thread = threading.Thread(target=self.coordinator.start_joystick,args=(self.selected_stage.get()))
-        self.thread.start()
+        self.coordinator.start_joystick(self.selected_stage.get())
 
     def kill_joystick(self):
         self.coordinator.stop_joystick()
@@ -575,11 +587,11 @@ class Manual(tk.Toplevel,):
     # Tempdeck Methods
     def set_tempdeck(self):
         temperature = self.temperature_entry.get()
-        self.myCoordinator.myModules.myTempDecks[self.selected_tempdeck].start_set_temperature(temperature)
+        self.coordinator.myModules.myTempDecks[self.selected_tempdeck].start_set_temperature(temperature)
         self.tempdeck_off_button["state"] = "normal"
 
     def tempdeck_off(self):
-        self.myCoordinator.myModules.myTempDecks[self.selected_tempdeck].deactivate()
+        self.coordinator.myModules.myTempDecks[self.selected_tempdeck].deactivate()
         self.tempdeck_off_button["state"] = "disabled"
 
 
