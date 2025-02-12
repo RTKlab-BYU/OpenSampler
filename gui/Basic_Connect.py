@@ -238,6 +238,8 @@ class Connect(tk.Toplevel,):
         json.dump(self.popCanv.loaded_settings, output_file)
 
         self.connectButton.configure(bg="green")
+        print("\n\nSuccessfully Connected!!\n\n")
+        self.iconify()
         
     def LoadDefaults(self, coordinator):
         self.Canv.destroy()
