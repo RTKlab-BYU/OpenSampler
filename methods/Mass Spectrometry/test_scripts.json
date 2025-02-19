@@ -1,1 +1,0 @@
-{"commands": [{"type": "set_relay_side", "parameters": ["0", "Left"]}, {"type": "start_sub_method", "parameters": ["methods/", "0"]}, {"type": "run_sub_method_simultaneously", "parameters": ["methods/"]}, {"type": "wait_sub_method", "parameters": ["0"]}]}

@@ -142,14 +142,22 @@ class ProtocolActions:
             if not wait_seconds==0:
                 self.wait(wait_seconds)
 
-    def puncture_foil(self, stage, plate_index, well, spread):
+    def puncture_foil(self, spread):
+        # need stage, plate, well
+        stage = self.myCoordinator.myReader.current_run["Stage"]
+        plate_index = int(self.myCoordinator.myReader.current_run["Wellplate"])  # uses index value for now...
+        well: str = self.myCoordinator.myReader.current_run["Well"]
+
         location: tuple = self.myCoordinator.myModules.myStages[stage].myLabware.get_well_location(int(plate_index), well)
         plate_model = self.myCoordinator.myModules.myStages[stage].myLabware.plate_list[int(plate_index)].model
+
+        message = f"Punching foil at '{well}' of well plate '{plate_model}' (plate index: {plate_index}). XYZ: {location}"
+        self.myCoordinator.myLogger.info(message)
+
         self.myCoordinator.myModules.myStages[stage].move_to(location)
         spread = float(spread)
         
-        message = f"Punching foil at '{well}' of well plate '{plate_model}' (plate index: {plate_index}). XYZ: {location}"
-        self.myCoordinator.myLogger.info(message)
+        
 
         x = location[0] 
         y = location[1]

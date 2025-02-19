@@ -9,7 +9,7 @@ from Classes.module_files.zaber_independent_syringe import ZaberIndependentSyrin
 from Classes.module_files.joystick import XboxJoystick
 from Classes.module_files.profile import Profile
 from Classes.module_files.tempdeck_driver import TempDeck
-from settings.default_controller_profile import default_controller_profile
+
 
 import os
 import json
