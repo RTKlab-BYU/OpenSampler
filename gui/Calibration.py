@@ -34,7 +34,7 @@ class Calibrator:
 
         # Calculate 4th point
         frp = blp + row_vector + column_vector
-        x,y,z = frp[0],frp[1],frp[2]
+        x,y,z = frp[0], frp[1], frp[2]
         self.fourth_point = (x,y,z)
 
 
@@ -99,9 +99,9 @@ class Calibration(tk.Toplevel,):
         # buttons to start and stop joystick
         self.joyBar = tk.Frame(self)
         self.joyBar.pack(side=tk.TOP)
-        self.joyButton = tk.Button(self.joyBar,text="Start Joystick",command=lambda: self.start_joystick(),justify=tk.LEFT)
+        self.joyButton = tk.Button(self.joyBar, text="Start Joystick", command=lambda: self.start_joystick(), justify=tk.LEFT)
         self.joyButton.grid(row=0,column=1)
-        self.killButton = tk.Button(self.joyBar,text="Kill Joystick",command=lambda: self.kill_joystick(),justify=tk.LEFT)
+        self.killButton = tk.Button(self.joyBar, text="Kill Joystick", command=lambda: self.kill_joystick(), justify=tk.LEFT)
         self.killButton.grid(row=0,column=2)
         self.killButton["state"] = "disabled"
 
@@ -255,7 +255,7 @@ class Calibration(tk.Toplevel,):
         elif cal_point == "Front Left":
             coordinates = (self.x_3.get(), self.y_3.get(), self.z_3.get())
         elif cal_point == "Front Right":
-            coordinates = (self.x_4.get(), self.y_4.get(), self.z_4.get())
+            coordinates = (round(self.x_4.get(), 2), round(self.y_4.get(), 2), round(self.z_4.get(), 2))
         self.coordinator.myModules.myStages[self.selected_stage].move_to(coordinates)
 
     def test_calibration(self):
@@ -288,9 +288,9 @@ class Calibration(tk.Toplevel,):
         
         while self.updating_positions == True:
             x,y,z = self.coordinator.myModules.myStages[self.selected_stage].get_motor_coordinates()
-            self.current_x.set(x)
-            self.current_y.set(y)
-            self.current_z.set(z)
+            self.current_x.set(round(x, 2))
+            self.current_y.set(round(y, 2))
+            self.current_z.set(round(z, 2))
             time.sleep(1)
             
             if self.updating_positions == False:

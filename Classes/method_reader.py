@@ -121,6 +121,7 @@ class MethodReader:  # should call read from coordinator file
             
             return True #allows code to continue
 
+
     def reset(self):
         self.stop_run = False
         self.queue_paused = False

@@ -239,6 +239,8 @@ class Connect(tk.Toplevel,):
         output_file.close()
 
         self.connectButton.configure(bg="green")
+        print("\n\nSuccessfully Connected!!\n\n")
+        self.destroy()
         
     def LoadDefaults(self, coordinator):
         self.Canv.destroy()

@@ -1,9 +1,10 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 from tkinter import filedialog as fd
 import time
 import threading
 import pandas as pd
+import json
 
 from Classes.coordinator import Coordinator
 
@@ -11,6 +12,9 @@ STANDARD_ROW_HEIGHT = 100
 SP_HEADERS = ["Method"]
 MS_HEADERS = ["Stage", "Wellplate", "Well", "Method"]
 FRAC_HEADERS = ["Stage", "Wellplate", "Well", "Elution Wells", "Method"]
+
+LOCATION_ACTIONS = ["move_to_location", "aspirate_from_location", "dispense_to_location"]
+WELL_ACTIONS = ["move_to_well", "aspirate_from_wells", "dispense_to_wells"]
 
 SERIES_TYPE = type(pd.Series(dtype=float))
 DATAFRAME_TYPE = type(pd.DataFrame(dtype=float))
@@ -194,6 +198,123 @@ class Queue_Gui(tk.Toplevel,):
         self.schedule_queue()
         time.sleep(0.5)
 
+    def verify_wells(self, proposed_queue: pd.DataFrame):  # checks sample wells in queue to make sure they all exist
+        if "Well" in proposed_queue:
+            for index, row in proposed_queue.iterrows():
+                row["Well"] = row["Well"].replace(" ", "")
+                if row["Well"] == '':
+                    message = F"Well not specified in row '{index}' of proposed queue."
+                    self.queue_error_message = messagebox.showwarning(parent=self, title="Missing Entry", message=message)
+                    return False
+
+
+                for well in row["Well"].split(","):
+                    
+                    well_exists = self.coordinator.myModules.myStages[row["Stage"]].myLabware.check_well_exists(int(row["Wellplate"]), well)
+
+                    if not well_exists:
+                        message = f"Well '{well}' does not exist for wellplate {row['Wellplate']}"
+                        self.queue_error_message = messagebox.showwarning(parent=self, title="Entry Not Recognized", message=message)
+                        return False
+
+        return True
+    
+    def verify_method(self, path_to_method):
+        '''
+        This function checks method files for missing parameter entries.
+        It also verifies sub_methods. 
+        '''
+        dictionary = {}
+        try:
+            with open(path_to_method, 'r') as myfile: # open file
+                data = myfile.read()
+        except:
+            message = f"Method not found on the record.\n Method Path Submitted: '{path_to_method}'"
+            self.queue_error_message = messagebox.showwarning(parent=self, title="Entry Not Recognized", message=message)
+            return False
+        else:
+            dictionary = json.loads(data)
+            for index, command in dictionary["commands"]:
+                for parameter in command["parameters"]:
+                    if parameter == "":
+
+                        message = f"A parameter in the proposed queue (row '{index}') is blank. \nFix and resubmit!"
+                        self.queue_error_message = messagebox.showwarning(parent=self, title="Missing Entry", message=message)
+                        return False
+                if command["type"] == "run_sub_method":
+                    self.verify_method(self, command["parameters"][0])
+
+                elif command["type"] in WELL_ACTIONS:
+                    stage = command["parameters"][0]
+                    wellplate_index = int(command["parameters"][1])
+                    wells = command["parameters"][2]
+                    wells = wells.replace(" ", "")
+
+                    for well in wells.split(","):
+                        well_exists = self.coordinator.myModules.myStages[stage].myLabware.check_well_exists(wellplate_index, well)
+                        if not well_exists:
+                            message = f"Well '{well}' does not exist for wellplate {wellplate_index}"
+                            self.queue_error_message = messagebox.showwarning(parent=self, title="Entry Not Recognized", message=message)
+                            return False
+                
+                elif command["type"] in LOCATION_ACTIONS:
+                    stage = command["parameters"][0]
+                    location_name = command["parameters"][1]
+                    stage_exists = stage in self.coordinator.myModules.myStages.keys()
+                    if stage_exists:
+                        location_exists = self.coordinator.myModules.myStages[stage].myLabware.check_custom_location_exists(location_name)
+                        if location_exists:
+                            pass
+                        else:
+
+                            message = f"Cannot find location named: '{location_name}'"
+                            self.queue_error_message = messagebox.showwarning(parent=self, title="Entry Not Recognized", message=message)
+                            return False
+                    else:
+                        message = f"Cannot find stage named: '{location_name}'"
+                        self.queue_error_message = messagebox.showwarning(parent=self, title="Entry Not Recognized", message=message)
+                        return False
+                    
+            return True
+                    
+    def verify_methods(self, proposed_queue: pd.DataFrame): # checks all the json files in CSV to make sure they all exist
+
+        for index, row in proposed_queue.iterrows(): # open and close each json file, if one is missing it will throw error
+
+            if row['Method'] == '':
+                message = f"Method not specified in row {index} of proposed queue"
+                self.queue_error_message = messagebox.showwarning(parent=self, title="Missing Entry", message=message)
+                return False
+            if self.verify_method(row["Method"]):
+                pass
+            else:
+                message = f"Cannot verify method for row {index}. \nMethod: {row['Method']}"
+                self.queue_error_message = messagebox.showwarning(parent=self, title="Invalid Method", message=message)
+                return False
+
+        return True
+
+    def verify(self, proposed_queue):  # check compiled runs to make sure its format is valid, sets first gradient, estimate end time
+        
+        if (len(proposed_queue) == 0):
+            message = "Cannot queue an empty "
+            self.queue_error_message = messagebox.showwarning(parent=self, title="Missing Entry", message=message)
+            return False
+        
+        # check all cells make sure none are empty & make sure size of each array is same
+        
+        if not self.verify_wells(proposed_queue): 
+            print ("\n------- WELL VERIFICATION FAILED. CANNOT RUN THE PROVIDED QUEUE. -------\n")
+            return False  # stops code from running
+        
+        if not self.verify_methods(proposed_queue):
+            print ("\n------- METHOD VERIFICATION FAILED. CANNOT RUN THE PROVIDED QUEUE. -------\n")
+            return False  # stops code from running
+        
+        else:
+            
+            return True #allows code to continue
+
     def schedule_queue(self):
         '''
         Compile the current queue into a pandas dataframe.
@@ -201,6 +322,8 @@ class Queue_Gui(tk.Toplevel,):
         Add the dataframe to the schedule queue,
         If not currently running, begin running.
         '''
+        # Make sure joystick is off
+        self.coordinator.stop_joystick()
 
         # start thread to run queue
         new_queue_type = self.page_type.get()
@@ -208,18 +331,18 @@ class Queue_Gui(tk.Toplevel,):
         # check for conflict between current and new queue
         if not self.my_reader.running:
             compiled_queue = self.compile_queue_to_schedule()
+            if not self.verify(compiled_queue):
+                return  
             self.active_queue_frame.active_queue_type = new_queue_type
             self.active_queue_frame.format_active_queue_display()
         elif (new_queue_type == self.active_queue_frame.active_queue_type):
             compiled_queue = self.compile_queue_to_schedule()
+            if not self.verify(compiled_queue):
+                return  
         else:
             print(f"\nCurrent running queue type: {self.active_queue_frame.active_queue_type}")
             print(f"Attempting to schecdule queue type: {new_queue_type}")
             print("\n\nYou Shall Not Queue!!!\n(Wait until current active que is finished to schedule new queue type)\n\n")
-            return
-        
-        # verify methods in new queue (needs work)
-        if not self.my_reader.verify(compiled_queue):
             return
         
         # add compiled methods to scheduled queue

@@ -25,21 +25,23 @@ class Labware_Selection(tk.Toplevel,):
         self.type_bar.pack(side=tk.TOP)
 
         self.option_selected = tk.StringVar(self.type_bar)
-        self.option_selected.set(0)
-        self.option_selected.trace("w", lambda x,y,z: self.update_options())
         
-        self.selected_model = ttk.Combobox(self, state='readonly')
-        self.selected_model.pack(side=tk.TOP)
-        self.selected_model["values"] = []
+        self.selected_model = tk.StringVar()
+        self.selected_model_dropbox = ttk.Combobox(self, state='readonly', textvariable=self.selected_model)
+        self.selected_model_dropbox.pack(side=tk.TOP)
+        self.selected_model_dropbox["values"] = [""]
+        
 
         self.start_calibration = tk.Button(self, text="Calibrate", command= self.open_sub_window,justify=tk.LEFT)
         self.start_calibration.pack(side=tk.TOP)
         self.start_calibration["state"] =  "disable"
-        self.selected_model.bind("<<ComboboxSelected>>", lambda x: self.enable_submit()) 
+        self.selected_model_dropbox.bind("<<ComboboxSelected>>", lambda x: self.enable_submit()) 
 
         tk.Radiobutton(self.type_bar, text="Wellplate", padx = 20, variable=self.option_selected, value="wellplate", command=self.update_options).grid(row=0,column=0)
         tk.Radiobutton(self.type_bar, text="Custom", padx = 20, variable=self.option_selected, value="custom", command=self.update_options).grid(row=0,column=1)
         tk.Radiobutton(self.type_bar, text="Syringe", padx = 20, variable=self.option_selected, value="syringe", command=self.update_options).grid(row=0,column=2)
+        self.option_selected.set("syringe")
+        self.update_options()
 
     def open_wellplate_calibration_page(self):
         if not self.wellplate_calibration_page or not self.wellplate_calibration_page.winfo_exists():
@@ -59,22 +61,24 @@ class Labware_Selection(tk.Toplevel,):
         else:
             self.syringe_calibration_page.deiconify()
         
-    def update_options(self):
+    def update_options(self, *args):
         
         if self.option_selected.get() == "wellplate":
             self.selected_model.set("")
             self.disable_submit()
-            self.selected_model["values"] = self.coordinator.myModules.myStages[self.selected_stage].myModelsManager.get_stored_models()["plates"]
+            self.selected_model_dropbox["values"] = self.coordinator.myModules.myStages[self.selected_stage].myModelsManager.get_stored_models()["plates"]
         
         elif self.option_selected.get() == "custom":
             self.selected_model.set("")
             self.enable_submit()
-            self.selected_model["values"] = []
+            self.selected_model_dropbox["values"] = [""]
         
         elif self.option_selected.get() == "syringe":
             self.selected_model.set("HAMILTON_1701")
-            self.disable_submit()
-            self.selected_model["values"] = self.coordinator.myModules.myStages[self.selected_stage].myModelsManager.get_stored_models()["syringes"]
+            self.enable_submit()
+            self.selected_model_dropbox["values"] = self.coordinator.myModules.myStages[self.selected_stage].myModelsManager.get_stored_models()["syringes"]
+        elif self.option_selected.get() == "":
+            pass
         else:
             print("Error, invalid labware type: " + str(self.option_selected.get()))
         # print(self.option_selected.get())
@@ -92,3 +96,4 @@ class Labware_Selection(tk.Toplevel,):
             self.open_custom_location_page()
         elif self.option_selected.get() == "syringe":
             self.open_syringe_calibration_page()
+        self.destroy()

@@ -12,7 +12,7 @@ import json
 RELATIVE_PATH = "saved_labware"
 # LABWARE_CHIP = "C"
 # LABWARE_PLATE = "W"
-DEFAULT_SYRINGE_MODEL = "Default"
+DEFAULT_SYRINGE_MODEL = "Not Selected"
 
 LINUX_OS = 'posix'
 WINDOWS_OS = 'nt'
