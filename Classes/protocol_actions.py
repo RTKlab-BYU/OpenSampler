@@ -142,6 +142,64 @@ class ProtocolActions:
             if not wait_seconds==0:
                 self.wait(wait_seconds)
 
+    def puncture_foil(self, stage, plate_index, well, spread):
+        location: tuple = self.myCoordinator.myModules.myStages[stage].myLabware.get_well_location(int(plate_index), well)
+        plate_model = self.myCoordinator.myModules.myStages[stage].myLabware.plate_list[int(plate_index)].model
+        self.myCoordinator.myModules.myStages[stage].move_to(location)
+        spread = float(spread)
+        
+        message = f"Punching foil at '{well}' of well plate '{plate_model}' (plate index: {plate_index}). XYZ: {location}"
+        self.myCoordinator.myLogger.info(message)
+
+        x = location[0] 
+        y = location[1]
+        z = location[2] 
+
+        # move downward to punch foil
+        z = z - 2
+        new_location = (x,y,z)
+        self.myCoordinator.myModules.myStages[stage].small_move_xy(new_location)
+
+        # move to "back" of well
+        y = y + spread
+        new_location = (x,y,z)
+        self.myCoordinator.myModules.myStages[stage].small_move_xy(new_location)
+
+        # move to "left side" of well
+        y = y - spread
+        x = x - spread
+        new_location = (x,y,z)
+        self.myCoordinator.myModules.myStages[stage].small_move_xy(new_location)
+
+        # move to "front" of well
+        y = y - spread
+        x = x + spread
+        new_location = (x,y,z)
+        self.myCoordinator.myModules.myStages[stage].small_move_xy(new_location)
+
+        # move to "right side" of well
+        y = y + spread
+        x = x + spread
+        new_location = (x,y,z)
+        self.myCoordinator.myModules.myStages[stage].small_move_xy(new_location)
+
+        # return to "back" of well
+        y = y + spread
+        x = x - spread
+        new_location = (x,y,z)
+        self.myCoordinator.myModules.myStages[stage].small_move_xy(new_location)
+
+        # return to "center" of well
+        y = y - spread
+        new_location = (x,y,z)
+        self.myCoordinator.myModules.myStages[stage].small_move_xy(new_location)
+
+        # move axis up out of the way after punching
+        self.myCoordinator.myModules.myStages[stage].move_current_axis_safe_az()
+
+
+
+
     def pool_samples(self, volume, speed, spread, wait_seconds):
         '''
         this is a mass spec method for pooling labeled samples. 
@@ -168,7 +226,7 @@ class ProtocolActions:
             y = location[1]
             z = location[2] 
             
-            # move "up" by spread distance (mm)
+            # move "back" by spread distance (mm)
             y = y + spread
             new_location = (x,y,z)
             
@@ -179,7 +237,7 @@ class ProtocolActions:
             new_location = (x,y,z)
             self.myCoordinator.myModules.myStages[stage].small_move_xy(new_location, move_speed=spread)
 
-            # move "down" by 2x spread distance (mm)
+            # move "forward" by 2x spread distance (mm)
             y = y - (2*spread)
             new_location = (x,y,z)
             self.myCoordinator.myModules.myStages[stage].small_move_xy(new_location, move_speed=spread)
@@ -307,16 +365,21 @@ class ProtocolActions:
             self.myCoordinator.myLogger.info("Skipping MS Contact Closure")
           #  return "Skipped MS Trigger"
 
-    def Wait_Contact_Closure(self, Logic, Input, Port=0):
+    def Wait_Contact_Closure(self, Logic, pin, Port=0):
         logic = Logic == "True" # definded by user based on expected input state
-        pin_state = self.myCoordinator.myModules.myPorts[int(Port)].getPinState(Input)
+        pin_state = self.myCoordinator.myModules.myPorts[int(Port)].getPinState(pin)
 
-        message = "Awaiting Contact Closure"
+        message = f"Awaiting Contact Closure from pin {pin}. Expecting {str(logic)}"
         self.myCoordinator.myLogger.info(message)
+
+        # pin_string = "Input Pins: "
+        # for pin in self.myCoordinator.myModules.myPorts[int(Port)].inputs:
+        #     pin_string += (str(pin) + ", ")
+        # self.myCoordinator.myLogger.info(pin_string)
 
         while (pin_state != logic):
             time.sleep(1)
-            pin_state = self.myCoordinator.myModules.myPorts[int(Port)].getPinState(Input)
+            pin_state = self.myCoordinator.myModules.myPorts[int(Port)].getPinState(pin)
 
             if self.myCoordinator.myReader.stop_run == True:
                 break

@@ -30,7 +30,7 @@ void loop() {
       String pin_string = input_string.substring(7,9);
       int pin = pin_string.toInt();
       int pin_state = digitalRead(pin);
-      String output_string = "pin " + input_string + " logic";
+      String output_string = "";
       if (pin_state == HIGH) {
         output_string = "pin " + pin_string + " on";
       } 
