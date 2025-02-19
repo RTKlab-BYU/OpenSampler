@@ -513,8 +513,8 @@ class Manual(tk.Toplevel,):
             valve.move_to_position(position)
 
         else:
-            plate_index = self.wellplate_dict[self.move_string_1]
-            well = self.move_string_2
+            plate_index = self.wellplate_dict[self.move_string_1.get()]
+            well = self.move_string_2.get()
             location: tuple = self.coordinator.myModules.myStages[self.selected_stage.get()].myLabware.get_well_location(plate_index, well)
         
         self.coordinator.myModules.myStages[self.selected_stage.get()].move_to(location)
