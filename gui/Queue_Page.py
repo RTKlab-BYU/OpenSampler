@@ -43,8 +43,9 @@ class Queue_Gui(tk.Toplevel,):
 
         self.sample_prep_page.grid(row=0,column=0)
         self.mass_spec_page.grid(row=0,column=1)
-        self.fractionation_page.grid(row=0,column=2)
-        self.scheduled_queue_page.grid(row=0,column=3)
+        self.scheduled_queue_page.grid(row=0,column=2)
+        # self.fractionation_page.grid(row=0,column=3)
+
 
         # Frame that changes based on page type
         self.page_display_frame = tk.Frame(self) 
