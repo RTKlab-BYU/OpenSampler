@@ -9,7 +9,7 @@ class Custom_Location(tk.Toplevel,):
     def __init__(self, coordinator, selected_stage):
         tk.Toplevel.__init__(self)    
       
-        self.title("Calibrate New Location")
+        self.title("Special Locations")
         self.geometry("500x500")
 
         self.coordinator: Coordinator = coordinator

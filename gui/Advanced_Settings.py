@@ -1064,7 +1064,7 @@ class Configuration(tk.Toplevel,):
     def __init__(self, coordinator):
         tk.Toplevel.__init__(self)    
         self.grab_set()
-        self.title("Settings and Configuration")
+        self.title("System Configuration")
 
         self.coordinator = coordinator
 

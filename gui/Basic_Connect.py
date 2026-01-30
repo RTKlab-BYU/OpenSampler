@@ -58,8 +58,8 @@ class MotorSeriesRow(tk.Frame,):
         super().__init__(frame.motorsGrid)
         ttk.Label(frame.motorsGrid, text=currentMotorSeries).grid(row=rowNum,column=0)
         self.com_box = ttk.Combobox(frame.motorsGrid, state='readonly')
-        self.com_box.grid(row=rowNum,column=1)
-        ttk.Button(frame.motorsGrid,text="Home All Motors",command=lambda: self.HomeMotors(coordinator, currentMotorSeries)).grid(row=rowNum,column=2)
+        # self.com_box.grid(row=rowNum,column=1)
+        # ttk.Button(frame.motorsGrid,text="Home All Motors",command=lambda: self.HomeMotors(coordinator, currentMotorSeries)).grid(row=rowNum,column=2)
         self.com_box["values"] = [*container.com_dict.keys()]
         current_com = container.loaded_settings["motors_configurations"][currentMotorSeries]["port"]
         if current_com in container.rev_com_dict.keys():
@@ -134,7 +134,7 @@ class Connect(tk.Toplevel,):
     def __init__(self, coordinator):
         tk.Toplevel.__init__(self)    
       
-        self.title("Basic Connect")
+        self.title("System Launcher")
         self.coordinator = coordinator
 
         self.available_ports = list_ports.comports()
@@ -176,7 +176,7 @@ class Connect(tk.Toplevel,):
         self.disconnectButton.grid(row=0,column=1)
         tk.Button(settingsBar,text="Clear Settings",command=lambda: self.LoadDefaults(coordinator),justify=tk.LEFT).grid(row=0,column=2)
         tk.Button(settingsBar, text='Import from a Settings File', command=lambda: self.LoadSettings(coordinator),justify=tk.LEFT).grid(row=0,column=3)
-        tk.Button(settingsBar,text="Save Settings to File",command=lambda: self.SaveSettings(),justify=tk.LEFT).grid(row=0,column=4)
+        # tk.Button(settingsBar,text="Save Settings to File",command=lambda: self.SaveSettings(),justify=tk.LEFT).grid(row=0,column=4)
         
         self.advanced_config = None
         self.advanced_config_button = tk.Button(settingsBar, text="Advanced Configuration", command=self.open_advanced_config_page)

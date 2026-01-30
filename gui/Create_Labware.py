@@ -57,7 +57,7 @@ class Create_Labware(tk.Toplevel,):
     def __init__(self):
         tk.Toplevel.__init__(self)    
       
-        self.title("Create Labware Model")
+        self.title("Labware Creator")
         self.geometry("1000x1000")
         self.model_grid = tk.Frame(self)
         self.model_grid.pack(side=tk.TOP)

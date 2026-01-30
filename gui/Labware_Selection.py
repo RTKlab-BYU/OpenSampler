@@ -12,7 +12,7 @@ class Labware_Selection(tk.Toplevel,):
         self.selected_stage = selected_stage
         self.coordinator = coordinator 
       
-        self.title("Add Labware Type")
+        self.title("Plate Selection")
         self.type_select_label = tk.Label(self, text="Select Labware Type: ")
         self.type_select_label.pack(side=tk.TOP)
         self.geometry("750x750")

@@ -10,7 +10,7 @@ class Syringe_Selection(tk.Toplevel,):
         self.selectedStage = selectedStage 
         self.coordinator = coordinator
       
-        self.title("Select Syringe Type")
+        self.title("Syringe Selection")
         self.settingsFileLabel = tk.Label(self, text="Select Syringe Type: ",justify=tk.LEFT)
         self.settingsFileLabel.pack(side=tk.TOP)
         self.geometry("750x750")

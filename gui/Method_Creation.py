@@ -267,7 +267,7 @@ class Method_Creator(tk.Toplevel,):
         tk.Toplevel.__init__(self)
         self.coordinator = coordinator    
       
-        self.title("Create a Method")
+        self.title("Method Creator")
 
         # sets the geometry of toplevel
         self.geometry("1000x1800")

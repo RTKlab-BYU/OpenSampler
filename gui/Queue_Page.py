@@ -24,7 +24,7 @@ class Queue_Gui(tk.Toplevel,):
     def __init__(self, coordinator):
         tk.Toplevel.__init__(self)    
       
-        self.title("Run Method")
+        self.title("Method Queue")
         self.geometry("1000x600")
         # self.state("zoomed")
         self.coordinator: Coordinator = coordinator

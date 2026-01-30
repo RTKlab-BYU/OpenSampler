@@ -85,7 +85,7 @@ class Calibration(tk.Toplevel,):
     def __init__(self, coordinator, selected_stage: int, model_name: str):
         tk.Toplevel.__init__(self)    
       
-        self.title("Calibrate New Location")
+        self.title("Plate Calibration")
         tk.Label(self, text=model_name, font="Helvetica 18",justify=tk.LEFT).pack(side=tk.TOP)
         self.component_type = "W"
         self.selected_stage = selected_stage
